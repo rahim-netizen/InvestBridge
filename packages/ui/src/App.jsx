@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import Navbar from "./components/Navbar.jsx";
 import Footer from "./components/Footer.jsx";
 import Homepage from "./components/Homepage.jsx";
+import AdminPage from "./components/AdminPage";
 import LoginPage from "./components/LoginPage.jsx";
 import RegisterPage from "./components/RegisterPage.jsx";
 
@@ -14,6 +15,8 @@ export default function App() {
         return <LoginPage navigate={setView} />;
       case "register":
         return <RegisterPage navigate={setView} />;
+      case "adminPage":
+        return <AdminPage navigate={setView} />;
       default:
         return (
           <div className="min-h-screen bg-ink-50">
