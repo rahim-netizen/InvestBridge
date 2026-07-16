@@ -12,6 +12,12 @@ export default function LoginPage({ navigate }) {
 
   const handleSubmit = (event) => {
     event.preventDefault();
+
+    if (form.email === "admin@company.com" && form.password === "admin") {
+      navigate("adminPage");
+      return;
+    }
+
     setStatus(`Welcome back, ${form.email || "investor"}!`);
   };
 
