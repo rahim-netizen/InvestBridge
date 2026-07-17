@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Menu, X, Landmark } from "lucide-react";
+import { Menu, Moon, Sun, X, Landmark } from "lucide-react";
 
 const links = [
   { label: "How it works", href: "#how-it-works" },
@@ -8,7 +8,7 @@ const links = [
   { label: "Stories", href: "#stories" },
 ];
 
-export default function Navbar({ navigate }) {
+export default function Navbar({ navigate, theme, toggleTheme }) {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
@@ -23,8 +23,8 @@ export default function Navbar({ navigate }) {
     <header
       className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${
         scrolled
-          ? "border-b border-ink-100 bg-white/80 backdrop-blur-xl shadow-soft"
-          : "border-b border-transparent bg-transparent"
+          ? "border-b border-ink-100 bg-white/80 backdrop-blur-xl shadow-soft dark:border-ink-800 dark:bg-ink-950/80"
+          : "border-b border-transparent bg-transparent dark:bg-ink-950/90"
       }`}
     >
       <nav className="container-page flex h-16 items-center justify-between sm:h-20">
@@ -56,8 +56,20 @@ export default function Navbar({ navigate }) {
         <div className="hidden items-center gap-3 md:flex">
           <button
             type="button"
+            onClick={toggleTheme}
+            className="grid h-10 w-10 place-items-center rounded-lg border border-ink-200 bg-white text-ink-700 transition hover:border-brand-300 hover:text-brand-700 dark:border-ink-700 dark:bg-ink-950 dark:text-ink-100"
+            aria-label="Toggle theme"
+          >
+            {theme === "dark" ? (
+              <Sun className="h-5 w-5" />
+            ) : (
+              <Moon className="h-5 w-5" />
+            )}
+          </button>
+          <button
+            type="button"
             onClick={() => navigate("login")}
-            className="text-sm font-semibold text-ink-700 hover:text-brand-700"
+            className="text-sm font-semibold text-ink-700 hover:text-brand-700 dark:text-ink-100"
           >
             Sign in
           </button>
@@ -72,7 +84,7 @@ export default function Navbar({ navigate }) {
 
         <button
           onClick={() => setOpen((v) => !v)}
-          className="grid h-10 w-10 place-items-center rounded-lg border border-ink-200 bg-white text-ink-700 md:hidden"
+          className="grid h-10 w-10 place-items-center rounded-lg border border-ink-200 bg-white text-ink-700 transition dark:border-ink-700 dark:bg-ink-950 dark:text-ink-100 md:hidden"
           aria-label="Toggle menu"
         >
           {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -80,19 +92,31 @@ export default function Navbar({ navigate }) {
       </nav>
 
       {open && (
-        <div className="border-t border-ink-100 bg-white md:hidden">
+        <div className="border-t border-ink-100 bg-white dark:border-ink-800 dark:bg-ink-950 md:hidden">
           <div className="container-page flex flex-col gap-1 py-4">
             {links.map((l) => (
               <a
                 key={l.href}
                 href={l.href}
                 onClick={() => setOpen(false)}
-                className="rounded-lg px-3 py-2.5 text-sm font-medium text-ink-700 hover:bg-ink-50"
+                className="rounded-lg px-3 py-2.5 text-sm font-medium text-ink-700 hover:bg-ink-50 dark:text-ink-100 dark:hover:bg-ink-900"
               >
                 {l.label}
               </a>
             ))}
-            <div className="mt-2 flex gap-3">
+            <div className="mt-2 flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                onClick={toggleTheme}
+                className="grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-ink-200 bg-white text-ink-700 transition hover:border-brand-300 hover:text-brand-700 dark:border-ink-700 dark:bg-ink-950 dark:text-ink-100"
+                aria-label="Toggle theme"
+              >
+                {theme === "dark" ? (
+                  <Sun className="h-5 w-5" />
+                ) : (
+                  <Moon className="h-5 w-5" />
+                )}
+              </button>
               <button
                 type="button"
                 onClick={() => {
