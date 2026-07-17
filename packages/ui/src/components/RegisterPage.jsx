@@ -29,7 +29,7 @@ export default function RegisterPage({ navigate }) {
   };
 
   return (
-    <section className="min-h-screen bg-[radial-gradient(circle_at_top_right,_rgba(45,97,255,0.16),_transparent_40%),linear-gradient(135deg,_#f8fbff_0%,_#eef4ff_100%)] px-4 py-20 sm:px-6 lg:px-8">
+    <section className="min-h-screen bg-[radial-gradient(circle_at_top_right,_rgba(45,97,255,0.16),_transparent_40%),linear-gradient(135deg,_#f8fbff_0%,_#eef4ff_100%)] dark:bg-gradient-to-br dark:from-ink-950 dark:to-ink-900 px-4 py-20 sm:px-6 lg:px-8 transition-colors duration-300">
       <div className="mx-auto flex max-w-6xl flex-col gap-8 lg:flex-row lg:items-center">
         <div className="max-w-xl">
           <span className="eyebrow">
