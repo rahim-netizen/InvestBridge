@@ -16,10 +16,10 @@ export default function AdminPage({ navigate }) {
     { id: 1, name: "Amina Rahman", email: "amina.rahman@invest.com", role: "Investor" },
     { id: 2, name: "John Doe", email: "john.doe@angel.co", role: "Investor" },
     { id: 3, name: "Sarah Chen", email: "sarah.chen@capital.io", role: "Investor" },
-    { id: 4, name: "Carlos Gomez", email: "carlos@greenfarms.org", role: "Farmowner" },
-    { id: 5, name: "Fatima Al-Fayed", email: "fatima@agri-bridge.com", role: "Farmowner" },
-    { id: 6, name: "Elena Petrova", email: "elena.petrova@expertnetwork.org", role: "Expert" },
-    { id: 7, name: "Kenji Sato", email: "sato@organic-consulting.jp", role: "Expert" },
+    { id: 4, name: "Carlos Gomez", email: "carlos@greenfarms.org", role: "Entrepreneur" },
+    { id: 5, name: "Fatima Al-Fayed", email: "fatima@agri-bridge.com", role: "Entrepreneur" },
+    { id: 6, name: "Elena Petrova", email: "elena.petrova@expertnetwork.org", role: "Entrepreneur" },
+    { id: 7, name: "Kenji Sato", email: "sato@organic-consulting.jp", role: "Entrepreneur" },
   ]);
 
   const [projects, setProjects] = useState([
@@ -35,7 +35,7 @@ export default function AdminPage({ navigate }) {
   ]);
 
   const [activeTab, setActiveTab] = useState("users"); // "users", "projects", "complaints"
-  const [roleFilter, setRoleFilter] = useState("All"); // "All", "Investor", "Farmowner", "Expert"
+  const [roleFilter, setRoleFilter] = useState("All"); // "All", "Investor", "Entrepreneur"
 
   const pendingComplaintsCount = complaints.filter((c) => c.status === "Pending").length;
 
@@ -177,7 +177,7 @@ export default function AdminPage({ navigate }) {
             {activeTab === "users" && (
               <div className="space-y-6">
                 <div className="flex items-center gap-2 border-b border-ink-100/50 pb-4">
-                  {["All", "Investor", "Farmowner", "Expert"].map((role) => (
+                  {["All", "Investor", "Entrepreneur"].map((role) => (
                     <button
                       key={role}
                       type="button"
@@ -214,7 +214,7 @@ export default function AdminPage({ navigate }) {
                               <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                                 user.role === "Investor"
                                   ? "bg-blue-100 text-blue-800"
-                                  : user.role === "Farmowner"
+                                  : user.role === "Entrepreneur"
                                   ? "bg-emerald-100 text-emerald-800"
                                   : "bg-purple-100 text-purple-800"
                               }`}>
@@ -225,7 +225,7 @@ export default function AdminPage({ navigate }) {
                               <button
                                 type="button"
                                 onClick={() => setUsers((current) => current.filter((u) => u.id !== user.id))}
-                                className="inline-flex items-center gap-1.5 text-xs font-semibold text-rose-600 hover:text-rose-800 transition-colors"
+                                className="inline-flex items-center gap-1.5 rounded-lg border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-700 transition-all hover:border-rose-300 hover:bg-rose-100 hover:text-rose-800"
                               >
                                 <Trash2 className="h-3.5 w-3.5" />
                                 Remove
@@ -273,7 +273,7 @@ export default function AdminPage({ navigate }) {
                           <button
                             type="button"
                             onClick={() => setProjects((current) => current.filter((p) => p.id !== project.id))}
-                            className="inline-flex items-center gap-1.5 text-xs font-semibold text-rose-600 hover:text-rose-800 transition-colors"
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-700 transition-all hover:border-rose-300 hover:bg-rose-100 hover:text-rose-800"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
                             Remove
@@ -349,4 +349,4 @@ export default function AdminPage({ navigate }) {
       </div>
     </div>
   );
-}
+}
