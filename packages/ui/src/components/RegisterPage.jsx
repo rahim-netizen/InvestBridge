@@ -149,7 +149,6 @@ export default function RegisterPage({ navigate }) {
                 >
                   <option>Founder</option>
                   <option>Investor</option>
-                  <option>Operator</option>
                 </select>
               </div>
             </label>
