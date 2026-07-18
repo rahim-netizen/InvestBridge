@@ -46,7 +46,7 @@ export default function Navbar({ navigate, theme, toggleTheme }) {
             <a
               key={l.href}
               href={l.href}
-              className="text-sm font-medium text-ink-600 transition-colors hover:text-brand-700"
+              className="nav-link text-sm font-medium text-ink-600 transition-colors hover:text-brand-700 dark:text-ink-100 dark:hover:text-brand-400"
             >
               {l.label}
             </a>
@@ -57,7 +57,7 @@ export default function Navbar({ navigate, theme, toggleTheme }) {
           <button
             type="button"
             onClick={toggleTheme}
-            className="grid h-10 w-10 place-items-center rounded-lg border border-ink-200 bg-white text-ink-700 transition hover:border-brand-300 hover:text-brand-700 dark:border-ink-700 dark:bg-ink-950 dark:text-ink-100"
+            className="theme-toggle grid h-10 w-10 place-items-center rounded-lg border border-ink-200 bg-white text-ink-700 transition hover:border-brand-300 hover:text-brand-700 hover:shadow-glow dark:border-ink-700 dark:bg-ink-950 dark:text-ink-100 dark:hover:border-brand-400 dark:hover:text-brand-400"
             aria-label="Toggle theme"
           >
             {theme === "dark" ? (
@@ -69,7 +69,7 @@ export default function Navbar({ navigate, theme, toggleTheme }) {
           <button
             type="button"
             onClick={() => navigate("login")}
-            className="text-sm font-semibold text-ink-700 hover:text-brand-700 dark:text-ink-100"
+            className="nav-link text-sm font-semibold text-ink-700 hover:text-brand-700 dark:text-ink-100 dark:hover:text-brand-400"
           >
             Sign in
           </button>
@@ -84,7 +84,7 @@ export default function Navbar({ navigate, theme, toggleTheme }) {
 
         <button
           onClick={() => setOpen((v) => !v)}
-          className="grid h-10 w-10 place-items-center rounded-lg border border-ink-200 bg-white text-ink-700 transition dark:border-ink-700 dark:bg-ink-950 dark:text-ink-100 md:hidden"
+          className="theme-toggle grid h-10 w-10 place-items-center rounded-lg border border-ink-200 bg-white text-ink-700 transition hover:border-brand-300 hover:text-brand-700 hover:shadow-glow dark:border-ink-700 dark:bg-ink-950 dark:text-ink-100 md:hidden"
           aria-label="Toggle menu"
         >
           {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -108,7 +108,7 @@ export default function Navbar({ navigate, theme, toggleTheme }) {
               <button
                 type="button"
                 onClick={toggleTheme}
-                className="grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-ink-200 bg-white text-ink-700 transition hover:border-brand-300 hover:text-brand-700 dark:border-ink-700 dark:bg-ink-950 dark:text-ink-100"
+                className="theme-toggle grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-ink-200 bg-white text-ink-700 transition hover:border-brand-300 hover:text-brand-700 hover:shadow-glow dark:border-ink-700 dark:bg-ink-950 dark:text-ink-100 dark:hover:border-brand-400 dark:hover:text-brand-400"
                 aria-label="Toggle theme"
               >
                 {theme === "dark" ? (

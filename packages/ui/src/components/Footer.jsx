@@ -42,7 +42,7 @@ export default function Footer() {
                 <a
                   key={i}
                   href="#"
-                  className="grid h-9 w-9 place-items-center rounded-lg border border-ink-200 text-ink-500 transition-colors hover:border-brand-300 hover:text-brand-700"
+                  className="social-link grid h-9 w-9 place-items-center rounded-lg border border-ink-200 text-ink-500 transition-colors hover:border-brand-300 hover:text-brand-700"
                   aria-label="social link"
                 >
                   <Icon className="h-4 w-4" />
@@ -57,7 +57,7 @@ export default function Footer() {
               <ul className="mt-4 space-y-2.5">
                 {col.links.map((l) => (
                   <li key={l}>
-                    <a href="#" className="text-sm text-ink-500 transition-colors hover:text-brand-700">
+                    <a href="#" className="footer-link text-sm text-ink-500 transition-colors hover:text-brand-700">
                       {l}
                     </a>
                   </li>

@@ -94,3 +94,17 @@
     @apply rounded-2xl border border-ink-100 bg-white shadow-soft;
   }
 }
+
+.dark .card.shadow-glow {
+  box-shadow:
+    0 0 0 1px rgba(16, 185, 129, 0.15),
+    0 12px 40px rgba(16, 185, 129, 0.18);
+}
+
+.dark .nav-link:hover,
+.dark .theme-toggle:hover,
+.dark .footer-link:hover,
+.dark .social-link:hover,
+.dark .btn-ghost:hover {
+  color: #34d399 !important;
+}

@@ -40,7 +40,7 @@ export default function AdminPage({ navigate }) {
   const pendingComplaintsCount = complaints.filter((c) => c.status === "Pending").length;
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(45,97,255,0.16),_transparent_40%),linear-gradient(135deg,_#f8fbff_0%,_#eef4ff_100%)] px-4 py-10 sm:px-6 lg:px-8">
+      <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(45,97,255,0.16),_transparent_40%),linear-gradient(135deg,_#f8fbff_0%,_#eef4ff_100%)] dark:bg-gradient-to-br dark:from-ink-950 dark:to-ink-900 px-4 py-10 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-6xl space-y-8">
         <section className="rounded-[32px] border border-brand-100 bg-white/80 p-8 shadow-lift backdrop-blur sm:p-10">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
@@ -142,8 +142,8 @@ export default function AdminPage({ navigate }) {
                 onClick={() => setActiveTab("users")}
                 className={`px-4 py-2 text-sm font-semibold rounded-xl transition-all ${
                   activeTab === "users"
-                    ? "bg-brand-600 text-white shadow-soft"
-                    : "bg-ink-50 text-ink-600 hover:bg-ink-100"
+                    ? "bg-brand-600 text-white shadow-soft dark:shadow-glow"
+                    : "bg-ink-50 text-ink-600 hover:bg-ink-100 dark:hover:shadow-glow"
                 }`}
               >
                 Users ({users.length})
@@ -153,8 +153,8 @@ export default function AdminPage({ navigate }) {
                 onClick={() => setActiveTab("projects")}
                 className={`px-4 py-2 text-sm font-semibold rounded-xl transition-all ${
                   activeTab === "projects"
-                    ? "bg-brand-600 text-white shadow-soft"
-                    : "bg-ink-50 text-ink-600 hover:bg-ink-100"
+                    ? "bg-brand-600 text-white shadow-soft dark:shadow-glow"
+                    : "bg-ink-50 text-ink-600 hover:bg-ink-100 dark:hover:shadow-glow"
                 }`}
               >
                 Projects ({projects.length})
@@ -164,8 +164,8 @@ export default function AdminPage({ navigate }) {
                 onClick={() => setActiveTab("complaints")}
                 className={`px-4 py-2 text-sm font-semibold rounded-xl transition-all ${
                   activeTab === "complaints"
-                    ? "bg-brand-600 text-white shadow-soft"
-                    : "bg-ink-50 text-ink-600 hover:bg-ink-100"
+                    ? "bg-brand-600 text-white shadow-soft dark:shadow-glow"
+                    : "bg-ink-50 text-ink-600 hover:bg-ink-100 dark:hover:shadow-glow"
                 }`}
               >
                 Complaints ({pendingComplaintsCount} pending)
@@ -184,8 +184,8 @@ export default function AdminPage({ navigate }) {
                       onClick={() => setRoleFilter(role)}
                       className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
                         roleFilter === role
-                          ? "bg-brand-100 text-brand-700"
-                          : "text-ink-500 hover:bg-ink-50"
+                          ? "bg-brand-100 text-brand-700 dark:shadow-glow"
+                          : "text-ink-500 hover:bg-ink-50 dark:hover:shadow-glow"
                       }`}
                     >
                       {role === "All" ? "All Roles" : `${role}s`}
@@ -296,7 +296,7 @@ export default function AdminPage({ navigate }) {
             {activeTab === "complaints" && (
               <div className="space-y-4">
                 {complaints.map((complaint) => (
-                  <div key={complaint.id} className="rounded-2xl border border-ink-100 bg-ink-50/50 p-5 transition-all hover:border-ink-200">
+                  <div key={complaint.id} className="rounded-2xl border border-ink-100 bg-ink-50/50 p-5 transition-all hover:border-ink-200 dark:border-ink-800 dark:bg-ink-900 dark:hover:border-ink-700 dark:hover:bg-white/10">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                       <div>
                         <div className="flex items-center gap-2">
