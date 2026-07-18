@@ -479,7 +479,7 @@ function ForWho() {
           </a>
         </div>
 
-        <div className="card border-brand-200 bg-gradient-to-br from-white to-brand-50 p-8 shadow-glow sm:p-10">
+        <div className="card border-brand-200 bg-gradient-to-br from-white to-brand-50 p-8 shadow-glow dark:border-brand-800/60 dark:from-ink-900 dark:to-ink-950 sm:p-10">
           <span className="eyebrow">For investors</span>
           <h3 className="mt-4 font-display text-2xl font-extrabold tracking-tight text-ink-900 sm:text-3xl">
             Find your next great investment

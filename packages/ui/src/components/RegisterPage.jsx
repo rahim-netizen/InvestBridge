@@ -74,7 +74,7 @@ export default function RegisterPage({ navigate }) {
             <button
               type="button"
               onClick={() => navigate("/")}
-              className="text-sm font-semibold text-ink-500 transition-colors hover:text-brand-700"
+              className="nav-link text-sm font-semibold text-ink-500 transition-colors hover:text-brand-700 dark:text-ink-100 dark:hover:text-brand-400"
             >
               Back home
             </button>
