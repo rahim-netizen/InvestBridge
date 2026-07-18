@@ -5,6 +5,7 @@ import Homepage from "./components/Homepage.jsx";
 import AdminPage from "./components/AdminPage";
 import LoginPage from "./components/LoginPage.jsx";
 import RegisterPage from "./components/RegisterPage.jsx";
+import ChatbotWidget from "./components/ChatbotWidget.jsx";
 
 export default function App() {
   const [view, setView] = useState("home");
@@ -57,5 +58,10 @@ export default function App() {
     }
   }, [view, theme]);
 
-  return page;
+  return (
+    <>
+      {page}
+      <ChatbotWidget />
+    </>
+  );
 }
