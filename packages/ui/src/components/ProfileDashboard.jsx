@@ -1,4 +1,4 @@
-import { CheckCircle2, Compass, Sparkles, UserRound } from "lucide-react";
+import { CheckCircle2, Sparkles, UserRound } from "lucide-react";
 import { useEffect, useState } from "react";
 
 const getStoredUser = () => {
@@ -15,19 +15,7 @@ const getStoredUser = () => {
   }
 };
 
-const buildInitialForm = (role) => {
-  if (role === "Investor") {
-    return {
-      fullName: "",
-      company: "",
-      focus: "",
-      ticketSize: "",
-      geography: "",
-      sectors: "",
-      notes: "",
-    };
-  }
-
+const buildInitialForm = () => {
   return {
     fullName: "",
     companyName: "",
@@ -37,14 +25,18 @@ const buildInitialForm = (role) => {
     mission: "",
     fundingGoal: "",
     website: "",
+    company: "",
+    focus: "",
+    ticketSize: "",
+    geography: "",
+    sectors: "",
+    notes: "",
   };
 };
 
 export default function ProfileDashboard({ navigate }) {
   const [user, setUser] = useState(() => getStoredUser());
-  const [form, setForm] = useState(() =>
-    buildInitialForm(getStoredUser()?.role || "Entrepreneur"),
-  );
+  const [form, setForm] = useState(() => buildInitialForm());
   const [status, setStatus] = useState("");
 
   useEffect(() => {
@@ -58,10 +50,10 @@ export default function ProfileDashboard({ navigate }) {
     setForm(
       storedUser.profile
         ? {
-            ...buildInitialForm(storedUser.role || "Entrepreneur"),
+            ...buildInitialForm(),
             ...storedUser.profile,
           }
-        : buildInitialForm(storedUser.role || "Entrepreneur"),
+        : buildInitialForm(),
     );
   }, []);
 
@@ -79,7 +71,6 @@ export default function ProfileDashboard({ navigate }) {
 
     const savedUser = {
       ...user,
-      role: user.role || "Entrepreneur",
       profile: form,
       profileComplete: true,
     };
@@ -104,7 +95,6 @@ export default function ProfileDashboard({ navigate }) {
     navigate("/");
   };
 
-  const isInvestor = (user?.role || "Entrepreneur") === "Investor";
   const inputWrapperClassName =
     "flex items-center gap-3 rounded-2xl border border-ink-200 bg-ink-50 px-4 py-3 dark:border-ink-700 dark:bg-ink-800";
   const inputClassName =
@@ -147,12 +137,12 @@ export default function ProfileDashboard({ navigate }) {
             Complete your profile
           </span>
           <h1 className="mt-5 font-display text-3xl font-bold text-ink-900 dark:text-ink-50">
-            {isInvestor ? "Investor profile" : "Founder profile"}
+            Build your InvestBridge profile
           </h1>
           <p className="mt-3 text-lg leading-relaxed text-ink-600 dark:text-ink-300">
-            {isInvestor
-              ? "Tell us where you invest, your typical check size, and the companies you are excited to back."
-              : "Share your company story, stage, and funding goals so investors can connect with you faster."}
+            Share your background, interests, and expertise. Whether you're
+            seeking opportunities or making connections, a complete profile
+            helps you succeed on InvestBridge.
           </p>
 
           <div className="mt-8 rounded-2xl border border-brand-100 bg-brand-50 p-5 dark:border-brand-900/60 dark:bg-brand-950/40">
@@ -173,235 +163,200 @@ export default function ProfileDashboard({ navigate }) {
         </div>
 
         <div className="w-full rounded-3xl border border-ink-100 bg-white p-8 shadow-lift dark:border-ink-800 dark:bg-ink-900 dark:text-ink-50">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-semibold text-brand-700 dark:text-brand-400">
-                Profile dashboard
-              </p>
-              <h2 className="mt-1 font-display text-2xl font-bold text-ink-900 dark:text-ink-50">
-                {isInvestor ? "Investor details" : "Startup details"}
-              </h2>
-            </div>
-            <div className="flex items-center gap-2 rounded-full bg-ink-100 px-3 py-2 text-sm font-medium text-ink-700 dark:bg-ink-800 dark:text-ink-200">
-              <Compass className="h-4 w-4" />
-              {user.role}
-            </div>
+          <div>
+            <p className="text-sm font-semibold text-brand-700 dark:text-brand-400">
+              Profile dashboard
+            </p>
+            <h2 className="mt-1 font-display text-2xl font-bold text-ink-900 dark:text-ink-50">
+              Your information
+            </h2>
           </div>
 
           <form className="mt-8 space-y-4" onSubmit={handleSubmit}>
-            {isInvestor ? (
-              <>
-                <label className="block">
-                  <span className={fieldLabelClassName}>Your name</span>
-                  <div className={inputWrapperClassName}>
-                    <UserRound className="h-4 w-4 text-ink-400" />
-                    <input
-                      type="text"
-                      name="fullName"
-                      value={form.fullName}
-                      onChange={handleChange}
-                      required
-                      placeholder="Aisha Malik"
-                      className="w-full border-none bg-transparent text-sm text-ink-900 outline-none"
-                    />
-                  </div>
-                </label>
+            <label className="block">
+              <span className={fieldLabelClassName}>Full name</span>
+              <div className={inputWrapperClassName}>
+                <UserRound className="h-4 w-4 text-ink-400" />
+                <input
+                  type="text"
+                  name="fullName"
+                  value={form.fullName}
+                  onChange={handleChange}
+                  required
+                  placeholder="Your name"
+                  className="w-full border-none bg-transparent text-sm text-ink-900 outline-none dark:text-ink-50"
+                />
+              </div>
+            </label>
 
-                <label className="block">
-                  <span className={fieldLabelClassName}>Firm or fund</span>
-                  <input
-                    type="text"
-                    name="company"
-                    value={form.company}
-                    onChange={handleChange}
-                    required
-                    placeholder="Northstar Capital"
-                    className="w-full rounded-2xl border border-ink-200 bg-ink-50 px-4 py-3 text-sm text-ink-900 outline-none"
-                  />
-                </label>
+            <div className="rounded-2xl border border-brand-100 bg-brand-50 p-4 dark:border-brand-900/60 dark:bg-brand-950/40">
+              <p className="text-sm font-semibold text-ink-900 dark:text-ink-50">
+                Company information
+              </p>
+              <p className="mt-1 text-sm text-ink-600 dark:text-ink-300">
+                Tell us about your company or firm
+              </p>
+            </div>
 
-                <label className="block">
-                  <span className={fieldLabelClassName}>Investment focus</span>
-                  <input
-                    type="text"
-                    name="focus"
-                    value={form.focus}
-                    onChange={handleChange}
-                    required
-                    placeholder="Fintech, climate, SaaS"
-                    className="w-full rounded-2xl border border-ink-200 bg-ink-50 px-4 py-3 text-sm text-ink-900 outline-none"
-                  />
-                </label>
+            <label className="block">
+              <span className={fieldLabelClassName}>Company/Firm name</span>
+              <input
+                type="text"
+                name="companyName"
+                value={form.companyName}
+                onChange={handleChange}
+                placeholder="Your company or firm name"
+                className={inputClassName}
+              />
+            </label>
 
-                <div className="grid gap-4 md:grid-cols-2">
-                  <label className="block">
-                    <span className={fieldLabelClassName}>
-                      Typical check size
-                    </span>
-                    <input
-                      type="text"
-                      name="ticketSize"
-                      value={form.ticketSize}
-                      onChange={handleChange}
-                      required
-                      placeholder="$100k - $500k"
-                      className="w-full rounded-2xl border border-ink-200 bg-ink-50 px-4 py-3 text-sm text-ink-900 outline-none"
-                    />
-                  </label>
+            <div className="grid gap-4 md:grid-cols-2">
+              <label className="block">
+                <span className={fieldLabelClassName}>Industry or focus</span>
+                <input
+                  type="text"
+                  name="industry"
+                  value={form.industry}
+                  onChange={handleChange}
+                  placeholder="e.g., Healthtech, Fintech, SaaS"
+                  className={inputClassName}
+                />
+              </label>
 
-                  <label className="block">
-                    <span className={fieldLabelClassName}>Geography</span>
-                    <input
-                      type="text"
-                      name="geography"
-                      value={form.geography}
-                      onChange={handleChange}
-                      required
-                      placeholder="US, MENA, Europe"
-                      className="w-full rounded-2xl border border-ink-200 bg-ink-50 px-4 py-3 text-sm text-ink-900 outline-none"
-                    />
-                  </label>
-                </div>
+              <label className="block">
+                <span className={fieldLabelClassName}>Stage</span>
+                <select
+                  name="stage"
+                  value={form.stage}
+                  onChange={handleChange}
+                  className={inputClassName}
+                >
+                  <option>Pre-seed</option>
+                  <option>Seed</option>
+                  <option>Series A</option>
+                  <option>Series B</option>
+                  <option>Series C+</option>
+                  <option>Growth</option>
+                </select>
+              </label>
+            </div>
 
-                <label className="block">
-                  <span className={fieldLabelClassName}>Preferred sectors</span>
-                  <input
-                    type="text"
-                    name="sectors"
-                    value={form.sectors}
-                    onChange={handleChange}
-                    required
-                    placeholder="AI infrastructure, healthtech"
-                    className="w-full rounded-2xl border border-ink-200 bg-ink-50 px-4 py-3 text-sm text-ink-900 outline-none"
-                  />
-                </label>
+            <div className="grid gap-4 md:grid-cols-2">
+              <label className="block">
+                <span className={fieldLabelClassName}>Location</span>
+                <input
+                  type="text"
+                  name="location"
+                  value={form.location}
+                  onChange={handleChange}
+                  placeholder="City, Country"
+                  className={inputClassName}
+                />
+              </label>
 
-                <label className="block">
-                  <span className={fieldLabelClassName}>Notes</span>
-                  <textarea
-                    name="notes"
-                    value={form.notes}
-                    onChange={handleChange}
-                    rows="4"
-                    placeholder="Share any deal criteria, favorite founders, or follow-on preferences."
-                    className="w-full rounded-2xl border border-ink-200 bg-ink-50 px-4 py-3 text-sm text-ink-900 outline-none"
-                  />
-                </label>
-              </>
-            ) : (
-              <>
-                <label className="block">
-                  <span className={fieldLabelClassName}>Founder name</span>
-                  <div className={inputWrapperClassName}>
-                    <UserRound className="h-4 w-4 text-ink-400" />
-                    <input
-                      type="text"
-                      name="fullName"
-                      value={form.fullName}
-                      onChange={handleChange}
-                      required
-                      placeholder="Salma Noor"
-                      className="w-full border-none bg-transparent text-sm text-ink-900 outline-none"
-                    />
-                  </div>
-                </label>
+              <label className="block">
+                <span className={fieldLabelClassName}>Website</span>
+                <input
+                  type="url"
+                  name="website"
+                  value={form.website}
+                  onChange={handleChange}
+                  placeholder="https://yourcompany.com"
+                  className={inputClassName}
+                />
+              </label>
+            </div>
 
-                <label className="block">
-                  <span className={fieldLabelClassName}>Company name</span>
-                  <input
-                    type="text"
-                    name="companyName"
-                    value={form.companyName}
-                    onChange={handleChange}
-                    required
-                    placeholder="BrightPath Labs"
-                    className="w-full rounded-2xl border border-ink-200 bg-ink-50 px-4 py-3 text-sm text-ink-900 outline-none"
-                  />
-                </label>
+            <label className="block">
+              <span className={fieldLabelClassName}>
+                Mission or focus areas
+              </span>
+              <textarea
+                name="mission"
+                value={form.mission}
+                onChange={handleChange}
+                rows="3"
+                placeholder="Describe your mission, what problems you solve, or your investment focus"
+                className={inputClassName}
+              />
+            </label>
 
-                <div className="grid gap-4 md:grid-cols-2">
-                  <label className="block">
-                    <span className={fieldLabelClassName}>Industry</span>
-                    <input
-                      type="text"
-                      name="industry"
-                      value={form.industry}
-                      onChange={handleChange}
-                      required
-                      placeholder="Healthtech"
-                      className="w-full rounded-2xl border border-ink-200 bg-ink-50 px-4 py-3 text-sm text-ink-900 outline-none"
-                    />
-                  </label>
+            <div className="rounded-2xl border border-brand-100 bg-brand-50 p-4 dark:border-brand-900/60 dark:bg-brand-950/40">
+              <p className="text-sm font-semibold text-ink-900 dark:text-ink-50">
+                Investment details
+              </p>
+              <p className="mt-1 text-sm text-ink-600 dark:text-ink-300">
+                Share your investment interests or funding goals
+              </p>
+            </div>
 
-                  <label className="block">
-                    <span className={fieldLabelClassName}>Stage</span>
-                    <select
-                      name="stage"
-                      value={form.stage}
-                      onChange={handleChange}
-                      className="w-full rounded-2xl border border-ink-200 bg-ink-50 px-4 py-3 text-sm text-ink-900 outline-none"
-                    >
-                      <option>Pre-seed</option>
-                      <option>Seed</option>
-                      <option>Series A</option>
-                      <option>Growth</option>
-                    </select>
-                  </label>
-                </div>
+            <label className="block">
+              <span className={fieldLabelClassName}>
+                Funding goal or typical investment
+              </span>
+              <input
+                type="text"
+                name="fundingGoal"
+                value={form.fundingGoal}
+                onChange={handleChange}
+                placeholder="e.g., $500k, $100k-$500k"
+                className={inputClassName}
+              />
+            </label>
 
-                <div className="grid gap-4 md:grid-cols-2">
-                  <label className="block">
-                    <span className={fieldLabelClassName}>Location</span>
-                    <input
-                      type="text"
-                      name="location"
-                      value={form.location}
-                      onChange={handleChange}
-                      required
-                      placeholder="London, UK"
-                      className="w-full rounded-2xl border border-ink-200 bg-ink-50 px-4 py-3 text-sm text-ink-900 outline-none"
-                    />
-                  </label>
+            <label className="block">
+              <span className={fieldLabelClassName}>
+                Preferred sectors or types
+              </span>
+              <input
+                type="text"
+                name="sectors"
+                value={form.sectors}
+                onChange={handleChange}
+                placeholder="e.g., AI, climate tech, fintech"
+                className={inputClassName}
+              />
+            </label>
 
-                  <label className="block">
-                    <span className={fieldLabelClassName}>Funding goal</span>
-                    <input
-                      type="text"
-                      name="fundingGoal"
-                      value={form.fundingGoal}
-                      onChange={handleChange}
-                      required
-                      placeholder="$750k"
-                      className="w-full rounded-2xl border border-ink-200 bg-ink-50 px-4 py-3 text-sm text-ink-900 outline-none"
-                    />
-                  </label>
-                </div>
+            <label className="block">
+              <span className={fieldLabelClassName}>
+                Typical investment ticket size or check size
+              </span>
+              <input
+                type="text"
+                name="ticketSize"
+                value={form.ticketSize}
+                onChange={handleChange}
+                placeholder="e.g., $500k, $100k-$1M"
+                className={inputClassName}
+              />
+            </label>
 
-                <label className="block">
-                  <span className={fieldLabelClassName}>Website</span>
-                  <input
-                    type="url"
-                    name="website"
-                    value={form.website}
-                    onChange={handleChange}
-                    placeholder="https://yourcompany.com"
-                    className="w-full rounded-2xl border border-ink-200 bg-ink-50 px-4 py-3 text-sm text-ink-900 outline-none"
-                  />
-                </label>
+            <label className="block">
+              <span className={fieldLabelClassName}>Geographic interests</span>
+              <input
+                type="text"
+                name="geography"
+                value={form.geography}
+                onChange={handleChange}
+                placeholder="e.g., US, MENA, Europe"
+                className={inputClassName}
+              />
+            </label>
 
-                <label className="block">
-                  <span className={fieldLabelClassName}>Mission</span>
-                  <textarea
-                    name="mission"
-                    value={form.mission}
-                    onChange={handleChange}
-                    rows="4"
-                    placeholder="What problem are you solving and why now?"
-                    className="w-full rounded-2xl border border-ink-200 bg-ink-50 px-4 py-3 text-sm text-ink-900 outline-none"
-                  />
-                </label>
-              </>
-            )}
+            <label className="block">
+              <span className={fieldLabelClassName}>
+                Additional information
+              </span>
+              <textarea
+                name="notes"
+                value={form.notes}
+                onChange={handleChange}
+                rows="3"
+                placeholder="Any additional details about your background, deal criteria, or connections"
+                className={inputClassName}
+              />
+            </label>
 
             <button type="submit" className="btn-primary w-full">
               Save profile

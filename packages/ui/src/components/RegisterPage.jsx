@@ -1,6 +1,5 @@
 import {
   ArrowRight,
-  Building2,
   LockKeyhole,
   Mail,
   ShieldCheck,
@@ -14,7 +13,6 @@ export default function RegisterPage({ navigate }) {
     name: "",
     email: "",
     password: "",
-    role: "Founder",
   });
   const [status, setStatus] = useState("");
 
@@ -37,7 +35,6 @@ export default function RegisterPage({ navigate }) {
       name: form.name,
       email: form.email,
       password: form.password,
-      role: form.role,
       profileComplete: false,
     };
 
@@ -62,11 +59,11 @@ export default function RegisterPage({ navigate }) {
             Join InvestBridge
           </span>
           <h1 className="mt-6 font-display text-4xl font-extrabold tracking-tight text-ink-900 sm:text-5xl">
-            Start building a stronger funding network.
+            Connect and grow your network.
           </h1>
           <p className="mt-4 text-lg leading-relaxed text-ink-600">
-            Create an account to pitch your startup, discover investors, or
-            browse opportunities with confidence.
+            Create an account to discover opportunities, connect with founders
+            and investors, and build meaningful relationships on InvestBridge.
           </p>
 
           <div className="mt-8 rounded-2xl border border-brand-100 bg-white/80 p-5 shadow-soft">
@@ -157,24 +154,6 @@ export default function RegisterPage({ navigate }) {
                   placeholder="Create a password"
                   className="w-full border-none bg-transparent text-sm text-ink-900 outline-none"
                 />
-              </div>
-            </label>
-
-            <label className="block">
-              <span className="mb-2 block text-sm font-medium text-ink-700">
-                I’m joining as
-              </span>
-              <div className="flex items-center gap-3 rounded-2xl border border-ink-200 bg-ink-50 px-4 py-3">
-                <Building2 className="h-4 w-4 text-ink-400" />
-                <select
-                  name="role"
-                  value={form.role}
-                  onChange={handleChange}
-                  className="w-full border-none bg-transparent text-sm text-ink-900 outline-none"
-                >
-                  <option>Entrepreneur</option>
-                  <option>Investor</option>
-                </select>
               </div>
             </label>
 
