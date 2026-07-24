@@ -16,174 +16,174 @@ import {
   Star,
   TrendingUp,
   Users,
-} from 'lucide-react';
+} from "lucide-react";
 
 const stats = [
-  { value: '$240M+', label: 'Total capital deployed' },
-  { value: '3,400+', label: 'Startups funded' },
-  { value: '1,800+', label: 'Active investors' },
-  { value: '92%', label: 'Round success rate' },
+  { value: "$240M+", label: "Total capital deployed" },
+  { value: "3,400+", label: "Startups funded" },
+  { value: "1,800+", label: "Active investors" },
+  { value: "92%", label: "Round success rate" },
 ];
 
 const steps = [
   {
     icon: PenLine,
-    title: 'Founders post their pitch',
-    desc: 'Entrepreneurs create a listing with their business model, traction, funding goal, and the raise timeline — all in one guided flow.',
+    title: "Founders post their pitch",
+    desc: "Entrepreneurs create a listing with their business model, traction, funding goal, and the raise timeline — all in one guided flow.",
   },
   {
     icon: Search,
-    title: 'Investors discover deals',
-    desc: 'Investors browse vetted opportunities, filter by sector and stage, and review detailed data rooms before committing.',
+    title: "Investors discover deals",
+    desc: "Investors browse vetted opportunities, filter by sector and stage, and review detailed data rooms before committing.",
   },
   {
     icon: Handshake,
-    title: 'Capital meets opportunity',
-    desc: 'Commit funds, track round progress in real time, and close the round — InvestBridge handles the paperwork handshake.',
+    title: "Capital meets opportunity",
+    desc: "Commit funds, track round progress in real time, and close the round — InvestBridge handles the paperwork handshake.",
   },
 ];
 
 const startups = [
   {
-    name: 'NovaVet AI',
-    logo: 'NV',
-    sector: 'HealthTech',
-    stage: 'Series A',
-    location: 'San Francisco, US',
-    goal: '$1.5M',
-    raised: '$920K',
+    name: "NovaVet AI",
+    logo: "NV",
+    sector: "HealthTech",
+    stage: "Series A",
+    location: "San Francisco, US",
+    goal: "$1.5M",
+    raised: "$920K",
     pct: 61,
-    blurb: 'AI-assisted diagnostics for independent veterinary clinics.',
+    blurb: "AI-assisted diagnostics for independent veterinary clinics.",
     image:
-      'https://images.pexels.com/photos/7088530/pexels-photo-7088530.jpeg?auto=compress&cs=tinysrgb&w=800',
+      "https://images.pexels.com/photos/7088530/pexels-photo-7088530.jpeg?auto=compress&cs=tinysrgb&w=800",
   },
   {
-    name: 'Lumen Grid',
-    logo: 'LG',
-    sector: 'CleanEnergy',
-    stage: 'Seed',
-    location: 'Berlin, DE',
-    goal: '$800K',
-    raised: '$540K',
+    name: "Lumen Grid",
+    logo: "LG",
+    sector: "CleanEnergy",
+    stage: "Seed",
+    location: "Berlin, DE",
+    goal: "$800K",
+    raised: "$540K",
     pct: 67,
-    blurb: 'Decentralized solar microgrids for multi-family housing.',
+    blurb: "Decentralized solar microgrids for multi-family housing.",
     image:
-      'https://images.pexels.com/photos/371900/pexels-photo-371900.jpeg?auto=compress&cs=tinysrgb&w=800',
+      "https://images.pexels.com/photos/371900/pexels-photo-371900.jpeg?auto=compress&cs=tinysrgb&w=800",
   },
   {
-    name: 'Cartful',
-    logo: 'CF',
-    sector: 'E-commerce',
-    stage: 'Pre-seed',
-    location: 'Bengaluru, IN',
-    goal: '$400K',
-    raised: '$210K',
+    name: "Cartful",
+    logo: "CF",
+    sector: "E-commerce",
+    stage: "Pre-seed",
+    location: "Bengaluru, IN",
+    goal: "$400K",
+    raised: "$210K",
     pct: 52,
-    blurb: 'Headless checkout that turns every link into a storefront.',
+    blurb: "Headless checkout that turns every link into a storefront.",
     image:
-      'https://images.pexels.com/photos/4464820/pexels-photo-4464820.jpeg?auto=compress&cs=tinysrgb&w=800',
+      "https://images.pexels.com/photos/4464820/pexels-photo-4464820.jpeg?auto=compress&cs=tinysrgb&w=800",
   },
   {
-    name: 'Verdant Labs',
-    logo: 'VL',
-    sector: 'AgriTech',
-    stage: 'Series A',
-    location: 'Nairobi, KE',
-    goal: '$2M',
-    raised: '$1.1M',
+    name: "Verdant Labs",
+    logo: "VL",
+    sector: "AgriTech",
+    stage: "Series A",
+    location: "Nairobi, KE",
+    goal: "$2M",
+    raised: "$1.1M",
     pct: 55,
-    blurb: 'Satellite-driven crop intelligence for smallholder farmers.',
+    blurb: "Satellite-driven crop intelligence for smallholder farmers.",
     image:
-      'https://images.pexels.com/photos/2284166/pexels-photo-2284166.jpeg?auto=compress&cs=tinysrgb&w=800',
+      "https://images.pexels.com/photos/2284166/pexels-photo-2284166.jpeg?auto=compress&cs=tinysrgb&w=800",
   },
   {
-    name: 'PayBridge',
-    logo: 'PB',
-    sector: 'FinTech',
-    stage: 'Seed',
-    location: 'Singapore',
-    goal: '$1M',
-    raised: '$780K',
+    name: "PayBridge",
+    logo: "PB",
+    sector: "FinTech",
+    stage: "Seed",
+    location: "Singapore",
+    goal: "$1M",
+    raised: "$780K",
     pct: 78,
-    blurb: 'Cross-border B2B payments with instant FX settlement.',
+    blurb: "Cross-border B2B payments with instant FX settlement.",
     image:
-      'https://images.pexels.com/photos/4968391/pexels-photo-4968391.jpeg?auto=compress&cs=tinysrgb&w=800',
+      "https://images.pexels.com/photos/4968391/pexels-photo-4968391.jpeg?auto=compress&cs=tinysrgb&w=800",
   },
   {
-    name: 'Loop Education',
-    logo: 'LE',
-    sector: 'EdTech',
-    stage: 'Pre-seed',
-    location: 'São Paulo, BR',
-    goal: '$500K',
-    raised: '$260K',
+    name: "Loop Education",
+    logo: "LE",
+    sector: "EdTech",
+    stage: "Pre-seed",
+    location: "São Paulo, BR",
+    goal: "$500K",
+    raised: "$260K",
     pct: 52,
-    blurb: 'Adaptive learning loops for public school curricula.',
+    blurb: "Adaptive learning loops for public school curricula.",
     image:
-      'https://images.pexels.com/photos/5212345/pexels-photo-5212345.jpeg?auto=compress&cs=tinysrgb&w=800',
+      "https://images.pexels.com/photos/5212345/pexels-photo-5212345.jpeg?auto=compress&cs=tinysrgb&w=800",
   },
 ];
 
 const founderBenefits = [
   {
     icon: Megaphone,
-    title: 'Tell your story',
-    desc: 'A guided pitch builder turns your vision into a compelling, investor-ready listing.',
+    title: "Tell your story",
+    desc: "A guided pitch builder turns your vision into a compelling, investor-ready listing.",
   },
   {
     icon: Users,
-    title: 'Reach the right investors',
-    desc: 'Your round is surfaced to investors who match your sector, stage, and geography.',
+    title: "Reach the right investors",
+    desc: "Your round is surfaced to investors who match your sector, stage, and geography.",
   },
   {
     icon: BarChart3,
-    title: 'Track every commitment',
-    desc: 'Real-time dashboards show committed capital, investor profiles, and round momentum.',
+    title: "Track every commitment",
+    desc: "Real-time dashboards show committed capital, investor profiles, and round momentum.",
   },
 ];
 
 const investorBenefits = [
   {
     icon: ShieldCheck,
-    title: 'Vetted opportunities',
-    desc: 'Every listing passes a diligence checkpoint before it reaches your deal flow.',
+    title: "Vetted opportunities",
+    desc: "Every listing passes a diligence checkpoint before it reaches your deal flow.",
   },
   {
     icon: LineChart,
-    title: 'Diversify with confidence',
-    desc: 'Filter by stage, sector, and geography to build a portfolio that fits your thesis.',
+    title: "Diversify with confidence",
+    desc: "Filter by stage, sector, and geography to build a portfolio that fits your thesis.",
   },
   {
     icon: Rocket,
-    title: 'Back founders early',
-    desc: 'Access pre-seed to Series A rounds you would not otherwise see — on one platform.',
+    title: "Back founders early",
+    desc: "Access pre-seed to Series A rounds you would not otherwise see — on one platform.",
   },
 ];
 
 const testimonials = [
   {
     quote:
-      'We closed our $1.5M Series A in three weeks. InvestBridge put us in front of investors who actually understood HealthTech — no cold outreach required.',
-    name: 'Amara Okafor',
-    role: 'Founder & CEO, NovaVet AI',
+      "We closed our $1.5M Series A in three weeks. InvestBridge put us in front of investors who actually understood HealthTech — no cold outreach required.",
+    name: "Amara Okafor",
+    role: "Founder & CEO, NovaVet AI",
     avatar:
-      'https://images.pexels.com/photos/3760263/pexels-photo-3760263.jpeg?auto=compress&cs=tinysrgb&w=200',
+      "https://images.pexels.com/photos/3760263/pexels-photo-3760263.jpeg?auto=compress&cs=tinysrgb&w=200",
   },
   {
     quote:
-      'As an angel investor, deal flow used to be a full-time job. Now I review three vetted rounds before my morning coffee and commit in a couple of clicks.',
-    name: 'Daniel Reyes',
-    role: 'Angel Investor · 14 portfolio companies',
+      "As an angel investor, deal flow used to be a full-time job. Now I review three vetted rounds before my morning coffee and commit in a couple of clicks.",
+    name: "Daniel Reyes",
+    role: "Angel Investor · 14 portfolio companies",
     avatar:
-      'https://images.pexels.com/photos/2182970/pexels-photo-2182970.jpeg?auto=compress&cs=tinysrgb&w=200',
+      "https://images.pexels.com/photos/2182970/pexels-photo-2182970.jpeg?auto=compress&cs=tinysrgb&w=200",
   },
   {
     quote:
-      'The data rooms are detailed enough to make real decisions. I built a diversified CleanEnergy portfolio across four countries without leaving the platform.',
-    name: 'Mei Lin Tan',
-    role: 'Partner, Greenline Capital',
+      "The data rooms are detailed enough to make real decisions. I built a diversified CleanEnergy portfolio across four countries without leaving the platform.",
+    name: "Mei Lin Tan",
+    role: "Partner, Greenline Capital",
     avatar:
-      'https://images.pexels.com/photos/3760263/pexels-photo-3760263.jpeg?auto=compress&cs=tinysrgb&w=200',
+      "https://images.pexels.com/photos/3760263/pexels-photo-3760263.jpeg?auto=compress&cs=tinysrgb&w=200",
   },
 ];
 
@@ -197,8 +197,8 @@ function Hero() {
           className="absolute inset-0 opacity-[0.04]"
           style={{
             backgroundImage:
-              'linear-gradient(to right, #0f1620 1px, transparent 1px), linear-gradient(to bottom, #0f1620 1px, transparent 1px)',
-            backgroundSize: '48px 48px',
+              "linear-gradient(to right, #0f1620 1px, transparent 1px), linear-gradient(to bottom, #0f1620 1px, transparent 1px)",
+            backgroundSize: "48px 48px",
           }}
         />
       </div>
@@ -211,14 +211,15 @@ function Hero() {
               The bridge between ideas and capital
             </span>
             <h1 className="mt-5 font-display text-4xl font-extrabold leading-[1.08] tracking-tight text-ink-900 sm:text-5xl lg:text-6xl">
-              Where ambitious founders meet{' '}
+              Where ambitious founders meet{" "}
               <span className="bg-gradient-to-r from-brand-600 to-brand-800 bg-clip-text text-transparent">
                 serious investors
               </span>
             </h1>
             <p className="mt-5 max-w-xl text-lg leading-relaxed text-ink-600">
-              InvestBridge helps entrepreneurs showcase their startups to a curated network of
-              investors — and gives investors a front-row seat to the next big thing.
+              InvestBridge helps entrepreneurs showcase their startups to a
+              curated network of investors — and gives investors a front-row
+              seat to the next big thing.
             </p>
 
             <div className="mt-8 flex flex-wrap items-center gap-3">
@@ -232,7 +233,11 @@ function Hero() {
             </div>
 
             <ul className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-sm text-ink-600">
-              {['No setup fees', 'Vetted opportunities', 'Global investor network'].map((t) => (
+              {[
+                "No setup fees",
+                "Vetted opportunities",
+                "Global investor network",
+              ].map((t) => (
                 <li key={t} className="flex items-center gap-2">
                   <CheckCircle2 className="h-4 w-4 text-brand-600" />
                   {t}
@@ -250,8 +255,12 @@ function Hero() {
                       NV
                     </div>
                     <div>
-                      <p className="text-sm font-semibold text-ink-900">NovaVet AI</p>
-                      <p className="text-xs text-ink-500">Series A · HealthTech</p>
+                      <p className="text-sm font-semibold text-ink-900">
+                        NovaVet AI
+                      </p>
+                      <p className="text-xs text-ink-500">
+                        Series A · HealthTech
+                      </p>
                     </div>
                   </div>
                   <span className="rounded-full bg-brand-50 px-2.5 py-1 text-xs font-semibold text-brand-700">
@@ -262,11 +271,15 @@ function Hero() {
                   <div className="flex items-end justify-between">
                     <div>
                       <p className="text-xs text-ink-500">Target raise</p>
-                      <p className="font-display text-2xl font-bold text-ink-900">$1.5M</p>
+                      <p className="font-display text-2xl font-bold text-ink-900">
+                        $1.5M
+                      </p>
                     </div>
                     <div className="text-right">
                       <p className="text-xs text-ink-500">Committed</p>
-                      <p className="font-display text-2xl font-bold text-brand-600">$920K</p>
+                      <p className="font-display text-2xl font-bold text-brand-600">
+                        $920K
+                      </p>
                     </div>
                   </div>
                   <div>
@@ -277,7 +290,7 @@ function Hero() {
                     <div className="h-2 w-full overflow-hidden rounded-full bg-ink-100">
                       <div
                         className="h-full rounded-full bg-gradient-to-r from-brand-500 to-brand-700"
-                        style={{ width: '61%' }}
+                        style={{ width: "61%" }}
                       />
                     </div>
                   </div>
@@ -290,13 +303,19 @@ function Hero() {
 
               <div className="absolute -bottom-8 -left-6 w-44 animate-floatUp rounded-2xl border border-ink-100 bg-white p-4 shadow-lift sm:-left-10">
                 <p className="text-xs text-ink-500">New investment</p>
-                <p className="mt-1 font-display text-lg font-bold text-ink-900">$50,000</p>
-                <p className="text-xs text-brand-600">from 2 investors · just now</p>
+                <p className="mt-1 font-display text-lg font-bold text-ink-900">
+                  $50,000
+                </p>
+                <p className="text-xs text-brand-600">
+                  from 2 investors · just now
+                </p>
               </div>
 
               <div className="absolute -right-4 -top-6 hidden animate-floatUp rounded-2xl border border-ink-100 bg-white px-4 py-3 shadow-lift [animation-delay:1.5s] sm:block">
                 <p className="text-xs font-semibold text-ink-900">Live deals</p>
-                <p className="font-display text-xl font-extrabold text-brand-600">128</p>
+                <p className="font-display text-xl font-extrabold text-brand-600">
+                  128
+                </p>
               </div>
             </div>
           </div>
@@ -333,8 +352,8 @@ function HowItWorks() {
             Three steps from pitch to funded
           </h2>
           <p className="mt-4 text-lg text-ink-600">
-            A transparent process that keeps founders focused on building and investors confident in
-            their commitments.
+            A transparent process that keeps founders focused on building and
+            investors confident in their commitments.
           </p>
         </div>
 
@@ -350,8 +369,12 @@ function HowItWorks() {
               <span className="grid h-12 w-12 place-items-center rounded-xl bg-brand-50 text-brand-700">
                 <s.icon className="h-6 w-6" />
               </span>
-              <h3 className="mt-5 font-display text-lg font-bold text-ink-900">{s.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-ink-600">{s.desc}</p>
+              <h3 className="mt-5 font-display text-lg font-bold text-ink-900">
+                {s.title}
+              </h3>
+              <p className="mt-2 text-sm leading-relaxed text-ink-600">
+                {s.desc}
+              </p>
             </div>
           ))}
         </div>
@@ -371,7 +394,8 @@ function FeaturedStartups() {
               Featured startups raising now
             </h2>
             <p className="mt-4 text-lg text-ink-600">
-              A snapshot of vetted rounds currently open for investment on InvestBridge.
+              A snapshot of vetted rounds currently open for investment on
+              InvestBridge.
             </p>
           </div>
           <a href="#" className="btn-ghost shrink-0">
@@ -406,12 +430,16 @@ function FeaturedStartups() {
                   <span className="grid h-9 w-9 place-items-center rounded-lg bg-white/20 font-display text-sm font-bold backdrop-blur">
                     {s.logo}
                   </span>
-                  <span className="font-display text-lg font-bold">{s.name}</span>
+                  <span className="font-display text-lg font-bold">
+                    {s.name}
+                  </span>
                 </div>
               </div>
 
               <div className="p-5">
-                <p className="text-sm leading-relaxed text-ink-600">{s.blurb}</p>
+                <p className="text-sm leading-relaxed text-ink-600">
+                  {s.blurb}
+                </p>
                 <p className="mt-3 flex items-center gap-1.5 text-xs text-ink-500">
                   <MapPin className="h-3.5 w-3.5" />
                   {s.location}
@@ -420,7 +448,8 @@ function FeaturedStartups() {
                 <div className="mt-4">
                   <div className="mb-1.5 flex justify-between text-xs font-medium text-ink-500">
                     <span>
-                      {s.raised} <span className="text-ink-400">of {s.goal}</span>
+                      {s.raised}{" "}
+                      <span className="text-ink-400">of {s.goal}</span>
                     </span>
                     <span className="text-brand-700">{s.pct}%</span>
                   </div>
@@ -458,8 +487,8 @@ function ForWho() {
             Raise capital without losing momentum
           </h3>
           <p className="mt-3 text-ink-600">
-            Post your startup, set your terms, and let InvestBridge connect you with investors who
-            get it.
+            Post your startup, set your terms, and let InvestBridge connect you
+            with investors who get it.
           </p>
           <ul className="mt-8 space-y-6">
             {founderBenefits.map((b) => (
@@ -468,8 +497,12 @@ function ForWho() {
                   <b.icon className="h-5 w-5" />
                 </span>
                 <div>
-                  <p className="font-display font-bold text-ink-900">{b.title}</p>
-                  <p className="mt-1 text-sm leading-relaxed text-ink-600">{b.desc}</p>
+                  <p className="font-display font-bold text-ink-900">
+                    {b.title}
+                  </p>
+                  <p className="mt-1 text-sm leading-relaxed text-ink-600">
+                    {b.desc}
+                  </p>
                 </div>
               </li>
             ))}
@@ -485,7 +518,8 @@ function ForWho() {
             Find your next great investment
           </h3>
           <p className="mt-3 text-ink-600">
-            Browse curated rounds, review data rooms, and commit capital — all in one place.
+            Browse curated rounds, review data rooms, and commit capital — all
+            in one place.
           </p>
           <ul className="mt-8 space-y-6">
             {investorBenefits.map((b) => (
@@ -494,8 +528,12 @@ function ForWho() {
                   <b.icon className="h-5 w-5" />
                 </span>
                 <div>
-                  <p className="font-display font-bold text-ink-900">{b.title}</p>
-                  <p className="mt-1 text-sm leading-relaxed text-ink-600">{b.desc}</p>
+                  <p className="font-display font-bold text-ink-900">
+                    {b.title}
+                  </p>
+                  <p className="mt-1 text-sm leading-relaxed text-ink-600">
+                    {b.desc}
+                  </p>
                 </div>
               </li>
             ))}
@@ -511,10 +549,13 @@ function ForWho() {
 
 function Testimonials() {
   return (
-    <section id="stories" className="bg-ink-950 py-20 text-white sm:py-28">
+    <section
+      id="stories"
+      className="bg-white py-20 text-ink-900 sm:py-28 dark:bg-ink-950 dark:text-white"
+    >
       <div className="container-page">
         <div className="mx-auto max-w-2xl text-center">
-          <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3.5 py-1.5 text-xs font-semibold uppercase tracking-wider text-brand-300">
+          <span className="inline-flex items-center gap-2 rounded-full border border-ink-200 bg-ink-50 px-3.5 py-1.5 text-xs font-semibold uppercase tracking-wider text-brand-600 dark:border-white/15 dark:bg-white/5 dark:text-brand-300">
             Success stories
           </span>
           <h2 className="mt-4 font-display text-3xl font-extrabold tracking-tight sm:text-4xl">
@@ -529,7 +570,9 @@ function Testimonials() {
               className="relative rounded-2xl border border-white/10 bg-white/[0.04] p-7 backdrop-blur transition-colors hover:bg-white/[0.07]"
             >
               <Quote className="h-8 w-8 text-brand-400/60" />
-              <blockquote className="mt-4 text-sm leading-relaxed text-ink-200">{t.quote}</blockquote>
+              <blockquote className="mt-4 text-sm leading-relaxed text-ink-200">
+                {t.quote}
+              </blockquote>
               <div className="mt-6 flex items-center gap-3">
                 <img
                   src={t.avatar}
@@ -538,7 +581,9 @@ function Testimonials() {
                   loading="lazy"
                 />
                 <div>
-                  <figcaption className="text-sm font-semibold text-white">{t.name}</figcaption>
+                  <figcaption className="text-sm font-semibold text-white">
+                    {t.name}
+                  </figcaption>
                   <p className="text-xs text-ink-400">{t.role}</p>
                 </div>
               </div>
@@ -555,7 +600,26 @@ function Testimonials() {
   );
 }
 
+const getStoredUser = () => {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  try {
+    return JSON.parse(
+      localStorage.getItem("investbridgeSessionUser") || "null",
+    );
+  } catch {
+    return null;
+  }
+};
+
 function CTA() {
+  const user = getStoredUser();
+  if (user) {
+    return null;
+  }
+
   return (
     <section className="py-20 sm:py-28">
       <div className="container-page">
@@ -565,7 +629,7 @@ function CTA() {
               className="absolute inset-0"
               style={{
                 backgroundImage:
-                  'radial-gradient(circle at 20% 20%, rgba(255,255,255,0.4) 0, transparent 40%), radial-gradient(circle at 80% 80%, rgba(255,255,255,0.25) 0, transparent 40%)',
+                  "radial-gradient(circle at 20% 20%, rgba(255,255,255,0.4) 0, transparent 40%), radial-gradient(circle at 80% 80%, rgba(255,255,255,0.25) 0, transparent 40%)",
               }}
             />
           </div>
@@ -574,7 +638,8 @@ function CTA() {
               Ready to build the bridge?
             </h2>
             <p className="mt-4 text-lg text-brand-50">
-              Join thousands of founders and investors turning bold ideas into funded companies.
+              Join thousands of founders and investors turning bold ideas into
+              funded companies.
             </p>
             <div className="mt-8 flex flex-wrap justify-center gap-3">
               <a

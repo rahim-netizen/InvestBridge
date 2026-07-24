@@ -14,7 +14,23 @@ export default function LoginPage({ navigate }) {
     event.preventDefault();
 
     if (form.email === "admin@company.com" && form.password === "admin") {
-      navigate("adminPage");
+      navigate("/admin");
+      return;
+    }
+
+    const storedUsers = JSON.parse(
+      localStorage.getItem("investbridgeUsers") || "[]",
+    );
+    const existingUser = storedUsers.find(
+      (entry) => entry.email === form.email,
+    );
+
+    if (existingUser && existingUser.password === form.password) {
+      localStorage.setItem(
+        "investbridgeSessionUser",
+        JSON.stringify(existingUser),
+      );
+      navigate("/profile");
       return;
     }
 
@@ -137,7 +153,7 @@ export default function LoginPage({ navigate }) {
             New here?{" "}
             <button
               type="button"
-              onClick={() => navigate("register")}
+              onClick={() => navigate("/register")}
               className="font-semibold text-brand-700 hover:text-brand-800"
             >
               Create an account

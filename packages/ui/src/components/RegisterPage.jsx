@@ -25,7 +25,32 @@ export default function RegisterPage({ navigate }) {
 
   const handleSubmit = (event) => {
     event.preventDefault();
+
+    const storedUsers = JSON.parse(
+      localStorage.getItem("investbridgeUsers") || "[]",
+    );
+    const existingUser = storedUsers.find(
+      (entry) => entry.email === form.email,
+    );
+
+    const user = {
+      name: form.name,
+      email: form.email,
+      password: form.password,
+      role: form.role,
+      profileComplete: false,
+    };
+
+    if (!existingUser) {
+      localStorage.setItem(
+        "investbridgeUsers",
+        JSON.stringify([...storedUsers, user]),
+      );
+    }
+
+    localStorage.setItem("investbridgeSessionUser", JSON.stringify(user));
     setStatus(`Thanks, ${form.name || "there"}! Your account is ready to go.`);
+    navigate("/profile");
   };
 
   return (
@@ -147,7 +172,7 @@ export default function RegisterPage({ navigate }) {
                   onChange={handleChange}
                   className="w-full border-none bg-transparent text-sm text-ink-900 outline-none"
                 >
-                  <option>Founder</option>
+                  <option>Entrepreneur</option>
                   <option>Investor</option>
                 </select>
               </div>
@@ -169,7 +194,7 @@ export default function RegisterPage({ navigate }) {
             Already have an account?{" "}
             <button
               type="button"
-              onClick={() => navigate("login")}
+              onClick={() => navigate("/login")}
               className="font-semibold text-brand-700 hover:text-brand-800"
             >
               Sign in
