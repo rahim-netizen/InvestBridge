@@ -28,18 +28,18 @@ const stats = [
 const steps = [
   {
     icon: PenLine,
-    title: "Founders post their pitch",
-    desc: "Entrepreneurs create a listing with their business model, traction, funding goal, and the raise timeline — all in one guided flow.",
+    title: "Everyone can post opportunities",
+    desc: "Share your startup, project, or investment opportunity with full details about your business model, stage, goals, and timeline — all in one guided flow.",
   },
   {
     icon: Search,
-    title: "Investors discover deals",
-    desc: "Investors browse vetted opportunities, filter by sector and stage, and review detailed data rooms before committing.",
+    title: "Browse and discover deals",
+    desc: "Find vetted opportunities that match your interests. Filter by sector, stage, and geography to discover connections that matter.",
   },
   {
     icon: Handshake,
-    title: "Capital meets opportunity",
-    desc: "Commit funds, track round progress in real time, and close the round — InvestBridge handles the paperwork handshake.",
+    title: "Connect and grow",
+    desc: "Make meaningful connections, track commitments in real time, and close partnerships — InvestBridge handles the logistics.",
   },
 ];
 
@@ -121,6 +121,39 @@ const startups = [
     blurb: "Adaptive learning loops for public school curricula.",
     image:
       "https://images.pexels.com/photos/5212345/pexels-photo-5212345.jpeg?auto=compress&cs=tinysrgb&w=800",
+  },
+];
+
+const universalBenefits = [
+  {
+    icon: Megaphone,
+    title: "Share your story",
+    desc: "Tell your vision, goals, and background in a compelling way that reaches the right audience.",
+  },
+  {
+    icon: Users,
+    title: "Connect with your network",
+    desc: "Find opportunities and relationships that match your interests, sector, and geography.",
+  },
+  {
+    icon: ShieldCheck,
+    title: "Vetted opportunities",
+    desc: "Every listing on InvestBridge passes diligence checks, so you can trust what you see.",
+  },
+  {
+    icon: LineChart,
+    title: "Real-time dashboards",
+    desc: "Track momentum, commitments, and connections as they happen.",
+  },
+  {
+    icon: Rocket,
+    title: "Discover early opportunities",
+    desc: "Access pre-seed to growth stage projects across all industries and geographies.",
+  },
+  {
+    icon: BarChart3,
+    title: "Build your network",
+    desc: "Whether you're looking to invest or raise capital, grow meaningful relationships on InvestBridge.",
   },
 ];
 
@@ -480,67 +513,33 @@ function FeaturedStartups() {
 function ForWho() {
   return (
     <section id="investors" className="py-20 sm:py-28">
-      <div className="container-page grid gap-12 lg:grid-cols-2">
-        <div className="card p-8 sm:p-10">
-          <span className="eyebrow">For founders</span>
-          <h3 className="mt-4 font-display text-2xl font-extrabold tracking-tight text-ink-900 sm:text-3xl">
-            Raise capital without losing momentum
-          </h3>
+      <div className="container-page">
+        <div className="mx-auto max-w-2xl text-center mb-12">
+          <span className="eyebrow">Features for everyone</span>
+          <h2 className="mt-4 font-display text-3xl font-extrabold tracking-tight text-ink-900 sm:text-4xl">
+            Everything you need on one platform
+          </h2>
           <p className="mt-3 text-ink-600">
-            Post your startup, set your terms, and let InvestBridge connect you
-            with investors who get it.
+            Whether you're looking to share an opportunity, find an investment,
+            or build your network, InvestBridge gives you all the tools you
+            need.
           </p>
-          <ul className="mt-8 space-y-6">
-            {founderBenefits.map((b) => (
-              <li key={b.title} className="flex gap-4">
-                <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-brand-50 text-brand-700">
-                  <b.icon className="h-5 w-5" />
-                </span>
-                <div>
-                  <p className="font-display font-bold text-ink-900">
-                    {b.title}
-                  </p>
-                  <p className="mt-1 text-sm leading-relaxed text-ink-600">
-                    {b.desc}
-                  </p>
-                </div>
-              </li>
-            ))}
-          </ul>
-          <a href="#" className="btn-primary mt-8">
-            Start your raise
-          </a>
         </div>
 
-        <div className="card border-brand-200 bg-gradient-to-br from-white to-brand-50 p-8 shadow-glow dark:border-brand-800/60 dark:from-ink-900 dark:to-ink-950 sm:p-10">
-          <span className="eyebrow">For investors</span>
-          <h3 className="mt-4 font-display text-2xl font-extrabold tracking-tight text-ink-900 sm:text-3xl">
-            Find your next great investment
-          </h3>
-          <p className="mt-3 text-ink-600">
-            Browse curated rounds, review data rooms, and commit capital — all
-            in one place.
-          </p>
-          <ul className="mt-8 space-y-6">
-            {investorBenefits.map((b) => (
-              <li key={b.title} className="flex gap-4">
-                <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-brand-600 text-white">
-                  <b.icon className="h-5 w-5" />
-                </span>
-                <div>
-                  <p className="font-display font-bold text-ink-900">
-                    {b.title}
-                  </p>
-                  <p className="mt-1 text-sm leading-relaxed text-ink-600">
-                    {b.desc}
-                  </p>
-                </div>
-              </li>
-            ))}
-          </ul>
-          <a href="#" className="btn-primary mt-8">
-            Explore deals
-          </a>
+        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+          {universalBenefits.map((b) => (
+            <div key={b.title} className="card p-8">
+              <span className="grid h-12 w-12 place-items-center rounded-xl bg-brand-50 text-brand-700">
+                <b.icon className="h-6 w-6" />
+              </span>
+              <p className="mt-4 font-display font-bold text-ink-900">
+                {b.title}
+              </p>
+              <p className="mt-2 text-sm leading-relaxed text-ink-600">
+                {b.desc}
+              </p>
+            </div>
+          ))}
         </div>
       </div>
     </section>

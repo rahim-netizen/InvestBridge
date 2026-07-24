@@ -34,7 +34,7 @@ export default function LoginPage({ navigate }) {
       return;
     }
 
-    setStatus(`Welcome back, ${form.email || "investor"}!`);
+    setStatus(`Welcome back, ${form.email || "user"}!`);
   };
 
   return (
@@ -46,21 +46,21 @@ export default function LoginPage({ navigate }) {
             Sign in to your account
           </span>
           <h1 className="mt-6 font-display text-4xl font-extrabold tracking-tight text-ink-900 sm:text-5xl">
-            Unlock your next investment opportunity.
+            Connect with opportunities on InvestBridge.
           </h1>
           <p className="mt-4 text-lg leading-relaxed text-ink-600">
-            Access your dashboard, track raised capital, and stay close to the
-            startups that matter.
+            Access your dashboard and manage your connections, projects, and
+            opportunities.
           </p>
 
           <div className="mt-8 rounded-2xl border border-brand-100 bg-white/80 p-5 shadow-soft">
             <p className="text-sm font-semibold text-ink-900">
-              Why founders love InvestBridge
+              Why you'll love InvestBridge
             </p>
             <ul className="mt-3 space-y-2 text-sm text-ink-600">
-              <li>• Review investor activity in real time.</li>
-              <li>• Securely manage your round and documents.</li>
-              <li>• Stay updated with warm introductions and momentum.</li>
+              <li>• Connect with entrepreneurs and investors globally.</li>
+              <li>• Discover and manage opportunities seamlessly.</li>
+              <li>• Build meaningful relationships and grow your network.</li>
             </ul>
           </div>
         </div>
