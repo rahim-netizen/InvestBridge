@@ -30,16 +30,22 @@ const steps = [
     icon: PenLine,
     title: "Everyone can post opportunities",
     desc: "Share your startup, project, or investment opportunity with full details about your business model, stage, goals, and timeline — all in one guided flow.",
+    route: "/opportunities",
+    action: "Open posting flow",
   },
   {
     icon: Search,
     title: "Browse and discover deals",
     desc: "Find vetted opportunities that match your interests. Filter by sector, stage, and geography to discover connections that matter.",
+    route: "/deals",
+    action: "Explore deals",
   },
   {
     icon: Handshake,
     title: "Connect and grow",
-    desc: "Make meaningful connections, track commitments in real time, and close partnerships — InvestBridge handles the logistics.",
+    desc: "Make meaningful connections, track commitments in real time, and close partnerships with a chat-first collaboration space.",
+    route: "/connect",
+    action: "Open chat workspace",
   },
 ];
 
@@ -220,7 +226,7 @@ const testimonials = [
   },
 ];
 
-function Hero() {
+function Hero({ navigate }) {
   return (
     <section id="home" className="relative overflow-hidden pt-28 sm:pt-36">
       <div className="pointer-events-none absolute inset-0 -z-10">
@@ -260,9 +266,13 @@ function Hero() {
                 Explore startups
                 <ArrowRight className="h-4 w-4" />
               </a>
-              <a href="#" className="btn-ghost">
+              <button
+                type="button"
+                onClick={() => navigate("/opportunities")}
+                className="btn-ghost"
+              >
                 Pitch your startup
-              </a>
+              </button>
             </div>
 
             <ul className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-sm text-ink-600">
@@ -375,7 +385,7 @@ function Stats() {
   );
 }
 
-function HowItWorks() {
+function HowItWorks({ navigate }) {
   return (
     <section id="how-it-works" className="py-20 sm:py-28">
       <div className="container-page">
@@ -392,9 +402,11 @@ function HowItWorks() {
 
         <div className="mt-14 grid gap-6 md:grid-cols-3">
           {steps.map((s, i) => (
-            <div
+            <button
               key={s.title}
-              className="card holo-card relative p-7 hover:shadow-lift"
+              type="button"
+              onClick={() => navigate(s.route)}
+              className="card holo-card relative p-7 text-left transition-transform hover:-translate-y-0.5 hover:shadow-lift"
             >
               <span className="absolute right-6 top-6 font-display text-5xl font-extrabold text-ink-100">
                 {i + 1}
@@ -408,7 +420,11 @@ function HowItWorks() {
               <p className="mt-2 text-sm leading-relaxed text-ink-600">
                 {s.desc}
               </p>
-            </div>
+              <span className="mt-5 inline-flex items-center gap-1 text-sm font-semibold text-brand-700">
+                {s.action}
+                <ArrowUpRight className="h-4 w-4" />
+              </span>
+            </button>
           ))}
         </div>
       </div>
@@ -613,7 +629,7 @@ const getStoredUser = () => {
   }
 };
 
-function CTA() {
+function CTA({ navigate }) {
   const user = getStoredUser();
   if (user) {
     return null;
@@ -642,19 +658,21 @@ function CTA() {
                 funded companies.
               </p>
               <div className="mt-8 flex flex-wrap justify-center gap-3">
-                <a
-                  href="#"
+                <button
+                  type="button"
+                  onClick={() => navigate("/register")}
                   className="inline-flex items-center justify-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-semibold text-brand-700 shadow-soft transition-all hover:-translate-y-0.5 hover:shadow-glow"
                 >
                   Create your account
                   <ArrowRight className="h-4 w-4" />
-                </a>
-                <a
-                  href="#"
+                </button>
+                <button
+                  type="button"
+                  onClick={() => navigate("/connect")}
                   className="inline-flex items-center justify-center gap-2 rounded-full border border-white/40 px-6 py-3 text-sm font-semibold text-white transition-all hover:bg-white/10"
                 >
                   Talk to our team
-                </a>
+                </button>
               </div>
             </div>
           </div>
@@ -664,16 +682,16 @@ function CTA() {
   );
 }
 
-export default function Homepage() {
+export default function Homepage({ navigate }) {
   return (
     <>
-      <Hero />
+      <Hero navigate={navigate} />
       <Stats />
-      <HowItWorks />
+      <HowItWorks navigate={navigate} />
       <FeaturedStartups />
       <ForWho />
       <Testimonials />
-      <CTA />
+      <CTA navigate={navigate} />
     </>
   );
 }
