@@ -38,26 +38,40 @@ export default function LoginPage({ navigate }) {
   };
 
   return (
-    <section className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(45,97,255,0.16),_transparent_40%),linear-gradient(135deg,_#f8fbff_0%,_#eef4ff_100%)] dark:bg-gradient-to-br dark:from-ink-950 dark:to-ink-900 px-4 py-20 sm:px-6 lg:px-8 transition-colors duration-300">
-      <div className="mx-auto flex max-w-6xl flex-col gap-8 lg:flex-row lg:items-center">
-        <div className="max-w-xl">
+    <section className="auth-scene relative min-h-screen overflow-hidden px-4 py-20 transition-colors duration-300 sm:px-6 lg:px-8">
+      <div className="pointer-events-none absolute inset-0 -z-20 bg-[radial-gradient(circle_at_top_left,_rgba(255,247,214,0.28),_transparent_30%),radial-gradient(circle_at_80%_15%,_rgba(255,255,255,0.16),_transparent_22%),linear-gradient(180deg,_rgba(15,23,42,0.18),_rgba(15,23,42,0.52))]" />
+      <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden opacity-95 dark:opacity-85">
+        <img
+          src="/investBridge.png"
+          alt=""
+          aria-hidden="true"
+          className="h-full w-full object-cover object-[center_34%]"
+        />
+      </div>
+      <div className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-t from-slate-950/45 via-slate-950/10 to-transparent" />
+      <div className="pointer-events-none absolute inset-0 -z-10 opacity-40">
+        <div className="absolute left-[-6rem] top-24 h-72 w-72 rounded-full bg-gold-200/30 blur-3xl" />
+        <div className="absolute right-[-5rem] top-1/3 h-80 w-80 rounded-full bg-brand-200/30 blur-3xl" />
+      </div>
+      <div className="mx-auto flex max-w-6xl flex-col gap-8 lg:flex-row lg:items-center holo-scene">
+        <div className="max-w-xl text-white drop-shadow-[0_8px_24px_rgba(15,23,42,0.5)]">
           <span className="eyebrow">
             <Sparkles className="h-3.5 w-3.5" />
             Sign in to your account
           </span>
-          <h1 className="mt-6 font-display text-4xl font-extrabold tracking-tight text-ink-900 sm:text-5xl">
+          <h1 className="mt-6 font-display text-4xl font-extrabold tracking-tight text-white sm:text-5xl">
             Connect with opportunities on InvestBridge.
           </h1>
-          <p className="mt-4 text-lg leading-relaxed text-ink-600">
+          <p className="mt-4 text-lg leading-relaxed text-slate-100/90">
             Access your dashboard and manage your connections, projects, and
             opportunities.
           </p>
 
-          <div className="mt-8 rounded-2xl border border-brand-100 bg-white/80 p-5 shadow-soft">
-            <p className="text-sm font-semibold text-ink-900">
+          <div className="glass-panel mt-8 rounded-3xl p-5 holo-card">
+            <p className="text-sm font-semibold text-slate-950 dark:text-white">
               Why you'll love InvestBridge
             </p>
-            <ul className="mt-3 space-y-2 text-sm text-ink-600">
+            <ul className="mt-3 space-y-2 text-sm text-slate-700 dark:text-slate-200">
               <li>• Connect with entrepreneurs and investors globally.</li>
               <li>• Discover and manage opportunities seamlessly.</li>
               <li>• Build meaningful relationships and grow your network.</li>
@@ -65,13 +79,13 @@ export default function LoginPage({ navigate }) {
           </div>
         </div>
 
-        <div className="w-full max-w-lg rounded-3xl border border-ink-100 bg-white p-8 shadow-lift">
+        <div className="glass-panel-strong w-full max-w-lg rounded-[2rem] p-8 holo-card">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-semibold text-brand-700">
                 Welcome back
               </p>
-              <h2 className="mt-1 font-display text-2xl font-bold text-ink-900">
+              <h2 className="mt-1 font-display text-2xl font-bold text-slate-950 dark:text-white">
                 Sign in
               </h2>
             </div>
@@ -86,11 +100,11 @@ export default function LoginPage({ navigate }) {
 
           <form className="mt-8 space-y-4" onSubmit={handleSubmit}>
             <label className="block">
-              <span className="mb-2 block text-sm font-medium text-ink-700">
+              <span className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-200">
                 Email address
               </span>
-              <div className="flex items-center gap-3 rounded-2xl border border-ink-200 bg-ink-50 px-4 py-3">
-                <Mail className="h-4 w-4 text-ink-400" />
+              <div className="surface-rim flex items-center gap-3 rounded-2xl px-4 py-3">
+                <Mail className="h-4 w-4 text-slate-400" />
                 <input
                   type="email"
                   name="email"
@@ -98,17 +112,17 @@ export default function LoginPage({ navigate }) {
                   onChange={handleChange}
                   required
                   placeholder="you@company.com"
-                  className="w-full border-none bg-transparent text-sm text-ink-900 outline-none"
+                  className="w-full border-none bg-transparent text-sm text-slate-950 outline-none placeholder:text-slate-400 dark:text-white"
                 />
               </div>
             </label>
 
             <label className="block">
-              <span className="mb-2 block text-sm font-medium text-ink-700">
+              <span className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-200">
                 Password
               </span>
-              <div className="flex items-center gap-3 rounded-2xl border border-ink-200 bg-ink-50 px-4 py-3">
-                <LockKeyhole className="h-4 w-4 text-ink-400" />
+              <div className="surface-rim flex items-center gap-3 rounded-2xl px-4 py-3">
+                <LockKeyhole className="h-4 w-4 text-slate-400" />
                 <input
                   type="password"
                   name="password"
@@ -116,12 +130,12 @@ export default function LoginPage({ navigate }) {
                   onChange={handleChange}
                   required
                   placeholder="Enter your password"
-                  className="w-full border-none bg-transparent text-sm text-ink-900 outline-none"
+                  className="w-full border-none bg-transparent text-sm text-slate-950 outline-none placeholder:text-slate-400 dark:text-white"
                 />
               </div>
             </label>
 
-            <div className="flex items-center justify-between text-sm text-ink-500">
+            <div className="flex items-center justify-between text-sm text-slate-500 dark:text-slate-300">
               <label className="flex items-center gap-2">
                 <input
                   type="checkbox"
@@ -149,7 +163,7 @@ export default function LoginPage({ navigate }) {
             </p>
           )}
 
-          <div className="mt-6 text-center text-sm text-ink-500">
+          <div className="mt-6 text-center text-sm text-slate-500 dark:text-slate-300">
             New here?{" "}
             <button
               type="button"
