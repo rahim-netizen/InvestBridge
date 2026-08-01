@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import {
+  BarChart3,
   LogOut,
   Menu,
   Moon,
@@ -146,29 +147,40 @@ export default function Navbar({ navigate, theme, toggleTheme }) {
                       </p>
                     )}
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setProfileMenuOpen(false);
-                      navigate("/profile");
-                    }}
-                    className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl border border-white/30 bg-white/45 px-3 py-2 text-sm font-semibold text-ink-700 transition hover:border-brand-300 hover:bg-white/70 hover:text-brand-700 dark:border-white/10 dark:bg-ink-950/35 dark:text-ink-200 dark:hover:bg-ink-950/55"
-                  >
-                    <Pencil className="h-4 w-4" />
-                    Edit profile
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      localStorage.removeItem("investbridgeSessionUser");
-                      setProfileMenuOpen(false);
-                      navigate("/");
-                    }}
-                    className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border border-rose-200/70 bg-rose-50/80 px-3 py-2 text-sm font-semibold text-rose-700 transition hover:border-rose-300 hover:bg-rose-100 dark:border-rose-800/70 dark:bg-rose-950/45 dark:text-rose-300 dark:hover:bg-rose-900/70"
-                  >
-                    <LogOut className="h-4 w-4" />
-                    Logout
-                  </button>
+                   <button
+                     type="button"
+                     onClick={() => {
+                       setProfileMenuOpen(false);
+                       navigate("/profile");
+                     }}
+                     className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl border border-white/30 bg-white/45 px-3 py-2 text-sm font-semibold text-ink-700 transition hover:border-brand-300 hover:bg-white/70 hover:text-brand-700 dark:border-white/10 dark:bg-ink-950/35 dark:text-ink-200 dark:hover:bg-ink-950/55"
+                   >
+                     <Pencil className="h-4 w-4" />
+                     Edit profile
+                   </button>
+                   <button
+                     type="button"
+                     onClick={() => {
+                       setProfileMenuOpen(false);
+                       navigate("/dashboard");
+                     }}
+                     className="mt-2 flex w-full items-center justify-center gap-2 rounded-2xl border border-white/30 bg-white/45 px-3 py-2 text-sm font-semibold text-ink-700 transition hover:border-brand-300 hover:bg-white/70 hover:text-brand-700 dark:border-white/10 dark:bg-ink-950/35 dark:text-ink-200 dark:hover:bg-ink-950/55"
+                   >
+                     <BarChart3 className="h-4 w-4" />
+                     My dashboard
+                   </button>
+                   <button
+                     type="button"
+                     onClick={() => {
+                       localStorage.removeItem("investbridgeSessionUser");
+                       setProfileMenuOpen(false);
+                       navigate("/");
+                     }}
+                     className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border border-rose-200/70 bg-rose-50/80 px-3 py-2 text-sm font-semibold text-rose-700 transition hover:border-rose-300 hover:bg-rose-100 dark:border-rose-800/70 dark:bg-rose-950/45 dark:text-rose-300 dark:hover:bg-rose-900/70"
+                   >
+                     <LogOut className="h-4 w-4" />
+                     Logout
+                   </button>
                 </div>
               )}
             </div>
