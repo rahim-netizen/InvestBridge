@@ -111,22 +111,47 @@ export default function AdminPage({ navigate }) {
   ).length;
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(45,97,255,0.16),_transparent_40%),linear-gradient(135deg,_#f8fbff_0%,_#eef4ff_100%)] dark:bg-gradient-to-br dark:from-ink-950 dark:to-ink-900 px-4 py-10 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-6xl space-y-8">
-        <section className="rounded-[32px] border border-brand-100 bg-white/80 p-8 shadow-lift backdrop-blur sm:p-10">
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-            <div className="max-w-2xl">
-              <span className="eyebrow">
-                <Sparkles className="h-3.5 w-3.5" />
-                Admin control center
+    <div className="relative min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top_left,_rgba(45,97,255,0.16),_transparent_36%),radial-gradient(circle_at_85%_10%,_rgba(16,185,129,0.12),_transparent_28%),linear-gradient(135deg,_#f8fbff_0%,_#eef4ff_100%)] px-4 py-10 sm:px-6 lg:px-8 dark:bg-gradient-to-br dark:from-ink-950 dark:via-ink-950 dark:to-ink-900">
+      <div className="pointer-events-none absolute inset-0 -z-10 opacity-60">
+        <div className="absolute left-[-5rem] top-24 h-80 w-80 rounded-full bg-brand-200/30 blur-3xl" />
+        <div className="absolute right-[-5rem] bottom-12 h-96 w-96 rounded-full bg-gold-200/20 blur-3xl" />
+      </div>
+      <div className="mx-auto max-w-6xl space-y-8 holo-scene">
+        <header className="glass-panel-strong sticky top-4 z-40 rounded-[2rem] px-5 py-4 sm:px-6">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex items-center gap-3">
+              <span className="grid h-11 w-11 place-items-center rounded-2xl border border-white/20 bg-brand-600/90 text-white shadow-soft backdrop-blur-sm">
+                <ShieldCheck className="h-5 w-5" />
               </span>
-              <h1 className="mt-5 font-display text-3xl font-extrabold tracking-tight text-ink-900 sm:text-4xl">
-                Welcome back, your platform is looking strong.
-              </h1>
-              <p className="mt-3 text-lg leading-relaxed text-ink-600">
-                Review users, monitor activity, and keep the InvestBridge
-                experience polished for every investor and founder.
-              </p>
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-brand-700 dark:text-brand-300">
+                  Admin navigation
+                </p>
+                <h1 className="font-display text-xl font-bold text-ink-900 dark:text-ink-50">
+                  InvestBridge control center
+                </h1>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              {[
+                { key: "users", label: "Users" },
+                { key: "projects", label: "Projects" },
+                { key: "complaints", label: "Complaints" },
+              ].map((tab) => (
+                <button
+                  key={tab.key}
+                  type="button"
+                  onClick={() => setActiveTab(tab.key)}
+                  className={`rounded-full px-4 py-2 text-sm font-semibold transition-all ${
+                    activeTab === tab.key
+                      ? "bg-brand-600 text-white shadow-soft"
+                      : "bg-white/55 text-ink-600 hover:bg-white/80 hover:text-ink-900 dark:bg-ink-950/40 dark:text-ink-200 dark:hover:bg-ink-950/60"
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
             </div>
 
             <div className="flex flex-wrap gap-3">
@@ -147,10 +172,46 @@ export default function AdminPage({ navigate }) {
               </button>
             </div>
           </div>
+        </header>
+
+        <section className="glass-panel-strong rounded-[2rem] p-8 sm:p-10">
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+            <div className="max-w-2xl">
+              <span className="eyebrow">
+                <Sparkles className="h-3.5 w-3.5" />
+                Admin control center
+              </span>
+              <h1 className="mt-5 font-display text-3xl font-extrabold tracking-tight text-ink-900 sm:text-4xl">
+                Welcome back, your platform is looking strong.
+              </h1>
+              <p className="mt-3 text-lg leading-relaxed text-ink-600">
+                Review users, monitor activity, and keep the InvestBridge
+                experience polished for every investor and founder.
+              </p>
+            </div>
+
+            <div className="hidden flex-wrap gap-3 lg:flex">
+              <button
+                type="button"
+                onClick={() => navigate("/")}
+                className="btn-ghost"
+              >
+                Back to site
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate("/")}
+                className="btn-primary"
+              >
+                <LogOut className="h-4 w-4" />
+                Logout
+              </button>
+            </div>
+          </div>
         </section>
 
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
-          <div className="card p-6">
+          <div className="glass-panel holo-card p-6">
             <div className="flex items-center gap-4">
               <div className="rounded-2xl bg-brand-100 p-3 text-brand-700">
                 <Users className="h-6 w-6" />
@@ -164,7 +225,7 @@ export default function AdminPage({ navigate }) {
             </div>
           </div>
 
-          <div className="card p-6">
+          <div className="glass-panel holo-card p-6">
             <div className="flex items-center gap-4">
               <div className="rounded-2xl bg-emerald-100 p-3 text-emerald-700">
                 <LayoutDashboard className="h-6 w-6" />
@@ -180,7 +241,7 @@ export default function AdminPage({ navigate }) {
             </div>
           </div>
 
-          <div className="card p-6">
+          <div className="glass-panel holo-card p-6">
             <div className="flex items-center gap-4">
               <div className="rounded-2xl bg-purple-100 p-3 text-purple-700">
                 <ShieldCheck className="h-6 w-6" />
@@ -192,7 +253,7 @@ export default function AdminPage({ navigate }) {
             </div>
           </div>
 
-          <div className="card p-6">
+          <div className="glass-panel holo-card p-6">
             <div className="flex items-center gap-4">
               <div className="rounded-2xl bg-rose-100 p-3 text-rose-700">
                 <AlertCircle className="h-6 w-6" />
@@ -207,7 +268,7 @@ export default function AdminPage({ navigate }) {
           </div>
         </div>
 
-        <section className="card p-8">
+        <section className="glass-panel rounded-[2rem] p-8 holo-card">
           <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between border-b border-ink-100 pb-6">
             <div>
               <p className="text-sm font-semibold text-brand-700">Your Tasks</p>
@@ -414,7 +475,7 @@ export default function AdminPage({ navigate }) {
                 {complaints.map((complaint) => (
                   <div
                     key={complaint.id}
-                    className="rounded-2xl border border-ink-100 bg-ink-50/50 p-5 transition-all hover:border-ink-200 dark:border-ink-800 dark:bg-ink-900 dark:hover:border-ink-700 dark:hover:bg-white/10"
+                    className="glass-panel rounded-2xl p-5 transition-all hover:border-white/35 hover:bg-white/80 dark:hover:bg-ink-900/80"
                   >
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                       <div>

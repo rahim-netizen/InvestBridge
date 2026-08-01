@@ -279,10 +279,10 @@ function Hero() {
             </ul>
           </div>
 
-          <div className="relative animate-fadeUp [animation-delay:120ms]">
+          <div className="relative animate-fadeUp [animation-delay:120ms] holo-scene">
             <div className="relative mx-auto max-w-md">
-              <div className="card overflow-hidden p-0 shadow-lift">
-                <div className="flex items-center justify-between border-b border-ink-100 bg-ink-50 px-5 py-4">
+              <div className="card holo-card overflow-hidden p-0 shadow-lift">
+                <div className="flex items-center justify-between border-b border-ink-100 bg-ink-50 px-5 py-4 holo-layer-soft">
                   <div className="flex items-center gap-3">
                     <div className="grid h-10 w-10 place-items-center rounded-xl bg-brand-600 text-white font-display font-bold">
                       NV
@@ -300,8 +300,8 @@ function Hero() {
                     Raising
                   </span>
                 </div>
-                <div className="space-y-4 p-5">
-                  <div className="flex items-end justify-between">
+                <div className="space-y-4 p-5 holo-layer-soft">
+                  <div className="flex items-end justify-between holo-layer">
                     <div>
                       <p className="text-xs text-ink-500">Target raise</p>
                       <p className="font-display text-2xl font-bold text-ink-900">
@@ -327,14 +327,14 @@ function Hero() {
                       />
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 text-xs text-ink-500">
+                  <div className="flex items-center gap-2 text-xs text-ink-500 holo-layer-soft">
                     <TrendingUp className="h-4 w-4 text-brand-600" />
                     3.2x projected return over 5 years
                   </div>
                 </div>
               </div>
 
-              <div className="absolute -bottom-8 -left-6 w-44 animate-floatUp rounded-2xl border border-ink-100 bg-white p-4 shadow-lift sm:-left-10">
+              <div className="absolute -bottom-8 -left-6 w-44 animate-floatUp rounded-2xl border border-ink-100 bg-white p-4 shadow-lift holo-card sm:-left-10">
                 <p className="text-xs text-ink-500">New investment</p>
                 <p className="mt-1 font-display text-lg font-bold text-ink-900">
                   $50,000
@@ -344,7 +344,7 @@ function Hero() {
                 </p>
               </div>
 
-              <div className="absolute -right-4 -top-6 hidden animate-floatUp rounded-2xl border border-ink-100 bg-white px-4 py-3 shadow-lift [animation-delay:1.5s] sm:block">
+              <div className="absolute -right-4 -top-6 hidden animate-floatUp rounded-2xl border border-ink-100 bg-white px-4 py-3 shadow-lift holo-card [animation-delay:1.5s] sm:block">
                 <p className="text-xs font-semibold text-ink-900">Live deals</p>
                 <p className="font-display text-xl font-extrabold text-brand-600">
                   128
@@ -394,7 +394,7 @@ function HowItWorks() {
           {steps.map((s, i) => (
             <div
               key={s.title}
-              className="card relative p-7 transition-all duration-200 hover:-translate-y-1 hover:shadow-lift"
+              className="card holo-card relative p-7 hover:shadow-lift"
             >
               <span className="absolute right-6 top-6 font-display text-5xl font-extrabold text-ink-100">
                 {i + 1}
@@ -441,7 +441,7 @@ function FeaturedStartups() {
           {startups.map((s) => (
             <article
               key={s.name}
-              className="card group overflow-hidden transition-all duration-200 hover:-translate-y-1 hover:shadow-lift"
+              className="card holo-card group overflow-hidden hover:shadow-lift"
             >
               <div className="relative h-40 overflow-hidden">
                 <img
@@ -528,7 +528,7 @@ function ForWho() {
 
         <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
           {universalBenefits.map((b) => (
-            <div key={b.title} className="card p-8">
+            <div key={b.title} className="card holo-card p-8 hover:shadow-lift">
               <span className="grid h-12 w-12 place-items-center rounded-xl bg-brand-50 text-brand-700">
                 <b.icon className="h-6 w-6" />
               </span>
@@ -566,7 +566,7 @@ function Testimonials() {
           {testimonials.map((t) => (
             <figure
               key={t.name}
-              className="relative rounded-2xl border border-white/10 bg-white/[0.04] p-7 backdrop-blur transition-colors hover:bg-white/[0.07]"
+              className="holo-card relative rounded-2xl border border-white/10 bg-white/[0.04] p-7 backdrop-blur transition-colors hover:bg-white/[0.07]"
             >
               <Quote className="h-8 w-8 text-brand-400/60" />
               <blockquote className="mt-4 text-sm leading-relaxed text-ink-200">
@@ -622,38 +622,40 @@ function CTA() {
   return (
     <section className="py-20 sm:py-28">
       <div className="container-page">
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-700 via-brand-600 to-brand-800 px-6 py-16 text-center shadow-lift sm:px-12">
-          <div className="pointer-events-none absolute inset-0 opacity-20">
-            <div
-              className="absolute inset-0"
-              style={{
-                backgroundImage:
-                  "radial-gradient(circle at 20% 20%, rgba(255,255,255,0.4) 0, transparent 40%), radial-gradient(circle at 80% 80%, rgba(255,255,255,0.25) 0, transparent 40%)",
-              }}
-            />
-          </div>
-          <div className="relative mx-auto max-w-2xl">
-            <h2 className="font-display text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
-              Ready to build the bridge?
-            </h2>
-            <p className="mt-4 text-lg text-brand-50">
-              Join thousands of founders and investors turning bold ideas into
-              funded companies.
-            </p>
-            <div className="mt-8 flex flex-wrap justify-center gap-3">
-              <a
-                href="#"
-                className="inline-flex items-center justify-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-semibold text-brand-700 shadow-soft transition-all hover:-translate-y-0.5 hover:shadow-glow"
-              >
-                Create your account
-                <ArrowRight className="h-4 w-4" />
-              </a>
-              <a
-                href="#"
-                className="inline-flex items-center justify-center gap-2 rounded-full border border-white/40 px-6 py-3 text-sm font-semibold text-white transition-all hover:bg-white/10"
-              >
-                Talk to our team
-              </a>
+        <div className="holo-scene">
+          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-700 via-brand-600 to-brand-800 px-6 py-16 text-center shadow-lift holo-card sm:px-12">
+            <div className="pointer-events-none absolute inset-0 opacity-20">
+              <div
+                className="absolute inset-0"
+                style={{
+                  backgroundImage:
+                    "radial-gradient(circle at 20% 20%, rgba(255,255,255,0.4) 0, transparent 40%), radial-gradient(circle at 80% 80%, rgba(255,255,255,0.25) 0, transparent 40%)",
+                }}
+              />
+            </div>
+            <div className="relative mx-auto max-w-2xl holo-layer-soft">
+              <h2 className="font-display text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
+                Ready to build the bridge?
+              </h2>
+              <p className="mt-4 text-lg text-brand-50">
+                Join thousands of founders and investors turning bold ideas into
+                funded companies.
+              </p>
+              <div className="mt-8 flex flex-wrap justify-center gap-3">
+                <a
+                  href="#"
+                  className="inline-flex items-center justify-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-semibold text-brand-700 shadow-soft transition-all hover:-translate-y-0.5 hover:shadow-glow"
+                >
+                  Create your account
+                  <ArrowRight className="h-4 w-4" />
+                </a>
+                <a
+                  href="#"
+                  className="inline-flex items-center justify-center gap-2 rounded-full border border-white/40 px-6 py-3 text-sm font-semibold text-white transition-all hover:bg-white/10"
+                >
+                  Talk to our team
+                </a>
+              </div>
             </div>
           </div>
         </div>
