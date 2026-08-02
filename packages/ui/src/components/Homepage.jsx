@@ -17,6 +17,7 @@ import {
   TrendingUp,
   Users,
 } from "lucide-react";
+import { useState } from "react";
 
 const stats = [
   { value: "$240M+", label: "Total capital deployed" },
@@ -432,7 +433,7 @@ function HowItWorks({ navigate }) {
   );
 }
 
-function FeaturedStartups() {
+function FeaturedStartups({ imageErrors, handleImageError }) {
   return (
     <section id="startups" className="bg-ink-50 py-20 sm:py-28">
       <div className="container-page">
@@ -460,12 +461,21 @@ function FeaturedStartups() {
               className="card holo-card group overflow-hidden hover:shadow-lift"
             >
               <div className="relative h-40 overflow-hidden">
-                <img
-                  src={s.image}
-                  alt={s.name}
-                  loading="lazy"
-                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                />
+                {!imageErrors[s.name] ? (
+                  <img
+                    src={s.image}
+                    alt={s.name}
+                    loading="lazy"
+                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    onError={() => handleImageError(s.name)}
+                  />
+                ) : (
+                  <div className="h-full w-full bg-ink-900 flex items-center justify-center">
+                    <span className="text-ink-500 text-xs">
+                      Image unavailable
+                    </span>
+                  </div>
+                )}
                 <div className="absolute inset-0 bg-gradient-to-t from-ink-950/70 via-ink-950/10 to-transparent" />
                 <div className="absolute left-4 top-4 flex gap-2">
                   <span className="rounded-full bg-white/90 px-2.5 py-1 text-xs font-semibold text-ink-800 backdrop-blur">
@@ -562,7 +572,7 @@ function ForWho() {
   );
 }
 
-function Testimonials() {
+function Testimonials({ imageErrors, handleImageError }) {
   return (
     <section
       id="stories"
@@ -589,12 +599,21 @@ function Testimonials() {
                 {t.quote}
               </blockquote>
               <div className="mt-6 flex items-center gap-3">
-                <img
-                  src={t.avatar}
-                  alt={t.name}
-                  className="h-11 w-11 rounded-full object-cover"
-                  loading="lazy"
-                />
+                {!imageErrors[t.name] ? (
+                  <img
+                    src={t.avatar}
+                    alt={t.name}
+                    className="h-11 w-11 rounded-full object-cover"
+                    loading="lazy"
+                    onError={() => handleImageError(t.name)}
+                  />
+                ) : (
+                  <div className="h-11 w-11 rounded-full bg-ink-200 flex items-center justify-center dark:bg-ink-800">
+                    <span className="text-ink-600 text-xs font-semibold dark:text-ink-300">
+                      {t.name.charAt(0)}
+                    </span>
+                  </div>
+                )}
                 <div>
                   <figcaption className="text-sm font-semibold text-white">
                     {t.name}
@@ -683,14 +702,26 @@ function CTA({ navigate }) {
 }
 
 export default function Homepage({ navigate }) {
+  const [imageErrors, setImageErrors] = useState({});
+
+  const handleImageError = (key) => {
+    setImageErrors((prev) => ({ ...prev, [key]: true }));
+  };
+
   return (
     <>
       <Hero navigate={navigate} />
       <Stats />
       <HowItWorks navigate={navigate} />
-      <FeaturedStartups />
+      <FeaturedStartups
+        imageErrors={imageErrors}
+        handleImageError={handleImageError}
+      />
       <ForWho />
-      <Testimonials />
+      <Testimonials
+        imageErrors={imageErrors}
+        handleImageError={handleImageError}
+      />
       <CTA navigate={navigate} />
     </>
   );

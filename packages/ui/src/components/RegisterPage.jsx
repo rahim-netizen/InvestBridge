@@ -15,6 +15,7 @@ export default function RegisterPage({ navigate }) {
     password: "",
   });
   const [status, setStatus] = useState("");
+  const [bgImageError, setBgImageError] = useState(false);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -54,12 +55,19 @@ export default function RegisterPage({ navigate }) {
     <section className="auth-scene relative min-h-screen overflow-hidden px-4 py-20 transition-colors duration-300 sm:px-6 lg:px-8">
       <div className="pointer-events-none absolute inset-0 -z-20 bg-[radial-gradient(circle_at_top_right,_rgba(255,247,214,0.28),_transparent_30%),radial-gradient(circle_at_18%_80%,_rgba(255,255,255,0.16),_transparent_22%),linear-gradient(180deg,_rgba(15,23,42,0.18),_rgba(15,23,42,0.52))]" />
       <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden opacity-95 dark:opacity-85">
-        <img
-          src="/investBridge.png"
-          alt=""
-          aria-hidden="true"
-          className="h-full w-full object-cover object-[center_34%]"
-        />
+        {!bgImageError ? (
+          <img
+            src="/investBridge.png"
+            alt=""
+            aria-hidden="true"
+            className="h-full w-full object-cover object-[center_34%]"
+            onError={() => setBgImageError(true)}
+          />
+        ) : (
+          <div className="h-full w-full bg-ink-950 flex items-center justify-center">
+            <span className="text-ink-500 text-xs">Image unavailable</span>
+          </div>
+        )}
       </div>
       <div className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-t from-slate-950/45 via-slate-950/10 to-transparent" />
       <div className="pointer-events-none absolute inset-0 -z-10 opacity-40">
