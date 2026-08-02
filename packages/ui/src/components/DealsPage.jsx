@@ -144,6 +144,7 @@ export default function DealsPage({ navigate }) {
   const [sortBy, setSortBy] = useState("pct");
   const [view, setView] = useState("grid");
   const [selectedDeal, setSelectedDeal] = useState(null);
+  const [imageErrors, setImageErrors] = useState({});
 
   useEffect(() => {
     saveDeals(deals);
@@ -178,6 +179,10 @@ export default function DealsPage({ navigate }) {
         : d,
     );
     setDeals(updated);
+  };
+
+  const handleImageError = (dealId) => {
+    setImageErrors((prev) => ({ ...prev, [dealId]: true }));
   };
 
   const inputWrapperClassName =
@@ -293,13 +298,20 @@ export default function DealsPage({ navigate }) {
                   className="card holo-card group overflow-hidden hover:shadow-lift cursor-pointer"
                   onClick={() => setSelectedDeal(deal)}
                 >
-                  <div className="relative h-40 overflow-hidden">
-                    <img
-                      src={deal.image}
-                      alt={deal.name}
-                      loading="lazy"
-                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    />
+                   <div className="relative h-40 overflow-hidden">
+                     {!imageErrors[deal.id] ? (
+                       <img
+                         src={deal.image}
+                         alt={deal.name}
+                         loading="lazy"
+                         className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                         onError={() => handleImageError(deal.id)}
+                       />
+                     ) : (
+                       <div className="h-full w-full bg-ink-900 flex items-center justify-center">
+                         <span className="text-ink-500 text-xs">Image unavailable</span>
+                       </div>
+                     )}
                     <div className="absolute inset-0 bg-gradient-to-t from-ink-950/70 via-ink-950/10 to-transparent" />
                     <div className="absolute left-4 top-4 flex gap-2">
                       <span className="rounded-full bg-white/90 px-2.5 py-1 text-xs font-semibold text-ink-800 backdrop-blur">
@@ -447,13 +459,20 @@ export default function DealsPage({ navigate }) {
                 </button>
               </div>
 
-              <div className="rounded-2xl overflow-hidden mb-6 h-48">
-                <img
-                  src={selectedDeal.image}
-                  alt={selectedDeal.name}
-                  className="h-full w-full object-cover"
-                />
-              </div>
+               <div className="rounded-2xl overflow-hidden mb-6 h-48">
+                 {!imageErrors[selectedDeal.id] ? (
+                   <img
+                     src={selectedDeal.image}
+                     alt={selectedDeal.name}
+                     className="h-full w-full object-cover"
+                     onError={() => handleImageError(selectedDeal.id)}
+                   />
+                 ) : (
+                   <div className="h-full w-full bg-ink-900 flex items-center justify-center">
+                     <span className="text-ink-500 text-xs">Image unavailable</span>
+                   </div>
+                 )}
+               </div>
 
               <div className="flex flex-wrap gap-2 mb-4">
                 <span className="rounded-full bg-brand-50 px-3 py-1 text-xs font-semibold text-brand-700 dark:bg-brand-400/10 dark:text-brand-300">

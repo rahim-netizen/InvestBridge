@@ -33,11 +33,19 @@
     color: #f8fafc !important;
   }
 
+  .dark .text-ink-800 {
+    color: #e2e8f0 !important;
+  }
+
+  .dark .text-ink-700 {
+    color: #cbd5e1 !important;
+  }
+
   .dark .text-ink-600,
   .dark .text-ink-500,
   .dark .text-ink-400,
   .dark .text-ink-300 {
-    color: #cbd5e1 !important;
+    color: #94a3b8 !important;
   }
 
   .dark .border-ink-100,
@@ -106,14 +114,42 @@
     pointer-events: none;
     mix-blend-mode: screen;
   }
-  .tilt-card:hover,
-  .tilt-card-reverse:hover,
-  .holo-card:hover {
-    box-shadow:
-      0 24px 60px rgba(37, 99, 235, 0.18),
-      0 0 0 1px rgba(255, 255, 255, 0.4),
-      inset 0 1px 0 rgba(255, 255, 255, 0.95);
-  }
+.dark .tilt-card,
+.dark .tilt-card-reverse,
+.dark .holo-card {
+  border-color: rgba(255, 255, 255, 0.12) !important;
+  background:
+    linear-gradient(
+      135deg,
+      rgba(30, 41, 59, 0.85),
+      rgba(30, 41, 59, 0.45)
+    ),
+    linear-gradient(120deg, rgba(59, 130, 246, 0.12), rgba(30, 41, 59, 0));
+  box-shadow:
+    0 18px 45px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.dark .tilt-card::before,
+.dark .tilt-card-reverse::before,
+.dark .holo-card::before {
+  background: linear-gradient(
+    125deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.08) 24%,
+    rgba(255, 255, 255, 0.03) 45%,
+    transparent 70%
+  );
+}
+
+.dark .tilt-card:hover,
+.dark .tilt-card-reverse:hover,
+.dark .holo-card:hover {
+  box-shadow:
+    0 24px 60px rgba(0, 0, 0, 0.45),
+    0 0 0 1px rgba(255, 255, 255, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
   .tilt-layer,
   .tilt-layer-soft {
     transform: none;
@@ -184,6 +220,11 @@
   }
 }
 
+.dark .card {
+  background-color: #1e293b !important;
+  border-color: #334155 !important;
+}
+
 .dark .card.shadow-glow {
   box-shadow:
     0 0 0 1px rgba(16, 185, 129, 0.15),
@@ -196,4 +237,32 @@
 .dark .social-link:hover,
 .dark .btn-ghost:hover {
   color: #34d399 !important;
+}
+
+.dark .bg-ink-50 {
+  background-color: #111827 !important;
+}
+
+.dark .bg-white\/35 {
+  background-color: rgba(30, 41, 59, 0.35) !important;
+}
+
+.dark .bg-white\/50 {
+  background-color: rgba(30, 41, 59, 0.5) !important;
+}
+
+.dark .bg-white\/55 {
+  background-color: rgba(30, 41, 59, 0.55) !important;
+}
+
+.dark .bg-white\/70 {
+  background-color: rgba(30, 41, 59, 0.7) !important;
+}
+
+.dark .bg-white\/80 {
+  background-color: rgba(30, 41, 59, 0.8) !important;
+}
+
+.dark .bg-white\/90 {
+  background-color: rgba(30, 41, 59, 0.9) !important;
 }
