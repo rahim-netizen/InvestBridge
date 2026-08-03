@@ -11,10 +11,16 @@ import OpportunitiesPage from "./components/OpportunitiesPage.jsx";
 import DealsPage from "./components/DealsPage.jsx";
 import ConnectPage from "./components/ConnectPage.jsx";
 import ChatbotWidget from "./components/ChatbotWidget.jsx";
+import { getCurrentUser } from "./api/auth";
 
 export default function App() {
   const [theme, setTheme] = useState("light");
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // Automatically verify active cookie session with Laravel server
+    getCurrentUser();
+  }, []);
 
   useEffect(() => {
     const storedTheme = localStorage.getItem("theme");
