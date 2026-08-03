@@ -5,6 +5,7 @@ import Homepage from "./components/Homepage.jsx";
 import AdminPage from "./components/AdminPage";
 import LoginPage from "./components/LoginPage.jsx";
 import RegisterPage from "./components/RegisterPage.jsx";
+import VerifyEmailPending from "./components/VerifyEmailPending.jsx";
 import ProfileDashboard from "./components/ProfileDashboard.jsx";
 import UserDashboard from "./components/UserDashboard.jsx";
 import OpportunitiesPage from "./components/OpportunitiesPage.jsx";
@@ -68,6 +69,14 @@ export default function App() {
           element={
             <PageLayout navigate={navigate} theme={theme} toggleTheme={toggleTheme}>
               <RegisterPage navigate={navigate} />
+            </PageLayout>
+          }
+        />
+        <Route
+          path="/verify-email-pending"
+          element={
+            <PageLayout navigate={navigate} theme={theme} toggleTheme={toggleTheme}>
+              <VerifyEmailPending navigate={navigate} />
             </PageLayout>
           }
         />

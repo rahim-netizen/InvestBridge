@@ -34,10 +34,8 @@ export default function RegisterPage({ navigate }) {
 
     try {
       const data = await apiRegister(form.name, form.email, form.password);
-      setStatus(`Thanks, ${data.user?.name || form.name}! Your account is ready.`);
-      setTimeout(() => {
-        navigate("/profile");
-      }, 600);
+      localStorage.setItem("pendingVerificationEmail", form.email);
+      navigate(`/verify-email-pending?email=${encodeURIComponent(form.email)}`);
     } catch (err) {
       setError(err.message || "Registration failed. Please check your details.");
     } finally {

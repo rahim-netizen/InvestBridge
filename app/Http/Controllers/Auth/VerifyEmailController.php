@@ -25,10 +25,7 @@ class VerifyEmailController extends Controller
             return redirect($frontendUrl . '/verify-email-pending?error=not_found');
         }
 
-        // Validate 5-minute signed URL
-        $isValidSignature = $request->hasValidRelativeSignature() || $request->hasValidSignature();
-
-        if (!$isValidSignature) {
+        if (!hash_equals((string) $hash, sha1($user->getEmailForVerification()))) {
             if ($request->wantsJson()) {
                 return response()->json(['message' => 'Invalid or expired verification link.'], 403);
             }
@@ -40,7 +37,7 @@ class VerifyEmailController extends Controller
             event(new Verified($user));
         }
 
-        // NOW VERIFICATION IS COMPLETE: Issue session cookie and log user in!
+        // Issue session cookie and log user in now that email verification is complete
         Auth::login($user);
 
         if ($request->hasSession()) {
@@ -54,12 +51,6 @@ class VerifyEmailController extends Controller
             ]);
         }
 
-        // Redirect directly to Profile Creation page with user credentials passed
-        return redirect(
-            $frontendUrl . '/profile?verified=1' .
-            '&id=' . $user->id .
-            '&email=' . urlencode($user->email) .
-            '&name=' . urlencode($user->name)
-        );
+        return redirect($frontendUrl . '/profile?verified=1');
     }
 }

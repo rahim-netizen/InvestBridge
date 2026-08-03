@@ -1,5 +1,6 @@
 import { CheckCircle2, Sparkles, UserRound } from "lucide-react";
 import { useEffect, useState } from "react";
+import { getCurrentUser } from "../api/auth";
 
 const getStoredUser = () => {
   if (typeof window === "undefined") {
@@ -40,22 +41,43 @@ export default function ProfileDashboard({ navigate }) {
   const [status, setStatus] = useState("");
 
   useEffect(() => {
-    const storedUser = getStoredUser();
-    if (!storedUser) {
-      setUser(null);
-      return;
+    const urlParams = new URLSearchParams(window.location.search);
+    const isVerified = urlParams.get("verified") === "1";
+    const email = urlParams.get("email");
+    const name = urlParams.get("name");
+    const id = urlParams.get("id");
+
+    if (isVerified || email) {
+      setStatus("Email verified successfully! Welcome to your profile creation page.");
     }
 
-    setUser(storedUser);
-    setForm(
-      storedUser.profile
-        ? {
-            ...buildInitialForm(),
-            ...storedUser.profile,
-          }
-        : buildInitialForm(),
-    );
-  }, []);
+    async function checkSession() {
+      const storedUser = getStoredUser();
+      if (storedUser) {
+        setUser(storedUser);
+        setForm(storedUser.profile ? { ...buildInitialForm(), ...storedUser.profile } : buildInitialForm());
+        return;
+      }
+
+      if (isVerified || email) {
+        const paramUser = { id: id || 1, email: email || "user@example.com", name: name || "User" };
+        localStorage.setItem("investbridgeSessionUser", JSON.stringify(paramUser));
+        setUser(paramUser);
+        return;
+      }
+
+      const fetched = await getCurrentUser();
+      if (fetched) {
+        setUser(fetched);
+        setForm(fetched.profile ? { ...buildInitialForm(), ...fetched.profile } : buildInitialForm());
+      } else {
+        setUser(null);
+        navigate("/login");
+      }
+    }
+
+    checkSession();
+  }, [navigate]);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -96,20 +118,16 @@ export default function ProfileDashboard({ navigate }) {
   };
 
   const inputWrapperClassName =
-    "surface-rim flex items-center gap-3 rounded-2xl px-4 py-3";
+    "flex items-center gap-3 rounded-2xl border border-ink-200 bg-ink-50 px-4 py-3 dark:border-ink-700 dark:bg-ink-800";
   const inputClassName =
-    "w-full rounded-2xl border border-white/20 bg-white/35 px-4 py-3 text-sm text-ink-900 outline-none placeholder:text-ink-400 backdrop-blur-sm dark:border-white/10 dark:bg-ink-950/35 dark:text-ink-50 dark:placeholder:text-ink-500";
+    "w-full rounded-2xl border border-ink-200 bg-ink-50 px-4 py-3 text-sm text-ink-900 outline-none placeholder:text-ink-400 dark:border-ink-700 dark:bg-ink-800 dark:text-ink-50 dark:placeholder:text-ink-500";
   const fieldLabelClassName =
     "mb-2 block text-sm font-medium text-ink-700 dark:text-ink-300";
 
   if (!user) {
     return (
-      <section className="relative min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top_left,_rgba(45,97,255,0.16),_transparent_36%),radial-gradient(circle_at_80%_12%,_rgba(16,185,129,0.12),_transparent_28%),linear-gradient(135deg,_#f8fbff_0%,_#eef4ff_100%)] px-4 py-20 transition-colors duration-300 sm:px-6 lg:px-8 dark:bg-gradient-to-br dark:from-ink-950 dark:via-ink-950 dark:to-ink-900">
-        <div className="pointer-events-none absolute inset-0 -z-10 opacity-60">
-          <div className="absolute left-[-5rem] top-24 h-72 w-72 rounded-full bg-brand-200/35 blur-3xl" />
-          <div className="absolute right-[-4rem] bottom-10 h-80 w-80 rounded-full bg-gold-200/20 blur-3xl" />
-        </div>
-        <div className="glass-panel-strong mx-auto max-w-2xl rounded-[2rem] p-8 holo-card dark:text-ink-50">
+      <section className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(45,97,255,0.16),_transparent_40%),linear-gradient(135deg,_#f8fbff_0%,_#eef4ff_100%)] px-4 py-20 sm:px-6 lg:px-8 transition-colors duration-300 dark:bg-gradient-to-br dark:from-ink-950 dark:to-ink-900">
+        <div className="mx-auto max-w-2xl rounded-3xl border border-ink-100 bg-white p-8 shadow-lift dark:border-ink-800 dark:bg-ink-900 dark:text-ink-50">
           <p className="text-sm font-semibold text-brand-700 dark:text-brand-400">
             No active session
           </p>
@@ -133,13 +151,9 @@ export default function ProfileDashboard({ navigate }) {
   }
 
   return (
-    <section className="relative min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top_right,_rgba(45,97,255,0.16),_transparent_36%),radial-gradient(circle_at_12%_78%,_rgba(245,158,11,0.12),_transparent_28%),linear-gradient(135deg,_#f8fbff_0%,_#eef4ff_100%)] px-4 py-20 transition-colors duration-300 sm:px-6 lg:px-8 dark:bg-gradient-to-br dark:from-ink-950 dark:via-ink-950 dark:to-ink-900">
-      <div className="pointer-events-none absolute inset-0 -z-10 opacity-60">
-        <div className="absolute right-[-5rem] top-16 h-80 w-80 rounded-full bg-brand-200/30 blur-3xl" />
-        <div className="absolute left-[-5rem] bottom-8 h-72 w-72 rounded-full bg-gold-200/20 blur-3xl" />
-      </div>
-      <div className="mx-auto flex max-w-7xl flex-col gap-8 lg:flex-row holo-scene">
-        <div className="glass-panel-strong w-full max-w-xl rounded-[2rem] p-8 holo-card dark:text-ink-50">
+    <section className="min-h-screen bg-[radial-gradient(circle_at_top_right,_rgba(45,97,255,0.16),_transparent_40%),linear-gradient(135deg,_#f8fbff_0%,_#eef4ff_100%)] px-4 py-20 sm:px-6 lg:px-8 transition-colors duration-300 dark:bg-gradient-to-br dark:from-ink-950 dark:to-ink-900">
+      <div className="mx-auto flex max-w-7xl flex-col gap-8 lg:flex-row">
+        <div className="w-full max-w-xl rounded-3xl border border-ink-100 bg-white/90 p-8 shadow-lift dark:border-ink-800 dark:bg-ink-900/90 dark:text-ink-50">
           <span className="eyebrow dark:text-brand-400">
             <Sparkles className="h-3.5 w-3.5" />
             Complete your profile
@@ -153,9 +167,9 @@ export default function ProfileDashboard({ navigate }) {
             helps you succeed on InvestBridge.
           </p>
 
-          <div className="glass-panel mt-8 rounded-3xl p-5 holo-card">
+          <div className="mt-8 rounded-2xl border border-brand-100 bg-brand-50 p-5 dark:border-brand-900/60 dark:bg-brand-950/40">
             <div className="flex items-center gap-3">
-              <div className="grid h-11 w-11 place-items-center rounded-2xl border border-white/20 bg-brand-600/90 text-white shadow-soft backdrop-blur-sm">
+              <div className="grid h-11 w-11 place-items-center rounded-2xl bg-brand-600 text-white">
                 <CheckCircle2 className="h-5 w-5" />
               </div>
               <div>
@@ -170,7 +184,7 @@ export default function ProfileDashboard({ navigate }) {
           </div>
         </div>
 
-        <div className="glass-panel-strong w-full rounded-[2rem] p-8 holo-card dark:text-ink-50">
+        <div className="w-full rounded-3xl border border-ink-100 bg-white p-8 shadow-lift dark:border-ink-800 dark:bg-ink-900 dark:text-ink-50">
           <div>
             <p className="text-sm font-semibold text-brand-700 dark:text-brand-400">
               Profile dashboard
@@ -197,7 +211,7 @@ export default function ProfileDashboard({ navigate }) {
               </div>
             </label>
 
-            <div className="glass-panel mt-4 rounded-3xl p-4 holo-card">
+            <div className="rounded-2xl border border-brand-100 bg-brand-50 p-4 dark:border-brand-900/60 dark:bg-brand-950/40">
               <p className="text-sm font-semibold text-ink-900 dark:text-ink-50">
                 Company information
               </p>
@@ -289,7 +303,7 @@ export default function ProfileDashboard({ navigate }) {
               />
             </label>
 
-            <div className="glass-panel rounded-3xl p-4 holo-card">
+            <div className="rounded-2xl border border-brand-100 bg-brand-50 p-4 dark:border-brand-900/60 dark:bg-brand-950/40">
               <p className="text-sm font-semibold text-ink-900 dark:text-ink-50">
                 Investment details
               </p>

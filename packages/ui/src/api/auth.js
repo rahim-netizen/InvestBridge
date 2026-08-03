@@ -10,6 +10,33 @@ export function getCookie(name) {
 }
 
 /**
+ * Explicitly purge all session & CSRF cookies in browser
+ */
+export function eraseAllAuthCookies() {
+  if (typeof document === "undefined") return;
+  const cookies = ["investbridge_session", "laravel_session", "XSRF-TOKEN"];
+  cookies.forEach((name) => {
+    document.cookie = `${name}=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;`;
+    document.cookie = `${name}=; path=/; domain=localhost; expires=Thu, 01 Jan 1970 00:00:01 GMT;`;
+    document.cookie = `${name}=; path=/; domain=127.0.0.1; expires=Thu, 01 Jan 1970 00:00:01 GMT;`;
+  });
+}
+
+/**
+ * Safely parse JSON response body to handle non-JSON or empty response errors
+ */
+async function parseJsonResponse(response) {
+  const text = await response.text();
+  let data = {};
+  try {
+    data = text ? JSON.parse(text) : {};
+  } catch {
+    data = { message: text ? text.slice(0, 120) : "Server returned empty response." };
+  }
+  return data;
+}
+
+/**
  * Fetch CSRF cookie from Laravel Sanctum
  */
 export async function getCsrfToken() {
@@ -54,9 +81,13 @@ export async function apiLogin(email, password) {
     body: JSON.stringify({ email, password }),
   });
 
-  const data = await response.json();
+  const data = await parseJsonResponse(response);
 
   if (!response.ok) {
+    // Strictly ensure ZERO cookies exist for unverified user or failed login
+    eraseAllAuthCookies();
+    localStorage.removeItem("investbridgeSessionUser");
+
     const errorMessage =
       data.message ||
       (data.errors ? Object.values(data.errors).flat().join(" ") : "Invalid credentials.");
@@ -71,7 +102,7 @@ export async function apiLogin(email, password) {
 }
 
 /**
- * Sign Up user via cookie session
+ * Sign Up user via cookie session (unverified, ZERO cookies issued)
  */
 export async function apiRegister(name, email, password) {
   await getCsrfToken();
@@ -88,7 +119,11 @@ export async function apiRegister(name, email, password) {
     }),
   });
 
-  const data = await response.json();
+  const data = await parseJsonResponse(response);
+
+  // STRICT ENFORCEMENT: Unverified user MUST have ZERO cookies
+  eraseAllAuthCookies();
+  localStorage.removeItem("investbridgeSessionUser");
 
   if (!response.ok) {
     const errorMessage =
@@ -97,21 +132,35 @@ export async function apiRegister(name, email, password) {
     throw new Error(errorMessage);
   }
 
-  if (data.user) {
-    localStorage.setItem("investbridgeSessionUser", JSON.stringify(data.user));
-  }
-
   return data;
 }
 
 /**
- * Helper to explicitly erase cookie in browser
+ * Resend 5-minute email verification link
  */
-export function eraseCookie(name) {
-  if (typeof document === "undefined") return;
-  document.cookie = `${name}=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;`;
-  document.cookie = `${name}=; path=/; domain=localhost; expires=Thu, 01 Jan 1970 00:00:01 GMT;`;
-  document.cookie = `${name}=; path=/; domain=127.0.0.1; expires=Thu, 01 Jan 1970 00:00:01 GMT;`;
+export async function apiResendVerification(email) {
+  await getCsrfToken();
+
+  const response = await fetch(`${API_BASE_URL}/api/email/resend-verification`, {
+    method: "POST",
+    headers: getHeaders(),
+    credentials: "include",
+    body: JSON.stringify({ email }),
+  });
+
+  const data = await parseJsonResponse(response);
+
+  // Purge any cookies while resending verification
+  eraseAllAuthCookies();
+
+  if (!response.ok) {
+    const errorMessage =
+      data.message ||
+      (data.errors ? Object.values(data.errors).flat().join(" ") : "Failed to resend verification email.");
+    throw new Error(errorMessage);
+  }
+
+  return data;
 }
 
 /**
@@ -127,8 +176,7 @@ export async function apiLogout() {
   } catch (err) {
     console.warn("Logout error:", err);
   } finally {
-    eraseCookie("laravel_session");
-    eraseCookie("XSRF-TOKEN");
+    eraseAllAuthCookies();
     localStorage.removeItem("investbridgeSessionUser");
   }
 }
@@ -145,9 +193,11 @@ export async function getCurrentUser() {
     });
 
     if (response.ok) {
-      const user = await response.json();
-      localStorage.setItem("investbridgeSessionUser", JSON.stringify(user));
-      return user;
+      const data = await parseJsonResponse(response);
+      if (data.id || data.email) {
+        localStorage.setItem("investbridgeSessionUser", JSON.stringify(data));
+        return data;
+      }
     }
   } catch (err) {
     console.warn("Fetch current user error:", err);
