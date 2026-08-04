@@ -5,16 +5,23 @@ import Homepage from "./components/Homepage.jsx";
 import AdminPage from "./components/AdminPage";
 import LoginPage from "./components/LoginPage.jsx";
 import RegisterPage from "./components/RegisterPage.jsx";
+import VerifyEmailPending from "./components/VerifyEmailPending.jsx";
 import ProfileDashboard from "./components/ProfileDashboard.jsx";
 import UserDashboard from "./components/UserDashboard.jsx";
 import OpportunitiesPage from "./components/OpportunitiesPage.jsx";
 import DealsPage from "./components/DealsPage.jsx";
 import ConnectPage from "./components/ConnectPage.jsx";
 import ChatbotWidget from "./components/ChatbotWidget.jsx";
+import { getCurrentUser } from "./api/auth";
 
 export default function App() {
   const [theme, setTheme] = useState("light");
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // Automatically verify active cookie session with Laravel server
+    getCurrentUser();
+  }, []);
 
   useEffect(() => {
     const storedTheme = localStorage.getItem("theme");
@@ -62,6 +69,14 @@ export default function App() {
           element={
             <PageLayout navigate={navigate} theme={theme} toggleTheme={toggleTheme}>
               <RegisterPage navigate={navigate} />
+            </PageLayout>
+          }
+        />
+        <Route
+          path="/verify-email-pending"
+          element={
+            <PageLayout navigate={navigate} theme={theme} toggleTheme={toggleTheme}>
+              <VerifyEmailPending navigate={navigate} />
             </PageLayout>
           }
         />

@@ -1,9 +1,12 @@
-import { ArrowRight, LockKeyhole, Mail, Sparkles } from "lucide-react";
+import { ArrowRight, LockKeyhole, Mail, Sparkles, Loader2 } from "lucide-react";
 import { useState } from "react";
+import { apiLogin } from "../api/auth";
 
 export default function LoginPage({ navigate }) {
   const [form, setForm] = useState({ email: "", password: "" });
   const [status, setStatus] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const [bgImageError, setBgImageError] = useState(false);
 
   const handleChange = (event) => {
@@ -11,31 +14,23 @@ export default function LoginPage({ navigate }) {
     setForm((current) => ({ ...current, [name]: value }));
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
+    setError("");
+    setStatus("");
+    setLoading(true);
 
-    if (form.email === "admin@company.com" && form.password === "admin") {
-      navigate("/admin");
-      return;
+    try {
+      const data = await apiLogin(form.email, form.password);
+      setStatus(`Welcome back, ${data.user?.name || data.user?.email || "user"}!`);
+      setTimeout(() => {
+        navigate("/profile");
+      }, 600);
+    } catch (err) {
+      setError(err.message || "Login failed. Please check your credentials.");
+    } finally {
+      setLoading(false);
     }
-
-    const storedUsers = JSON.parse(
-      localStorage.getItem("investbridgeUsers") || "[]",
-    );
-    const existingUser = storedUsers.find(
-      (entry) => entry.email === form.email,
-    );
-
-    if (existingUser && existingUser.password === form.password) {
-      localStorage.setItem(
-        "investbridgeSessionUser",
-        JSON.stringify(existingUser),
-      );
-      navigate("/profile");
-      return;
-    }
-
-    setStatus(`Welcome back, ${form.email || "user"}!`);
   };
 
   return (
@@ -159,11 +154,26 @@ export default function LoginPage({ navigate }) {
               </button>
             </div>
 
-            <button type="submit" className="btn-primary w-full">
-              Sign in
-              <ArrowRight className="h-4 w-4" />
+            <button type="submit" disabled={loading} className="btn-primary w-full flex items-center justify-center gap-2">
+              {loading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Signing in...
+                </>
+              ) : (
+                <>
+                  Sign in
+                  <ArrowRight className="h-4 w-4" />
+                </>
+              )}
             </button>
           </form>
+
+          {error && (
+            <p className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700 dark:border-rose-900/50 dark:bg-rose-950/40 dark:text-rose-300">
+              {error}
+            </p>
+          )}
 
           {status && (
             <p className="mt-4 rounded-2xl border border-brand-100 bg-brand-50 px-4 py-3 text-sm text-brand-700">

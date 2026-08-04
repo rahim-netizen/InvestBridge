@@ -11,6 +11,7 @@ import {
   Pencil,
   UserCircle2,
 } from "lucide-react";
+import { apiLogout } from "../api/auth";
 
 const links = [
   { label: "How it works", href: "#how-it-works" },
@@ -52,7 +53,7 @@ export default function Navbar({ navigate, theme, toggleTheme }) {
     setProfileMenuOpen(false);
   }, [location.pathname]);
 
-  const showProfileMenu = Boolean(currentUser?.profileComplete);
+  const showProfileMenu = Boolean(currentUser);
   const profileLabel = currentUser?.name || currentUser?.email || "Profile";
   const profileInitial = String(profileLabel).charAt(0).toUpperCase();
 
@@ -169,18 +170,19 @@ export default function Navbar({ navigate, theme, toggleTheme }) {
                      <BarChart3 className="h-4 w-4" />
                      My dashboard
                    </button>
-                   <button
-                     type="button"
-                     onClick={() => {
-                       localStorage.removeItem("investbridgeSessionUser");
-                       setProfileMenuOpen(false);
-                       navigate("/");
-                     }}
-                     className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border border-rose-200/70 bg-rose-50/80 px-3 py-2 text-sm font-semibold text-rose-700 transition hover:border-rose-300 hover:bg-rose-100 dark:border-rose-800/70 dark:bg-rose-950/45 dark:text-rose-300 dark:hover:bg-rose-900/70"
-                   >
-                     <LogOut className="h-4 w-4" />
-                     Logout
-                   </button>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        await apiLogout();
+                        setCurrentUser(null);
+                        setProfileMenuOpen(false);
+                        navigate("/");
+                      }}
+                      className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border border-rose-200/70 bg-rose-50/80 px-3 py-2 text-sm font-semibold text-rose-700 transition hover:border-rose-300 hover:bg-rose-100 dark:border-rose-800/70 dark:bg-rose-950/45 dark:text-rose-300 dark:hover:bg-rose-900/70"
+                    >
+                      <LogOut className="h-4 w-4" />
+                      Logout
+                    </button>
                 </div>
               )}
             </div>

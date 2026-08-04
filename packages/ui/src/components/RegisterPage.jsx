@@ -5,8 +5,10 @@ import {
   ShieldCheck,
   Sparkles,
   UserRound,
+  Loader2,
 } from "lucide-react";
 import { useState } from "react";
+import { apiRegister } from "../api/auth";
 
 export default function RegisterPage({ navigate }) {
   const [form, setForm] = useState({
@@ -15,6 +17,8 @@ export default function RegisterPage({ navigate }) {
     password: "",
   });
   const [status, setStatus] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const [bgImageError, setBgImageError] = useState(false);
 
   const handleChange = (event) => {
@@ -22,33 +26,21 @@ export default function RegisterPage({ navigate }) {
     setForm((current) => ({ ...current, [name]: value }));
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
+    setError("");
+    setStatus("");
+    setLoading(true);
 
-    const storedUsers = JSON.parse(
-      localStorage.getItem("investbridgeUsers") || "[]",
-    );
-    const existingUser = storedUsers.find(
-      (entry) => entry.email === form.email,
-    );
-
-    const user = {
-      name: form.name,
-      email: form.email,
-      password: form.password,
-      profileComplete: false,
-    };
-
-    if (!existingUser) {
-      localStorage.setItem(
-        "investbridgeUsers",
-        JSON.stringify([...storedUsers, user]),
-      );
+    try {
+      const data = await apiRegister(form.name, form.email, form.password);
+      localStorage.setItem("pendingVerificationEmail", form.email);
+      navigate(`/verify-email-pending?email=${encodeURIComponent(form.email)}`);
+    } catch (err) {
+      setError(err.message || "Registration failed. Please check your details.");
+    } finally {
+      setLoading(false);
     }
-
-    localStorage.setItem("investbridgeSessionUser", JSON.stringify(user));
-    setStatus(`Thanks, ${form.name || "there"}! Your account is ready to go.`);
-    navigate("/profile");
   };
 
   return (
@@ -179,11 +171,26 @@ export default function RegisterPage({ navigate }) {
               </div>
             </label>
 
-            <button type="submit" className="btn-primary w-full">
-              Create account
-              <ArrowRight className="h-4 w-4" />
+            <button type="submit" disabled={loading} className="btn-primary w-full flex items-center justify-center gap-2">
+              {loading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Creating account...
+                </>
+              ) : (
+                <>
+                  Create account
+                  <ArrowRight className="h-4 w-4" />
+                </>
+              )}
             </button>
           </form>
+
+          {error && (
+            <p className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700 dark:border-rose-900/50 dark:bg-rose-950/40 dark:text-rose-300">
+              {error}
+            </p>
+          )}
 
           {status && (
             <p className="mt-4 rounded-2xl border border-brand-100 bg-brand-50 px-4 py-3 text-sm text-brand-700">
