@@ -2,8 +2,6 @@ import {
   ArrowLeft,
   BarChart3,
   Briefcase,
-  Calendar,
-  Globe,
   MapPin,
   PenLine,
   Plus,
@@ -11,8 +9,11 @@ import {
   Trash2,
   UserRound,
   X,
+  Users,
+  Clock,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { deleteOpportunity, getMyOpportunities } from "../api/opportunities";
 
 const getStoredUser = () => {
   if (typeof window === "undefined") {
@@ -56,28 +57,101 @@ export default function UserDashboard({ navigate }) {
     setUser(getStoredUser());
   }, []);
 
-  const userProjects = allOpportunities.filter(
-    (o) => (o.postedBy || o.postedByName) && o.postedBy === user?.email,
-  );
+  useEffect(() => {
+    async function loadOpportunities() {
+      try {
+        const data = await getMyOpportunities();
+        if (data.opportunities) {
+          const mapped = data.opportunities.map((opp) => ({
+            id: opp.id,
+            title: opp.title,
+            company: opp.company,
+            sector: opp.sector,
+            stage: "TBD",
+            location: opp.location || "TBD",
+            goal: opp.funding_goal || "$0",
+            raised: "$0",
+            pct: 0,
+            blurb: opp.description || "",
+            image: opp.image || null,
+            investors: 0,
+            daysLeft: opp.timeline || "TBD",
+            postedBy: opp.user?.email || null,
+            postedByName: opp.user?.name || opp.user?.email || "Anonymous",
+            createdAt: opp.created_at,
+          }));
+          setAllOpportunities(mapped);
+        }
+      } catch {
+        // keep localStorage fallback
+      }
+    }
 
-  const filteredProjects = userProjects.filter((o) => {
+    loadOpportunities();
+  }, []);
+
+  useEffect(() => {
+    const handler = () => {
+      async function loadOpportunities() {
+        try {
+          const data = await getMyOpportunities();
+          if (data.opportunities) {
+            const mapped = data.opportunities.map((opp) => ({
+              id: opp.id,
+              title: opp.title,
+              company: opp.company,
+              sector: opp.sector,
+              stage: "TBD",
+              location: opp.location || "TBD",
+              goal: opp.funding_goal || "$0",
+              raised: "$0",
+              pct: 0,
+              blurb: opp.description || "",
+              image: opp.image || null,
+              investors: 0,
+              daysLeft: opp.timeline || "TBD",
+              postedBy: opp.user?.email || null,
+              postedByName: opp.user?.name || opp.user?.email || "Anonymous",
+              createdAt: opp.created_at,
+            }));
+            setAllOpportunities(mapped);
+          }
+        } catch {
+          // keep localStorage fallback
+        }
+      }
+      loadOpportunities();
+    };
+    window.addEventListener("opportunity-changed", handler);
+    return () => {
+      window.removeEventListener("opportunity-changed", handler);
+    };
+  }, []);
+
+  const filteredProjects = allOpportunities.filter((o) => {
     const q = searchQuery.toLowerCase();
     return (
       o.title.toLowerCase().includes(q) ||
       o.company.toLowerCase().includes(q) ||
       o.sector.toLowerCase().includes(q) ||
-      o.stage.toLowerCase().includes(q)
+      (o.stage || "").toLowerCase().includes(q)
     );
   });
 
   const confirmDelete = (id) => setDeleteId(id);
   const cancelDelete = () => setDeleteId(null);
 
-  const handleDelete = (id) => {
-    const updated = allOpportunities.filter((o) => o.id !== id);
-    setAllOpportunities(updated);
-    saveOpportunities(updated);
-    setDeleteId(null);
+  const handleDelete = async (id) => {
+    try {
+      await deleteOpportunity(id);
+      const updated = allOpportunities.filter((o) => o.id !== id);
+      setAllOpportunities(updated);
+      saveOpportunities(updated);
+      setDeleteId(null);
+      window.dispatchEvent(new CustomEvent("opportunity-changed"));
+    } catch {
+      setDeleteId(null);
+    }
   };
 
   const inputWrapperClassName =
@@ -113,9 +187,9 @@ export default function UserDashboard({ navigate }) {
     );
   }
 
-  const totalProjects = userProjects.length;
-  const raisingNow = userProjects.filter((o) => o.pct < 100).length;
-  const fullyFunded = userProjects.filter((o) => o.pct >= 100).length;
+  const totalProjects = allOpportunities.length;
+  const raisingNow = allOpportunities.filter((o) => o.pct < 100).length;
+  const fullyFunded = allOpportunities.filter((o) => o.pct >= 100).length;
 
   return (
     <section className="relative min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top_left,_rgba(45,97,255,0.16),_transparent_36%),radial-gradient(circle_at_80%_12%,_rgba(16,185,129,0.12),_transparent_28%),linear-gradient(135deg,_#f8fbff_0%,_#eef4ff_100%)] px-4 py-20 transition-colors duration-300 sm:px-6 lg:px-8 dark:bg-gradient-to-br dark:from-ink-950 dark:via-ink-950 dark:to-ink-900">
@@ -225,113 +299,100 @@ export default function UserDashboard({ navigate }) {
                 </p>
               </div>
             ) : (
-              <div className="grid gap-6 lg:grid-cols-2">
+              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 {filteredProjects.map((opp) => (
                   <article
                     key={opp.id}
-                    className="glass-panel-strong holo-card rounded-[2rem] p-6 relative"
+                    className="card holo-card group overflow-hidden hover:shadow-lift"
                   >
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className="rounded-full bg-brand-50 px-2.5 py-1 text-xs font-semibold text-brand-700 dark:bg-brand-400/10 dark:text-brand-300">
-                            {opp.sector}
-                          </span>
-                          <span className="rounded-full bg-ink-100 px-2.5 py-1 text-xs font-semibold text-ink-600 dark:bg-ink-800 dark:text-ink-300">
-                            {opp.stage}
-                          </span>
-                        </div>
-                        <h3 className="font-display text-xl font-bold text-ink-900 dark:text-ink-50">
-                          {opp.title}
-                        </h3>
-                        <p className="mt-1 text-sm text-ink-500 dark:text-ink-400">
-                          by {opp.company}
-                        </p>
-                      </div>
-                      <div className="text-right shrink-0">
-                        <p className="font-display text-2xl font-bold text-brand-600">
-                          {opp.pct}%
-                        </p>
-                        <p className="text-xs text-ink-500 dark:text-ink-400">
-                          funded
-                        </p>
-                      </div>
-                    </div>
-
-                    {opp.description && (
-                      <p className="mt-4 text-sm leading-relaxed text-ink-600 dark:text-ink-300">
-                        {opp.description}
-                      </p>
-                    )}
-
-                    <div className="mt-4 grid grid-cols-2 gap-3">
-                      <div className="rounded-2xl bg-white/50 p-3 dark:bg-ink-950/40">
-                        <p className="text-xs font-semibold uppercase tracking-wider text-brand-700 dark:text-brand-300">
-                          Funding goal
-                        </p>
-                        <p className="mt-1 font-display text-lg font-bold text-ink-900 dark:text-ink-50">
-                          {opp.fundingGoal}
-                        </p>
-                        <p className="text-xs text-ink-500 dark:text-ink-400">
-                          {opp.raised} raised
-                        </p>
-                      </div>
-                      <div className="rounded-2xl bg-white/50 p-3 dark:bg-ink-950/40">
-                        <p className="text-xs font-semibold uppercase tracking-wider text-brand-700 dark:text-brand-300">
-                          Timeline
-                        </p>
-                        <p className="mt-1 font-display text-lg font-bold text-ink-900 dark:text-ink-50">
-                          {opp.timeline}
-                        </p>
-                        <p className="text-xs text-ink-500 dark:text-ink-400">
-                          {opp.nextMilestone}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="mt-4 flex items-center gap-4 text-xs text-ink-500 dark:text-ink-400">
-                      <span className="flex items-center gap-1">
-                        <MapPin className="h-3.5 w-3.5" />
-                        {opp.location}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Globe className="h-3.5 w-3.5" />
-                        {opp.businessModel}
-                      </span>
-                      {opp.createdAt && (
-                        <span className="flex items-center gap-1">
-                          <Calendar className="h-3.5 w-3.5" />
-                          {new Date(opp.createdAt).toLocaleDateString()}
+                     <div className="relative h-40 overflow-hidden">
+                       {opp.image ? (
+                         <img
+                           src={opp.image}
+                           alt={opp.title}
+                           loading="lazy"
+                           className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                         />
+                       ) : (
+                         <div className="h-full w-full bg-ink-900 flex items-center justify-center">
+                           <span className="text-ink-500 text-xs">No image</span>
+                         </div>
+                       )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-ink-950/70 via-ink-950/10 to-transparent" />
+                      <div className="absolute left-4 top-4 flex gap-2">
+                        <span className="rounded-full bg-white/90 px-2.5 py-1 text-xs font-semibold text-ink-800 backdrop-blur">
+                          {opp.sector}
                         </span>
-                      )}
+                        <span className="rounded-full bg-brand-600/90 px-2.5 py-1 text-xs font-semibold text-white backdrop-blur">
+                          {opp.stage || "TBD"}
+                        </span>
+                      </div>
+                      <div className="absolute bottom-4 left-4 flex items-center gap-2 text-white">
+                        <span className="grid h-9 w-9 place-items-center rounded-lg bg-white/20 font-display text-sm font-bold backdrop-blur">
+                          {opp.company?.slice(0, 2).toUpperCase() || "OP"}
+                        </span>
+                        <span className="font-display text-lg font-bold">
+                          {opp.company}
+                        </span>
+                      </div>
                     </div>
 
-                    <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-ink-100 dark:bg-ink-800">
-                      <div
-                        className="h-full rounded-full bg-gradient-to-r from-brand-500 to-brand-700"
-                        style={{ width: `${opp.pct}%` }}
-                      />
-                    </div>
+                    <div className="p-5">
+                      <p className="text-sm leading-relaxed text-ink-600 dark:text-ink-400">
+                        {opp.blurb || "No description provided."}
+                      </p>
+                      <div className="mt-3 flex items-center gap-1.5 text-xs text-ink-500 dark:text-ink-400">
+                        <MapPin className="h-3.5 w-3.5" />
+                        {opp.location || "TBD"}
+                      </div>
 
-                    <div className="mt-4 flex items-center justify-between">
-                      <div className="flex items-center gap-3">
+                      <div className="mt-4">
+                        <div className="mb-1.5 flex justify-between text-xs font-medium text-ink-500">
+                          <span>
+                            {opp.raised || "$0"}{" "}
+                            <span className="text-ink-400">of {opp.goal || "$0"}</span>
+                          </span>
+                          <span className="text-brand-700">{opp.pct || 0}%</span>
+                        </div>
+                        <div className="h-2 w-full overflow-hidden rounded-full bg-ink-100 dark:bg-ink-800">
+                          <div
+                            className="h-full rounded-full bg-gradient-to-r from-brand-500 to-brand-700"
+                            style={{ width: `${opp.pct || 0}%` }}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="mt-4 flex items-center justify-between text-xs text-ink-500 dark:text-ink-400">
+                        <span className="flex items-center gap-1">
+                          <Users className="h-3.5 w-3.5" />
+                          {opp.investors || 0} investors
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Clock className="h-3.5 w-3.5" />
+                          {opp.daysLeft || "TBD"}
+                        </span>
+                      </div>
+
+                      <div className="mt-4 flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <button
+                            type="button"
+                            onClick={() => navigate("/connect")}
+                            className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-700 transition-colors hover:text-brand-800 dark:text-brand-400"
+                          >
+                            <PenLine className="h-4 w-4" />
+                            Edit
+                          </button>
+                        </div>
                         <button
                           type="button"
-                          onClick={() => navigate("/connect")}
-                          className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-700 transition-colors hover:text-brand-800 dark:text-brand-400"
+                          onClick={() => confirmDelete(opp.id)}
+                          className="text-xs font-semibold text-rose-500 transition-colors hover:text-rose-700"
                         >
-                          <PenLine className="h-4 w-4" />
-                          Edit
+                          <Trash2 className="h-3.5 w-3.5" />
+                          Remove
                         </button>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => confirmDelete(opp.id)}
-                        className="text-xs font-semibold text-rose-500 transition-colors hover:text-rose-700"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                        Remove
-                      </button>
                     </div>
                   </article>
                 ))}
