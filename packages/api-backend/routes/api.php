@@ -22,3 +22,5 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy']);
 });
 
+Route::post('/chatbot/message', [\App\Http\Controllers\ChatbotController::class, 'message']);
+
