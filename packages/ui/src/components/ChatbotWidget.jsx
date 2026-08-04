@@ -9,22 +9,24 @@ const starterMessages = [
   },
 ];
 
-function getBotReply(message) {
-  const normalized = message.toLowerCase();
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 
-  if (normalized.includes("startup") || normalized.includes("founder")) {
-    return "You can browse curated startup listings, review funding goals, and connect with the right investors from the main dashboard.";
+async function getBotReply(message) {
+  const response = await fetch(`${API_BASE_URL}/api/chatbot/message`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+    body: JSON.stringify({ message }),
+  });
+
+  const data = await response.json();
+  if (response.ok && data.reply) {
+    return data.reply;
   }
 
-  if (normalized.includes("invest")) {
-    return "Investors can discover vetted deals, filter by sector and stage, and track round progress in real time.";
-  }
-
-  if (normalized.includes("login") || normalized.includes("register")) {
-    return "You can sign in or create an account from the navigation bar to access personalized features.";
-  }
-
-  return "I can help with startup discovery, investor workflows, and platform guidance. Ask me anything about InvestBridge.";
+  return null;
 }
 
 export default function ChatbotWidget() {
@@ -32,7 +34,7 @@ export default function ChatbotWidget() {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState(starterMessages);
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
     const trimmed = input.trim();
 
@@ -44,12 +46,14 @@ export default function ChatbotWidget() {
     ]);
     setInput("");
 
-    window.setTimeout(() => {
+    const reply = await getBotReply(trimmed);
+
+    if (reply) {
       setMessages((prev) => [
         ...prev,
-        { id: Date.now() + 1, sender: "bot", text: getBotReply(trimmed) },
+        { id: Date.now() + 1, sender: "bot", text: reply },
       ]);
-    }, 350);
+    }
   };
 
   return (
