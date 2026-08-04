@@ -127,7 +127,7 @@ export default function ProfileDashboard({ navigate }) {
   if (!user) {
     return (
       <section className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(45,97,255,0.16),_transparent_40%),linear-gradient(135deg,_#f8fbff_0%,_#eef4ff_100%)] px-4 py-20 sm:px-6 lg:px-8 transition-colors duration-300 dark:bg-gradient-to-br dark:from-ink-950 dark:to-ink-900">
-        <div className="mx-auto max-w-2xl rounded-3xl border border-ink-100 bg-white p-8 shadow-lift dark:border-ink-800 dark:bg-ink-900 dark:text-ink-50">
+        <div className="mx-auto max-w-2xl rounded-3xl border border-white/40 bg-white/70 p-8 shadow-lift backdrop-blur-2xl dark:border-white/10 dark:bg-ink-900/70 dark:text-ink-50">
           <p className="text-sm font-semibold text-brand-700 dark:text-brand-400">
             No active session
           </p>
@@ -153,7 +153,7 @@ export default function ProfileDashboard({ navigate }) {
   return (
     <section className="min-h-screen bg-[radial-gradient(circle_at_top_right,_rgba(45,97,255,0.16),_transparent_40%),linear-gradient(135deg,_#f8fbff_0%,_#eef4ff_100%)] px-4 py-20 sm:px-6 lg:px-8 transition-colors duration-300 dark:bg-gradient-to-br dark:from-ink-950 dark:to-ink-900">
       <div className="mx-auto flex max-w-7xl flex-col gap-8 lg:flex-row">
-        <div className="w-full max-w-xl rounded-3xl border border-ink-100 bg-white/90 p-8 shadow-lift dark:border-ink-800 dark:bg-ink-900/90 dark:text-ink-50">
+        <div className="w-full max-w-xl rounded-3xl border border-white/40 bg-white/70 p-8 shadow-lift backdrop-blur-2xl dark:border-white/10 dark:bg-ink-900/70 dark:text-ink-50">
           <span className="eyebrow dark:text-brand-400">
             <Sparkles className="h-3.5 w-3.5" />
             Complete your profile
@@ -184,7 +184,7 @@ export default function ProfileDashboard({ navigate }) {
           </div>
         </div>
 
-        <div className="w-full rounded-3xl border border-ink-100 bg-white p-8 shadow-lift dark:border-ink-800 dark:bg-ink-900 dark:text-ink-50">
+        <div className="w-full rounded-3xl border border-white/40 bg-white/70 p-8 shadow-lift backdrop-blur-2xl dark:border-white/10 dark:bg-ink-900/70 dark:text-ink-50">
           <div>
             <p className="text-sm font-semibold text-brand-700 dark:text-brand-400">
               Profile dashboard

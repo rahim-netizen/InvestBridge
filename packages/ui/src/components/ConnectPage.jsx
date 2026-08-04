@@ -382,7 +382,7 @@ export default function ConnectPage({ navigate }) {
                     className={`max-w-[85%] rounded-3xl px-4 py-3 text-sm leading-relaxed shadow-soft ${
                       msg.self
                         ? "ml-auto bg-brand-600 text-white"
-                        : "bg-white text-ink-700 border border-white/20 dark:border-white/10 dark:bg-ink-950/55 dark:text-ink-200"
+                        : "bg-white/70 text-ink-700 border border-white/20 backdrop-blur-md dark:border-white/10 dark:bg-ink-950/55 dark:text-ink-200"
                     }`}
                   >
                     <p className="font-semibold text-xs mb-1 opacity-70">

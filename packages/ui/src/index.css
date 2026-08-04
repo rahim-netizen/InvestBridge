@@ -216,13 +216,13 @@
     @apply inline-flex items-center gap-2 rounded-full border border-brand-200 bg-brand-50 px-3.5 py-1.5 text-xs font-semibold uppercase tracking-wider text-brand-700;
   }
   .card {
-    @apply rounded-2xl border border-ink-100 bg-white shadow-soft;
+    @apply rounded-2xl border border-white/40 bg-white/70 shadow-soft backdrop-blur-xl;
   }
 }
 
 .dark .card {
-  background-color: #1e293b !important;
-  border-color: #334155 !important;
+  background-color: rgba(15, 23, 42, 0.7) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
 }
 
 .dark .card.shadow-glow {

@@ -21,7 +21,7 @@ const columns = [
 
 export default function Footer() {
   return (
-    <footer className="border-t border-ink-100 bg-white">
+    <footer className="border-t border-white/40 bg-white/60 backdrop-blur-2xl dark:border-white/10 dark:bg-ink-950/60">
       <div className="container-page py-14">
         <div className="grid gap-10 lg:grid-cols-[1.4fr_repeat(4,1fr)]">
           <div>
@@ -67,7 +67,7 @@ export default function Footer() {
           ))}
         </div>
 
-        <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-ink-100 pt-6 sm:flex-row">
+        <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-white/40 pt-6 dark:border-white/10 sm:flex-row">
           <p className="text-xs text-ink-500">
             © {new Date().getFullYear()} InvestBridge. All rights reserved.
           </p>

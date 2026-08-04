@@ -1,0 +1,362 @@
+.ib-auth-scene {
+  --ib-primary: #10b981;
+  --ib-secondary: #34d399;
+  --ib-glass: rgba(255, 255, 255, 0.03);
+  --ib-border: rgba(255, 255, 255, 0.08);
+  --ib-text: #ffffff;
+  --ib-text-dim: #a0a0b0;
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  perspective: 1000px;
+  background: #0f1620;
+  padding: 6rem 1rem;
+}
+
+.ib-back-home {
+  position: absolute;
+  top: 24px;
+  left: 24px;
+  z-index: 11;
+  color: var(--ib-text-dim);
+  background: none;
+  border: none;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+.ib-back-home:hover {
+  color: var(--ib-text);
+}
+
+.ib-auth-container {
+  position: relative;
+  width: 100%;
+  max-width: 400px;
+  padding: 40px;
+  background: var(--ib-glass);
+  border: 1px solid var(--ib-border);
+  border-radius: 24px;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+  z-index: 10;
+  transform-style: preserve-3d;
+  transition:
+    transform 0.1s ease,
+    box-shadow 0.3s ease;
+}
+.ib-auth-container:hover {
+  box-shadow: 0 30px 60px rgba(16, 185, 129, 0.15);
+}
+
+.ib-avatar-area {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 30px;
+  position: relative;
+}
+
+.ib-face {
+  width: 80px;
+  height: 80px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid var(--ib-border);
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  transition: all 0.3s ease;
+}
+
+.ib-eye {
+  width: 14px;
+  height: 14px;
+  background: #fff;
+  border-radius: 50%;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: height 0.1s ease;
+}
+
+.ib-pupil {
+  width: 6px;
+  height: 6px;
+  background: var(--ib-primary);
+  border-radius: 50%;
+  position: absolute;
+  transition: transform 0.05s linear;
+}
+
+.ib-auth-container.hide-password .ib-eye {
+  height: 2px;
+  background: var(--ib-text-dim);
+}
+.ib-auth-container.hide-password .ib-pupil {
+  display: none;
+}
+
+.ib-auth-container h2 {
+  color: var(--ib-text);
+  text-align: center;
+  margin-bottom: 30px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  font-size: 1.5rem;
+}
+
+.ib-input-group {
+  position: relative;
+  margin-bottom: 25px;
+}
+
+.ib-input-icon {
+  position: absolute;
+  left: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--ib-text-dim);
+  transition: color 0.3s ease;
+  pointer-events: none;
+  display: flex;
+}
+
+.ib-input-group input {
+  width: 100%;
+  padding: 15px 45px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--ib-border);
+  border-radius: 12px;
+  outline: none;
+  color: var(--ib-text);
+  font-size: 16px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.ib-input-group label {
+  position: absolute;
+  left: 45px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--ib-text-dim);
+  pointer-events: none;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.ib-input-group input:focus,
+.ib-input-group input:not(:placeholder-shown) {
+  border-color: var(--ib-primary);
+  background: rgba(16, 185, 129, 0.05);
+  box-shadow: 0 0 15px rgba(16, 185, 129, 0.2);
+}
+
+.ib-input-group input:focus ~ label,
+.ib-input-group input:not(:placeholder-shown) ~ label {
+  top: -12px;
+  left: 12px;
+  font-size: 12px;
+  color: var(--ib-secondary);
+  padding: 0 8px;
+  background: #022c22;
+  border-radius: 4px;
+}
+
+.ib-input-group input:focus ~ .ib-input-icon {
+  color: var(--ib-secondary);
+}
+
+.ib-toggle-password {
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--ib-text-dim);
+  cursor: pointer;
+  transition: color 0.3s ease;
+  background: none;
+  border: none;
+  padding: 0;
+  display: flex;
+}
+.ib-toggle-password:hover {
+  color: var(--ib-text);
+}
+
+.ib-utils {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+  margin-bottom: 30px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ib-remember-me {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ib-text-dim);
+  cursor: pointer;
+}
+.ib-remember-me input {
+  accent-color: var(--ib-primary);
+}
+
+.ib-forgot-pass {
+  color: var(--ib-secondary);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  font-size: 14px;
+  transition: opacity 0.3s;
+}
+.ib-forgot-pass:hover {
+  text-decoration: underline;
+}
+
+.ib-hint {
+  margin: -14px 0 25px;
+  font-size: 12px;
+  color: var(--ib-text-dim);
+}
+
+.ib-submit-btn {
+  width: 100%;
+  padding: 15px;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(90deg, var(--ib-primary), #047857);
+  color: white;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.3s ease;
+}
+.ib-submit-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(16, 185, 129, 0.4);
+}
+.ib-submit-btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+.ib-submit-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.ib-ripple {
+  position: absolute;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  transform: scale(0);
+  animation: ib-ripple-effect 0.6s linear;
+  pointer-events: none;
+}
+@keyframes ib-ripple-effect {
+  to {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+.ib-error-msg {
+  margin-top: 16px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: rgba(255, 118, 117, 0.1);
+  border: 1px solid rgba(255, 118, 117, 0.3);
+  color: #ff9b96;
+  font-size: 14px;
+}
+
+.ib-footer-links {
+  margin-top: 24px;
+  text-align: center;
+  font-size: 14px;
+  color: var(--ib-text-dim);
+}
+.ib-footer-links button {
+  color: var(--ib-secondary);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  font-weight: 600;
+}
+.ib-footer-links button:hover {
+  text-decoration: underline;
+}
+
+.ib-success-overlay {
+  position: absolute;
+  inset: 0;
+  background: #0b1a15;
+  border-radius: 24px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.5s ease;
+  z-index: 20;
+  text-align: center;
+  padding: 20px;
+}
+.ib-auth-container.success .ib-success-overlay {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.ib-success-checkmark {
+  width: 80px;
+  height: 80px;
+  background: #10b981;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  transform: scale(0);
+  transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.3s;
+}
+.ib-auth-container.success .ib-success-checkmark {
+  transform: scale(1);
+}
+.ib-success-overlay h2 {
+  color: var(--ib-text);
+  margin-top: 20px;
+  margin-bottom: 0;
+}
+.ib-success-overlay p {
+  color: var(--ib-text-dim);
+  margin: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ib-glow-sphere,
+  .ib-pupil,
+  .ib-auth-container,
+  .ib-success-checkmark {
+    animation: none !important;
+    transition: none !important;
+  }
+}

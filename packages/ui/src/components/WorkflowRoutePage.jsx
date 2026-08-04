@@ -128,7 +128,7 @@ export default function WorkflowRoutePage({ navigate, content, variant }) {
                     Investor: Great. Please add the revenue summary and a Q&A
                     note.
                   </div>
-                  <div className="max-w-[88%] rounded-3xl border border-white/20 bg-white px-4 py-3 text-sm text-ink-700 shadow-soft dark:border-white/10 dark:bg-ink-950/55 dark:text-ink-200">
+                  <div className="max-w-[88%] rounded-3xl border border-white/20 bg-white/70 px-4 py-3 text-sm text-ink-700 shadow-soft backdrop-blur-md dark:border-white/10 dark:bg-ink-950/55 dark:text-ink-200">
                     Shared note: diligence call scheduled for Thursday at 2 PM.
                   </div>
                 </div>
