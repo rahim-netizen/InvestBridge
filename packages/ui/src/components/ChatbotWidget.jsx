@@ -64,8 +64,8 @@ export default function ChatbotWidget() {
       </button>
 
       {isOpen && (
-        <div className="fixed bottom-24 right-5 z-[60] flex w-[min(92vw,24rem)] flex-col overflow-hidden rounded-3xl border border-ink-200 bg-white shadow-2xl dark:border-ink-800 dark:bg-ink-950">
-          <div className="flex items-center justify-between border-b border-ink-100 bg-gradient-to-r from-brand-600 to-brand-700 px-4 py-3 text-white">
+        <div className="fixed bottom-24 right-5 z-[60] flex w-[min(92vw,24rem)] flex-col overflow-hidden rounded-3xl border border-white/40 bg-white/75 shadow-2xl backdrop-blur-2xl dark:border-white/10 dark:bg-ink-950/80">
+          <div className="flex items-center justify-between border-b border-white/10 bg-gradient-to-r from-brand-600/90 to-brand-700/90 px-4 py-3 text-white backdrop-blur-xl">
             <div className="flex items-center gap-2">
               <div className="grid h-9 w-9 place-items-center rounded-full bg-white/20">
                 <Sparkles className="h-5 w-5" />
@@ -85,14 +85,14 @@ export default function ChatbotWidget() {
             </button>
           </div>
 
-          <div className="flex h-80 flex-col gap-3 overflow-y-auto bg-ink-50/80 px-4 py-3 dark:bg-ink-900/70">
+          <div className="flex h-80 flex-col gap-3 overflow-y-auto bg-white/30 px-4 py-3 backdrop-blur-md dark:bg-ink-900/40">
             {messages.map((message) => (
               <div
                 key={message.id}
                 className={`max-w-[85%] rounded-2xl px-3 py-2 text-sm leading-relaxed ${
                   message.sender === "user"
                     ? "ml-auto bg-brand-600 text-white"
-                    : "bg-white text-ink-700 shadow-sm dark:bg-ink-800 dark:text-ink-100"
+                    : "bg-white/70 text-ink-700 shadow-sm backdrop-blur-md dark:bg-ink-800/70 dark:text-ink-100"
                 }`}
               >
                 {message.text}
@@ -100,11 +100,11 @@ export default function ChatbotWidget() {
             ))}
           </div>
 
-          <form onSubmit={handleSubmit} className="border-t border-ink-100 bg-white p-3 dark:border-ink-800 dark:bg-ink-950">
+          <form onSubmit={handleSubmit} className="border-t border-white/10 bg-white/60 p-3 backdrop-blur-xl dark:border-white/10 dark:bg-ink-950/70">
             <label className="sr-only" htmlFor="chatbot-input">
               Type your message
             </label>
-            <div className="flex items-center gap-2 rounded-full border border-ink-200 bg-ink-50 px-3 py-2 dark:border-ink-700 dark:bg-ink-900">
+            <div className="flex items-center gap-2 rounded-full border border-white/30 bg-white/50 px-3 py-2 dark:border-white/10 dark:bg-ink-900/50">
               <input
                 id="chatbot-input"
                 type="text"

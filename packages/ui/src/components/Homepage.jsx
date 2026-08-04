@@ -345,7 +345,7 @@ function Hero({ navigate }) {
                 </div>
               </div>
 
-              <div className="absolute -bottom-8 -left-6 w-44 animate-floatUp rounded-2xl border border-ink-100 bg-white p-4 shadow-lift holo-card sm:-left-10">
+              <div className="absolute -bottom-8 -left-6 w-44 animate-floatUp rounded-2xl border border-white/40 bg-white/70 p-4 shadow-lift backdrop-blur-xl holo-card dark:border-white/10 dark:bg-ink-900/60 sm:-left-10">
                 <p className="text-xs text-ink-500">New investment</p>
                 <p className="mt-1 font-display text-lg font-bold text-ink-900">
                   $50,000
@@ -355,7 +355,7 @@ function Hero({ navigate }) {
                 </p>
               </div>
 
-              <div className="absolute -right-4 -top-6 hidden animate-floatUp rounded-2xl border border-ink-100 bg-white px-4 py-3 shadow-lift holo-card [animation-delay:1.5s] sm:block">
+              <div className="absolute -right-4 -top-6 hidden animate-floatUp rounded-2xl border border-white/40 bg-white/70 px-4 py-3 shadow-lift backdrop-blur-xl holo-card dark:border-white/10 dark:bg-ink-900/60 [animation-delay:1.5s] sm:block">
                 <p className="text-xs font-semibold text-ink-900">Live deals</p>
                 <p className="font-display text-xl font-extrabold text-brand-600">
                   128
