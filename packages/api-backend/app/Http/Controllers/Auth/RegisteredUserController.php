@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Mail\WelcomeEmail;
+use App\Models\Profile;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -34,6 +35,12 @@ class RegisteredUserController extends Controller
             'email' => $request->email,
             'password' => Hash::make($request->string('password')),
             'email_verified_at' => null,
+        ]);
+
+        Profile::create([
+            'user_id' => $user->id,
+            'full_name' => $user->name,
+            'profile_complete' => false,
         ]);
 
         // Generate 5-minute temporary signed verification URL
