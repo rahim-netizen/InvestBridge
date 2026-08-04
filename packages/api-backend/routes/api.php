@@ -17,9 +17,13 @@ Route::get('/verify-email/{id}/{hash}', VerifyEmailController::class)
 
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/user', function (Request $request) {
-        return $request->user();
+        $user = $request->user();
+        $user->setRelation('profile', $user->profile);
+        return $user;
     });
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy']);
+    Route::get('/profile', [\App\Http\Controllers\ProfileController::class, 'show']);
+    Route::put('/profile', [\App\Http\Controllers\ProfileController::class, 'update']);
 });
 
 Route::post('/chatbot/message', [\App\Http\Controllers\ChatbotController::class, 'message']);

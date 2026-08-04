@@ -1,6 +1,7 @@
-import { CheckCircle2, Sparkles, UserRound } from "lucide-react";
+import { CheckCircle2, Sparkles, UserRound, Camera } from "lucide-react";
 import { useEffect, useState } from "react";
 import { getCurrentUser } from "../api/auth";
+import { updateProfile } from "../api/profile";
 
 const getStoredUser = () => {
   if (typeof window === "undefined") {
@@ -18,27 +19,40 @@ const getStoredUser = () => {
 
 const buildInitialForm = () => {
   return {
+    profileImage: null,
     fullName: "",
     companyName: "",
     industry: "",
-    stage: "Pre-seed",
-    location: "",
-    mission: "",
-    fundingGoal: "",
+    position: "",
     website: "",
-    company: "",
-    focus: "",
-    ticketSize: "",
-    geography: "",
-    sectors: "",
+    mission: "",
     notes: "",
+    companyPersonnelPhotos: [],
+    nidPhotos: [],
   };
 };
+
+function mapBackendProfileToForm(backendProfile) {
+  if (!backendProfile) return buildInitialForm();
+  return {
+    fullName: backendProfile.full_name || backendProfile.fullName || "",
+    companyName: backendProfile.company_name || backendProfile.companyName || "",
+    industry: backendProfile.industry || "",
+    position: backendProfile.position || "",
+    website: backendProfile.website || "",
+    mission: backendProfile.mission || "",
+    notes: backendProfile.notes || "",
+    companyPersonnelPhotos: [],
+    nidPhotos: [],
+    profileImage: null,
+  };
+}
 
 export default function ProfileDashboard({ navigate }) {
   const [user, setUser] = useState(() => getStoredUser());
   const [form, setForm] = useState(() => buildInitialForm());
   const [status, setStatus] = useState("");
+  const [hasCompanyInfo, setHasCompanyInfo] = useState(false);
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -55,21 +69,24 @@ export default function ProfileDashboard({ navigate }) {
       const storedUser = getStoredUser();
       if (storedUser) {
         setUser(storedUser);
-        setForm(storedUser.profile ? { ...buildInitialForm(), ...storedUser.profile } : buildInitialForm());
-        return;
-      }
-
-      if (isVerified || email) {
-        const paramUser = { id: id || 1, email: email || "user@example.com", name: name || "User" };
-        localStorage.setItem("investbridgeSessionUser", JSON.stringify(paramUser));
-        setUser(paramUser);
-        return;
+        if (storedUser.profile) {
+          const profile = mapBackendProfileToForm(storedUser.profile);
+          if (profile.companyName || profile.industry || profile.position || profile.website || profile.mission) {
+            setHasCompanyInfo(true);
+          }
+          setForm(profile);
+          return;
+        }
       }
 
       const fetched = await getCurrentUser();
       if (fetched) {
         setUser(fetched);
-        setForm(fetched.profile ? { ...buildInitialForm(), ...fetched.profile } : buildInitialForm());
+        const profile = fetched.profile ? mapBackendProfileToForm(fetched.profile) : buildInitialForm();
+        if (profile.companyName || profile.industry || profile.position || profile.website || profile.mission) {
+          setHasCompanyInfo(true);
+        }
+        setForm(profile);
       } else {
         setUser(null);
         navigate("/login");
@@ -84,37 +101,80 @@ export default function ProfileDashboard({ navigate }) {
     setForm((current) => ({ ...current, [name]: value }));
   };
 
-  const handleSubmit = (event) => {
+  const handlePhotoChange = async (event, field) => {
+    const files = Array.from(event.target.files || []);
+    const readers = files.map(
+      (file) =>
+        new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.readAsDataURL(file);
+        }),
+    );
+
+    const results = await Promise.all(readers);
+    setForm((current) => ({ ...current, [field]: results }));
+  };
+
+  const handleProfileImageChange = (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      setForm((current) => ({ ...current, profileImage: reader.result }));
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleSubmit = async (event) => {
     event.preventDefault();
 
     if (!user) {
       return;
     }
 
-    const savedUser = {
-      ...user,
-      profile: form,
-      profileComplete: true,
+    const profilePayload = {
+      full_name: form.fullName,
+      company_name: form.companyName,
+      industry: form.industry,
+      position: form.position,
+      website: form.website,
+      mission: form.mission,
+      notes: form.notes,
+      profile_complete: true,
     };
 
-    const storedUsers = JSON.parse(
-      localStorage.getItem("investbridgeUsers") || "[]",
-    );
-    const existingIndex = storedUsers.findIndex(
-      (entry) => entry.email === user.email,
-    );
+    try {
+      const response = await updateProfile(profilePayload);
+      const savedUser = {
+        ...user,
+        ...(response.user || {}),
+        profile: response.profile || form,
+        profileComplete: true,
+      };
 
-    const nextUsers =
-      existingIndex >= 0
-        ? storedUsers.map((entry, index) =>
-            index === existingIndex ? savedUser : entry,
-          )
-        : [...storedUsers, savedUser];
+      const storedUsers = JSON.parse(
+        localStorage.getItem("investbridgeUsers") || "[]",
+      );
+      const existingIndex = storedUsers.findIndex(
+        (entry) => entry.email === user.email,
+      );
 
-    localStorage.setItem("investbridgeSessionUser", JSON.stringify(savedUser));
-    localStorage.setItem("investbridgeUsers", JSON.stringify(nextUsers));
-    setStatus("Profile saved. Your dashboard is ready to go.");
-    navigate("/");
+      const nextUsers =
+        existingIndex >= 0
+          ? storedUsers.map((entry, index) =>
+              index === existingIndex ? savedUser : entry,
+            )
+          : [...storedUsers, savedUser];
+
+      localStorage.setItem("investbridgeSessionUser", JSON.stringify(savedUser));
+      localStorage.setItem("investbridgeUsers", JSON.stringify(nextUsers));
+      setStatus("Profile saved. Your dashboard is ready to go.");
+      navigate("/");
+    } catch (err) {
+      setStatus("Failed to save profile. Please try again.");
+    }
   };
 
   const inputWrapperClassName =
@@ -123,6 +183,11 @@ export default function ProfileDashboard({ navigate }) {
     "w-full rounded-2xl border border-ink-200 bg-ink-50 px-4 py-3 text-sm text-ink-900 outline-none placeholder:text-ink-400 dark:border-ink-700 dark:bg-ink-800 dark:text-ink-50 dark:placeholder:text-ink-500";
   const fieldLabelClassName =
     "mb-2 block text-sm font-medium text-ink-700 dark:text-ink-300";
+  const blurredClassName =
+    "transition-all duration-200 " +
+    (hasCompanyInfo
+      ? "blur-0"
+      : "blur-sm select-none pointer-events-none opacity-60");
 
   if (!user) {
     return (
@@ -195,6 +260,34 @@ export default function ProfileDashboard({ navigate }) {
           </div>
 
           <form className="mt-8 space-y-4" onSubmit={handleSubmit}>
+            <div className="flex flex-col items-center">
+              <label className="group relative cursor-pointer">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleProfileImageChange}
+                  className="sr-only"
+                />
+                <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-full border-2 border-dashed border-ink-300 bg-ink-50 transition group-hover:border-brand-400 group-hover:bg-brand-50 dark:border-ink-600 dark:bg-ink-800 dark:group-hover:border-brand-500 dark:group-hover:bg-brand-900/20">
+                  {form.profileImage ? (
+                    <img
+                      src={form.profileImage}
+                      alt="Profile preview"
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex flex-col items-center gap-1 text-ink-400 dark:text-ink-500">
+                      <Camera className="h-6 w-6" />
+                      <UserRound className="h-8 w-8" />
+                    </div>
+                  )}
+                </div>
+              </label>
+              <p className="mt-2 text-xs text-ink-500 dark:text-ink-400">
+                Profile image (optional)
+              </p>
+            </div>
+
             <label className="block">
               <span className={fieldLabelClassName}>Full name</span>
               <div className={inputWrapperClassName}>
@@ -211,70 +304,65 @@ export default function ProfileDashboard({ navigate }) {
               </div>
             </label>
 
-            <div className="rounded-2xl border border-brand-100 bg-brand-50 p-4 dark:border-brand-900/60 dark:bg-brand-950/40">
-              <p className="text-sm font-semibold text-ink-900 dark:text-ink-50">
-                Company information
-              </p>
-              <p className="mt-1 text-sm text-ink-600 dark:text-ink-300">
-                Tell us about your company or firm
-              </p>
-            </div>
-
-            <label className="block">
-              <span className={fieldLabelClassName}>Company/Firm name</span>
+            <label className="flex items-center gap-3 rounded-2xl border border-ink-200 bg-ink-50 px-4 py-3 dark:border-ink-700 dark:bg-ink-800">
               <input
-                type="text"
-                name="companyName"
-                value={form.companyName}
-                onChange={handleChange}
-                placeholder="Your company or firm name"
-                className={inputClassName}
+                type="checkbox"
+                checked={hasCompanyInfo}
+                onChange={(e) => setHasCompanyInfo(e.target.checked)}
+                className="h-4 w-4 rounded border-ink-300 text-brand-600 focus:ring-brand-500"
               />
+              <span className="text-sm font-medium text-ink-700 dark:text-ink-300">
+                Company information
+              </span>
             </label>
 
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className={blurredClassName}>
+              <div className="rounded-2xl border border-brand-100 bg-brand-50 p-4 dark:border-brand-900/60 dark:bg-brand-950/40">
+                <p className="text-sm font-semibold text-ink-900 dark:text-ink-50">
+                  Company information
+                </p>
+                <p className="mt-1 text-sm text-ink-600 dark:text-ink-300">
+                  Tell us about your company or firm
+                </p>
+              </div>
+
               <label className="block">
-                <span className={fieldLabelClassName}>Industry or focus</span>
+                <span className={fieldLabelClassName}>Company/Firm name</span>
                 <input
                   type="text"
-                  name="industry"
-                  value={form.industry}
+                  name="companyName"
+                  value={form.companyName}
                   onChange={handleChange}
-                  placeholder="e.g., Healthtech, Fintech, SaaS"
+                  placeholder="Your company or firm name"
                   className={inputClassName}
                 />
               </label>
 
-              <label className="block">
-                <span className={fieldLabelClassName}>Stage</span>
-                <select
-                  name="stage"
-                  value={form.stage}
-                  onChange={handleChange}
-                  className={inputClassName}
-                >
-                  <option>Pre-seed</option>
-                  <option>Seed</option>
-                  <option>Series A</option>
-                  <option>Series B</option>
-                  <option>Series C+</option>
-                  <option>Growth</option>
-                </select>
-              </label>
-            </div>
+              <div className="grid gap-4 md:grid-cols-2">
+                <label className="block">
+                  <span className={fieldLabelClassName}>Industry or focus</span>
+                  <input
+                    type="text"
+                    name="industry"
+                    value={form.industry}
+                    onChange={handleChange}
+                    placeholder="e.g., Healthtech, Fintech, SaaS"
+                    className={inputClassName}
+                  />
+                </label>
 
-            <div className="grid gap-4 md:grid-cols-2">
-              <label className="block">
-                <span className={fieldLabelClassName}>Location</span>
-                <input
-                  type="text"
-                  name="location"
-                  value={form.location}
-                  onChange={handleChange}
-                  placeholder="City, Country"
-                  className={inputClassName}
-                />
-              </label>
+                <label className="block">
+                  <span className={fieldLabelClassName}>Position</span>
+                  <input
+                    type="text"
+                    name="position"
+                    value={form.position}
+                    onChange={handleChange}
+                    placeholder="Your position in the company"
+                    className={inputClassName}
+                  />
+                </label>
+              </div>
 
               <label className="block">
                 <span className={fieldLabelClassName}>Website</span>
@@ -287,21 +375,49 @@ export default function ProfileDashboard({ navigate }) {
                   className={inputClassName}
                 />
               </label>
-            </div>
 
-            <label className="block">
-              <span className={fieldLabelClassName}>
-                Mission or focus areas
-              </span>
-              <textarea
-                name="mission"
-                value={form.mission}
-                onChange={handleChange}
-                rows="3"
-                placeholder="Describe your mission, what problems you solve, or your investment focus"
-                className={inputClassName}
-              />
-            </label>
+              <label className="block">
+                <span className={fieldLabelClassName}>
+                  Mission or focus areas
+                </span>
+                <textarea
+                  name="mission"
+                  value={form.mission}
+                  onChange={handleChange}
+                  rows="3"
+                  placeholder="Describe your mission, what problems you solve, or your investment focus"
+                  className={inputClassName}
+                />
+              </label>
+
+              <label className="block">
+                <span className={fieldLabelClassName}>
+                  Company personnel photos
+                </span>
+                <p className="mb-2 text-xs text-ink-500 dark:text-ink-400">
+                  Upload up to 2 photos
+                </p>
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={(e) => handlePhotoChange(e, "companyPersonnelPhotos")}
+                  className="block w-full text-sm text-ink-500 file:mr-4 file:rounded-full file:border-0 file:bg-brand-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-brand-700 hover:file:bg-brand-100 dark:file:bg-brand-900/40 dark:file:text-brand-300"
+                />
+                {(form.companyPersonnelPhotos || []).length > 0 && (
+                  <div className="mt-3 flex gap-3">
+                    {form.companyPersonnelPhotos.map((src, idx) => (
+                      <img
+                        key={idx}
+                        src={src}
+                        alt={`Company personnel ${idx + 1}`}
+                        className="h-16 w-16 rounded-xl object-cover"
+                      />
+                    ))}
+                  </div>
+                )}
+              </label>
+            </div>
 
             <div className="rounded-2xl border border-brand-100 bg-brand-50 p-4 dark:border-brand-900/60 dark:bg-brand-950/40">
               <p className="text-sm font-semibold text-ink-900 dark:text-ink-50">
@@ -311,60 +427,6 @@ export default function ProfileDashboard({ navigate }) {
                 Share your investment interests or funding goals
               </p>
             </div>
-
-            <label className="block">
-              <span className={fieldLabelClassName}>
-                Funding goal or typical investment
-              </span>
-              <input
-                type="text"
-                name="fundingGoal"
-                value={form.fundingGoal}
-                onChange={handleChange}
-                placeholder="e.g., $500k, $100k-$500k"
-                className={inputClassName}
-              />
-            </label>
-
-            <label className="block">
-              <span className={fieldLabelClassName}>
-                Preferred sectors or types
-              </span>
-              <input
-                type="text"
-                name="sectors"
-                value={form.sectors}
-                onChange={handleChange}
-                placeholder="e.g., AI, climate tech, fintech"
-                className={inputClassName}
-              />
-            </label>
-
-            <label className="block">
-              <span className={fieldLabelClassName}>
-                Typical investment ticket size or check size
-              </span>
-              <input
-                type="text"
-                name="ticketSize"
-                value={form.ticketSize}
-                onChange={handleChange}
-                placeholder="e.g., $500k, $100k-$1M"
-                className={inputClassName}
-              />
-            </label>
-
-            <label className="block">
-              <span className={fieldLabelClassName}>Geographic interests</span>
-              <input
-                type="text"
-                name="geography"
-                value={form.geography}
-                onChange={handleChange}
-                placeholder="e.g., US, MENA, Europe"
-                className={inputClassName}
-              />
-            </label>
 
             <label className="block">
               <span className={fieldLabelClassName}>
@@ -378,6 +440,34 @@ export default function ProfileDashboard({ navigate }) {
                 placeholder="Any additional details about your background, deal criteria, or connections"
                 className={inputClassName}
               />
+            </label>
+
+            <label className="block">
+              <span className={fieldLabelClassName}>
+                NID photos
+              </span>
+              <p className="mb-2 text-xs text-ink-500 dark:text-ink-400">
+                Upload up to 2 photos
+              </p>
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={(e) => handlePhotoChange(e, "nidPhotos")}
+                className="block w-full text-sm text-ink-500 file:mr-4 file:rounded-full file:border-0 file:bg-brand-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-brand-700 hover:file:bg-brand-100 dark:file:bg-brand-900/40 dark:file:text-brand-300"
+              />
+              {(form.nidPhotos || []).length > 0 && (
+                <div className="mt-3 flex gap-3">
+                  {form.nidPhotos.map((src, idx) => (
+                    <img
+                      key={idx}
+                      src={src}
+                      alt={`NID ${idx + 1}`}
+                      className="h-16 w-16 rounded-xl object-cover"
+                    />
+                  ))}
+                </div>
+              )}
             </label>
 
             <button type="submit" className="btn-primary w-full">
