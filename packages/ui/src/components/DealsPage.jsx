@@ -11,132 +11,31 @@ import {
   Clock,
   Star,
   ChevronDown,
+  Trash2,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { deleteOpportunity, getAllOpportunities } from "../api/opportunities";
 
-const getStoredDeals = () => {
+const getStoredUser = () => {
   if (typeof window === "undefined") {
-    return [];
+    return null;
   }
   try {
-    return JSON.parse(localStorage.getItem("investbridgeDeals") || "[]");
+    return JSON.parse(
+      localStorage.getItem("investbridgeSessionUser") || "null",
+    );
   } catch {
-    return [];
+    return null;
   }
 };
-
-const saveDeals = (deals) => {
-  localStorage.setItem("investbridgeDeals", JSON.stringify(deals));
-};
-
-const defaultDeals = [
-  {
-    id: 1,
-    name: "NovaVet AI",
-    logo: "NV",
-    sector: "HealthTech",
-    stage: "Series A",
-    location: "San Francisco, US",
-    goal: "$1.5M",
-    raised: "$920K",
-    pct: 61,
-    blurb: "AI-assisted diagnostics for independent veterinary clinics.",
-    image:
-      "https://images.pexels.com/photos/7088530/pexels-photo-7088530.jpeg?auto=compress&cs=tinysrgb&w=800",
-    investors: 14,
-    daysLeft: 14,
-  },
-  {
-    id: 2,
-    name: "Lumen Grid",
-    logo: "LG",
-    sector: "CleanEnergy",
-    stage: "Seed",
-    location: "Berlin, DE",
-    goal: "$800K",
-    raised: "$540K",
-    pct: 67,
-    blurb: "Decentralized solar microgrids for multi-family housing.",
-    image:
-      "https://images.pexels.com/photos/371900/pexels-photo-371900.jpeg?auto=compress&cs=tinysrgb&w=800",
-    investors: 8,
-    daysLeft: 21,
-  },
-  {
-    id: 3,
-    name: "Cartful",
-    logo: "CF",
-    sector: "E-commerce",
-    stage: "Pre-seed",
-    location: "Bengaluru, IN",
-    goal: "$400K",
-    raised: "$210K",
-    pct: 52,
-    blurb: "Headless checkout that turns every link into a storefront.",
-    image:
-      "https://images.pexels.com/photos/4464820/pexels-photo-4464820.jpeg?auto=compress&cs=tinysrgb&w=800",
-    investors: 5,
-    daysLeft: 30,
-  },
-  {
-    id: 4,
-    name: "Verdant Labs",
-    logo: "VL",
-    sector: "AgriTech",
-    stage: "Series A",
-    location: "Nairobi, KE",
-    goal: "$2M",
-    raised: "$1.1M",
-    pct: 55,
-    blurb: "Satellite-driven crop intelligence for smallholder farmers.",
-    image:
-      "https://images.pexels.com/photos/2284166/pexels-photo-2284166.jpeg?auto=compress&cs=tinysrgb&w=800",
-    investors: 11,
-    daysLeft: 7,
-  },
-  {
-    id: 5,
-    name: "PayBridge",
-    logo: "PB",
-    sector: "FinTech",
-    stage: "Seed",
-    location: "Singapore",
-    goal: "$1M",
-    raised: "$780K",
-    pct: 78,
-    blurb: "Cross-border B2B payments with instant FX settlement.",
-    image:
-      "https://images.pexels.com/photos/4968391/pexels-photo-4968391.jpeg?auto=compress&cs=tinysrgb&w=800",
-    investors: 9,
-    daysLeft: 3,
-  },
-  {
-    id: 6,
-    name: "Loop Education",
-    logo: "LE",
-    sector: "EdTech",
-    stage: "Pre-seed",
-    location: "São Paulo, BR",
-    goal: "$500K",
-    raised: "$260K",
-    pct: 52,
-    blurb: "Adaptive learning loops for public school curricula.",
-    image:
-      "https://images.pexels.com/photos/5212345/pexels-photo-5212345.jpeg?auto=compress&cs=tinysrgb&w=800",
-    investors: 4,
-    daysLeft: 18,
-  },
-];
 
 const sectors = ["All", "HealthTech", "CleanEnergy", "E-commerce", "AgriTech", "FinTech", "EdTech"];
 const stages = ["All", "Pre-seed", "Seed", "Series A", "Series B", "Series C+", "Growth"];
 const geographies = ["All", "US", "DE", "IN", "KE", "SG", "BR"];
 
 export default function DealsPage({ navigate }) {
-  const [deals, setDeals] = useState(() => {
-    const stored = getStoredDeals();
-    return stored.length > 0 ? stored : defaultDeals;
-  });
+  const user = getStoredUser();
+  const [deals, setDeals] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [sectorFilter, setSectorFilter] = useState("All");
   const [stageFilter, setStageFilter] = useState("All");
@@ -145,10 +44,86 @@ export default function DealsPage({ navigate }) {
   const [view, setView] = useState("grid");
   const [selectedDeal, setSelectedDeal] = useState(null);
   const [imageErrors, setImageErrors] = useState({});
+  const [deleteId, setDeleteId] = useState(null);
 
   useEffect(() => {
-    saveDeals(deals);
-  }, [deals]);
+    const handler = () => {
+      async function loadDeals() {
+        try {
+          const data = await getAllOpportunities();
+          if (data.opportunities && data.opportunities.length > 0) {
+            const mapped = data.opportunities.map((opp) => ({
+              id: opp.id,
+              name: opp.company,
+              logo: opp.company.slice(0, 2).toUpperCase(),
+              sector: opp.sector,
+              stage: "TBD",
+              location: opp.location || "TBD",
+              goal: opp.funding_goal || "$0",
+              raised: "$0",
+              pct: 0,
+              blurb: opp.description || "",
+              image: opp.image || null,
+              investors: 0,
+              daysLeft: opp.timeline || "TBD",
+              postedBy: opp.user?.email || null,
+            }));
+            setDeals(mapped);
+          }
+        } catch {
+          // keep localStorage fallback
+        }
+      }
+      loadDeals();
+    };
+    window.addEventListener("opportunity-changed", handler);
+    return () => {
+      window.removeEventListener("opportunity-changed", handler);
+    };
+  }, []);
+
+  const handleDelete = async (id) => {
+    try {
+      await deleteOpportunity(id);
+      const updated = deals.filter((d) => d.id !== id);
+      setDeals(updated);
+      setDeleteId(null);
+      window.dispatchEvent(new CustomEvent("opportunity-changed"));
+    } catch {
+      setDeleteId(null);
+    }
+  };
+
+  useEffect(() => {
+    async function loadDeals() {
+      try {
+        const data = await getAllOpportunities();
+        if (data.opportunities && data.opportunities.length > 0) {
+          const mapped = data.opportunities.map((opp) => ({
+            id: opp.id,
+            name: opp.company,
+            logo: opp.company.slice(0, 2).toUpperCase(),
+            sector: opp.sector,
+            stage: "TBD",
+            location: opp.location || "TBD",
+            goal: opp.funding_goal || "$0",
+            raised: "$0",
+            pct: 0,
+            blurb: opp.description || "",
+            image: opp.image || null,
+            investors: 0,
+            daysLeft: opp.timeline || "TBD",
+            postedBy: opp.user?.email || null,
+          }));
+          setDeals(mapped);
+        }
+      } catch {
+        // keep localStorage fallback
+      }
+    }
+
+    loadDeals();
+  }, []);
 
   const filteredDeals = deals
     .filter((d) => {
@@ -367,17 +342,31 @@ export default function DealsPage({ navigate }) {
                       </span>
                     </div>
 
-                    <a
-                      href="#"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedDeal(deal);
-                      }}
-                      className="mt-5 inline-flex items-center gap-1 text-sm font-semibold text-brand-700 transition-colors hover:text-brand-800"
-                    >
-                      View deal room
-                      <ArrowUpRight className="h-4 w-4" />
-                    </a>
+                     <a
+                       href="#"
+                       onClick={(e) => {
+                         e.stopPropagation();
+                         setSelectedDeal(deal);
+                       }}
+                       className="mt-5 inline-flex items-center gap-1 text-sm font-semibold text-brand-700 transition-colors hover:text-brand-800"
+                     >
+                       View deal room
+                       <ArrowUpRight className="h-4 w-4" />
+                     </a>
+
+                     {deal.postedBy === user?.email && (
+                       <button
+                         type="button"
+                         onClick={(e) => {
+                           e.stopPropagation();
+                           setDeleteId(deal.id);
+                         }}
+                         className="ml-3 inline-flex items-center gap-1 text-xs font-semibold text-rose-500 transition-colors hover:text-rose-700"
+                       >
+                         <Trash2 className="h-3.5 w-3.5" />
+                         Remove
+                       </button>
+                     )}
                   </div>
                 </article>
               ))
@@ -424,20 +413,33 @@ export default function DealsPage({ navigate }) {
                     </span>
                   </div>
                 </div>
-                <div className="text-right shrink-0">
-                  <p className="font-display text-xl font-bold text-ink-900 dark:text-ink-50">
-                    {deal.pct}%
-                  </p>
-                  <p className="text-xs text-ink-500 dark:text-ink-400">
-                    {deal.raised} of {deal.goal}
-                  </p>
-                  <div className="mt-2 h-1.5 w-24 overflow-hidden rounded-full bg-ink-100 dark:bg-ink-800">
-                    <div
-                      className="h-full rounded-full bg-gradient-to-r from-brand-500 to-brand-700"
-                      style={{ width: `${deal.pct}%` }}
-                    />
-                  </div>
-                </div>
+                 <div className="text-right shrink-0">
+                   <p className="font-display text-xl font-bold text-ink-900 dark:text-ink-50">
+                     {deal.pct}%
+                   </p>
+                   <p className="text-xs text-ink-500 dark:text-ink-400">
+                     {deal.raised} of {deal.goal}
+                   </p>
+                   <div className="mt-2 h-1.5 w-24 overflow-hidden rounded-full bg-ink-100 dark:bg-ink-800">
+                     <div
+                       className="h-full rounded-full bg-gradient-to-r from-brand-500 to-brand-700"
+                       style={{ width: `${deal.pct}%` }}
+                     />
+                   </div>
+                   {deal.postedBy === user?.email && (
+                     <button
+                       type="button"
+                       onClick={(e) => {
+                         e.stopPropagation();
+                         setDeleteId(deal.id);
+                       }}
+                       className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-rose-500 transition-colors hover:text-rose-700"
+                     >
+                       <Trash2 className="h-3.5 w-3.5" />
+                       Remove
+                     </button>
+                   )}
+                 </div>
               </div>
             ))}
           </div>
@@ -593,6 +595,53 @@ export default function DealsPage({ navigate }) {
             </button>
           </div>
         </div>
+
+        {deleteId !== null && (
+          <div className="fixed inset-0 z-50 grid place-items-center bg-black/30 px-4">
+            <div className="glass-panel-strong holo-card w-full max-w-md rounded-[2rem] p-6">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="grid h-11 w-11 place-items-center rounded-2xl border border-white/20 bg-rose-600/90 text-white shadow-soft">
+                    <Trash2 className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h2 className="font-display text-xl font-bold text-ink-900 dark:text-ink-50">
+                      Remove deal?
+                    </h2>
+                    <p className="mt-1 text-sm text-ink-600 dark:text-ink-300">
+                      This action cannot be undone. This opportunity will be removed
+                      from discovery and your dashboard.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setDeleteId(null)}
+                  className="text-ink-400 hover:text-ink-700 dark:text-ink-500 dark:hover:text-ink-300"
+                  aria-label="Close"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+              <div className="mt-6 flex items-center justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setDeleteId(null)}
+                  className="btn-ghost"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleDelete(deleteId)}
+                  className="rounded-full bg-rose-600 px-5 py-2.5 text-sm font-semibold text-white shadow-soft transition-colors hover:bg-rose-700"
+                >
+                  Remove deal
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </section>
   );

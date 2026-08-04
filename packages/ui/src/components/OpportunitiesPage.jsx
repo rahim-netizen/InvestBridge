@@ -19,8 +19,23 @@ import {
   Plus,
   X,
   Search,
+  Image as ImageIcon,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { createOpportunity, getAllOpportunities, deleteOpportunity } from "../api/opportunities";
+
+const getStoredUser = () => {
+  if (typeof window === "undefined") {
+    return null;
+  }
+  try {
+    return JSON.parse(
+      localStorage.getItem("investbridgeSessionUser") || "null",
+    );
+  } catch {
+    return null;
+  }
+};
 
 const getStoredOpportunities = () => {
   if (typeof window === "undefined") {
@@ -35,19 +50,6 @@ const getStoredOpportunities = () => {
 
 const saveOpportunities = (opportunities) => {
   localStorage.setItem("investbridgeOpportunities", JSON.stringify(opportunities));
-};
-
-const getStoredUser = () => {
-  if (typeof window === "undefined") {
-    return null;
-  }
-  try {
-    return JSON.parse(
-      localStorage.getItem("investbridgeSessionUser") || "null",
-    );
-  } catch {
-    return null;
-  }
 };
 
 const defaultOpportunities = [
@@ -102,7 +104,7 @@ const defaultOpportunities = [
 ];
 
 const stages = ["Pre-seed", "Seed", "Series A", "Series B", "Series C+", "Growth"];
-const sectors = ["All", "HealthTech", "CleanEnergy", "E-commerce", "AgriTech", "FinTech", "EdTech"];
+const sectors = ["All", "HealthTech", "CleanEnergy", "E-commerce", "AgriTech", "FinTech", "EdTech","Others"];
 
 export default function OpportunitiesPage({ navigate }) {
   const [opportunities, setOpportunities] = useState(() => {
@@ -113,23 +115,88 @@ export default function OpportunitiesPage({ navigate }) {
   const [form, setForm] = useState({
     title: "",
     company: "",
-    sector: "HealthTech",
-    stage: "Pre-seed",
+    sector: "",
     location: "",
     fundingGoal: "",
     description: "",
     timeline: "",
-    nextMilestone: "",
-    businessModel: "",
-    targetAudience: "",
+    image: null,
   });
   const [formStatus, setFormStatus] = useState("");
   const [sectorFilter, setSectorFilter] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     saveOpportunities(opportunities);
   }, [opportunities]);
+
+  useEffect(() => {
+    async function loadOpportunities() {
+      try {
+        const data = await getAllOpportunities();
+        if (data.opportunities && data.opportunities.length > 0) {
+          const mapped = data.opportunities.map((opp) => ({
+            id: opp.id,
+            title: opp.title,
+            company: opp.company,
+            sector: opp.sector,
+            location: opp.location || "TBD",
+            fundingGoal: opp.funding_goal || "$0",
+            raised: "$0",
+            pct: 0,
+            description: opp.description || "",
+            timeline: opp.timeline || "TBD",
+            image: opp.image || null,
+            postedBy: opp.user?.email || null,
+            postedByName: opp.user?.name || opp.user?.email || "Anonymous",
+            createdAt: opp.created_at,
+          }));
+          setOpportunities(mapped);
+        }
+      } catch {
+        // keep localStorage fallback
+      }
+    }
+
+    loadOpportunities();
+  }, []);
+
+  useEffect(() => {
+    const handler = () => {
+      async function loadOpportunities() {
+        try {
+          const data = await getAllOpportunities();
+          if (data.opportunities && data.opportunities.length > 0) {
+            const mapped = data.opportunities.map((opp) => ({
+              id: opp.id,
+              title: opp.title,
+              company: opp.company,
+              sector: opp.sector,
+              location: opp.location || "TBD",
+              fundingGoal: opp.funding_goal || "$0",
+              raised: "$0",
+              pct: 0,
+              description: opp.description || "",
+              timeline: opp.timeline || "TBD",
+              image: opp.image || null,
+              postedBy: opp.user?.email || null,
+              postedByName: opp.user?.name || opp.user?.email || "Anonymous",
+              createdAt: opp.created_at,
+            }));
+            setOpportunities(mapped);
+          }
+        } catch {
+          // keep localStorage fallback
+        }
+      }
+      loadOpportunities();
+    };
+    window.addEventListener("opportunity-changed", handler);
+    return () => {
+      window.removeEventListener("opportunity-changed", handler);
+    };
+  }, []);
 
   const filteredOpportunities = opportunities.filter((o) => {
     const matchesSearch =
@@ -145,59 +212,91 @@ export default function OpportunitiesPage({ navigate }) {
     setForm((current) => ({ ...current, [name]: value }));
   };
 
-  const handleSubmit = (event) => {
+  const handleImageChange = (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      setForm((current) => ({ ...current, image: reader.result }));
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleSubmit = async (event) => {
     event.preventDefault();
+    setFormStatus("");
+    setIsLoading(true);
 
     const sessionUser = getStoredUser();
 
     if (!form.title.trim() || !form.company.trim()) {
       setFormStatus("Please fill in the title and company fields.");
+      setIsLoading(false);
       return;
     }
 
-    const newOpp = {
-      id: Date.now(),
-      title: form.title,
-      company: form.company,
-      sector: form.sector,
-      stage: form.stage,
-      location: form.location || "TBD",
-      fundingGoal: form.fundingGoal || "$0",
-      raised: "$0",
-      pct: 0,
-      description: form.description || "",
-      timeline: form.timeline || "TBD",
-      nextMilestone: form.nextMilestone || "TBD",
-      businessModel: form.businessModel || "TBD",
-      targetAudience: form.targetAudience || "TBD",
-      postedBy: sessionUser?.email || null,
-      postedByName: sessionUser?.name || sessionUser?.email || "Anonymous",
-      createdAt: new Date().toISOString(),
-    };
+    try {
+      const response = await createOpportunity({
+        title: form.title,
+        company: form.company,
+        sector: form.sector || "Other",
+        location: form.location || "TBD",
+        funding_goal: form.fundingGoal || "$0",
+        description: form.description || "",
+        timeline: form.timeline || "TBD",
+        image: form.image || null,
+      });
 
-    const updated = [newOpp, ...opportunities];
-    setOpportunities(updated);
-    setFormStatus("Opportunity posted successfully!");
-    setForm({
-      title: "",
-      company: "",
-      sector: "HealthTech",
-      stage: "Pre-seed",
-      location: "",
-      fundingGoal: "",
-      description: "",
-      timeline: "",
-      nextMilestone: "",
-      businessModel: "",
-      targetAudience: "",
-    });
-    setShowForm(false);
+      const newOpp = {
+        id: response.opportunity.id,
+        title: response.opportunity.title,
+        company: response.opportunity.company,
+        sector: response.opportunity.sector,
+        location: response.opportunity.location || "TBD",
+        fundingGoal: response.opportunity.funding_goal || "$0",
+        raised: "$0",
+        pct: 0,
+        description: response.opportunity.description || "",
+        timeline: response.opportunity.timeline || "TBD",
+        image: response.opportunity.image || form.image,
+        postedBy: sessionUser?.email || null,
+        postedByName: sessionUser?.name || sessionUser?.email || "Anonymous",
+        createdAt: response.opportunity.created_at,
+      };
 
-    setTimeout(() => setFormStatus(""), 4000);
+      setOpportunities((prev) => [newOpp, ...prev]);
+      window.dispatchEvent(new CustomEvent("opportunity-changed"));
+      setFormStatus("Opportunity posted successfully!");
+      setForm({
+        title: "",
+        company: "",
+        sector: "",
+        location: "",
+        fundingGoal: "",
+        description: "",
+        timeline: "",
+        image: null,
+      });
+      setShowForm(false);
+
+      setTimeout(() => setFormStatus(""), 4000);
+    } catch (err) {
+      setFormStatus(err.message || "Failed to post opportunity.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleDelete = (id) => {
-    setOpportunities(opportunities.filter((o) => o.id !== id));
+  const handleDelete = async (id) => {
+    try {
+      await deleteOpportunity(id);
+      const updated = opportunities.filter((o) => o.id !== id);
+      setOpportunities(updated);
+      saveOpportunities(updated);
+      window.dispatchEvent(new CustomEvent("opportunity-changed"));
+    } catch {
+      // keep local state on error
+    }
   };
 
   const inputWrapperClassName =
@@ -255,6 +354,34 @@ export default function OpportunitiesPage({ navigate }) {
             </p>
 
             <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
+              <div className="flex flex-col items-center">
+                <label className="group relative cursor-pointer">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    className="sr-only"
+                  />
+                  <div className="flex h-48 w-48 items-center justify-center overflow-hidden rounded-3xl border-2 border-dashed border-ink-300 bg-ink-50 transition group-hover:border-brand-400 group-hover:bg-brand-50 dark:border-ink-600 dark:bg-ink-800 dark:group-hover:border-brand-500 dark:group-hover:bg-brand-900/20">
+                    {form.image ? (
+                      <img
+                        src={form.image}
+                        alt="Opportunity preview"
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex flex-col items-center gap-1 text-ink-400 dark:text-ink-500">
+                        <ImageIcon className="h-8 w-8" />
+                        <span className="text-xs font-medium">Opportunity image</span>
+                      </div>
+                    )}
+                  </div>
+                </label>
+                <p className="mt-2 text-xs text-ink-500 dark:text-ink-400">
+                  Upload a cover image (optional)
+                </p>
+              </div>
+
               <div className="grid gap-4 md:grid-cols-2">
                 <label className="block">
                   <span className={fieldLabelClassName}>Title *</span>
@@ -284,27 +411,16 @@ export default function OpportunitiesPage({ navigate }) {
 
               <div className="grid gap-4 md:grid-cols-3">
                 <label className="block">
-                  <span className={fieldLabelClassName}>Sector</span>
+                  <span className={fieldLabelClassName}>Sector *</span>
                   <select
                     name="sector"
                     value={form.sector}
                     onChange={handleFormChange}
+                    required
                     className={inputClassName}
                   >
+                    <option value="">Select a sector</option>
                     {sectors.filter((s) => s !== "All").map((s) => (
-                      <option key={s} value={s}>{s}</option>
-                    ))}
-                  </select>
-                </label>
-                <label className="block">
-                  <span className={fieldLabelClassName}>Stage</span>
-                  <select
-                    name="stage"
-                    value={form.stage}
-                    onChange={handleFormChange}
-                    className={inputClassName}
-                  >
-                    {stages.map((s) => (
                       <option key={s} value={s}>{s}</option>
                     ))}
                   </select>
@@ -320,9 +436,6 @@ export default function OpportunitiesPage({ navigate }) {
                     className={inputClassName}
                   />
                 </label>
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-2">
                 <label className="block">
                   <span className={fieldLabelClassName}>Funding goal</span>
                   <input
@@ -331,17 +444,6 @@ export default function OpportunitiesPage({ navigate }) {
                     value={form.fundingGoal}
                     onChange={handleFormChange}
                     placeholder="e.g., $1.5M"
-                    className={inputClassName}
-                  />
-                </label>
-                <label className="block">
-                  <span className={fieldLabelClassName}>Timeline</span>
-                  <input
-                    type="text"
-                    name="timeline"
-                    value={form.timeline}
-                    onChange={handleFormChange}
-                    placeholder="e.g., 14 days"
                     className={inputClassName}
                   />
                 </label>
@@ -359,41 +461,17 @@ export default function OpportunitiesPage({ navigate }) {
                 />
               </label>
 
-              <div className="grid gap-4 md:grid-cols-3">
-                <label className="block">
-                  <span className={fieldLabelClassName}>Next milestone</span>
-                  <input
-                    type="text"
-                    name="nextMilestone"
-                    value={form.nextMilestone}
-                    onChange={handleFormChange}
-                    placeholder="e.g., Close seed extension"
-                    className={inputClassName}
-                  />
-                </label>
-                <label className="block">
-                  <span className={fieldLabelClassName}>Business model</span>
-                  <input
-                    type="text"
-                    name="businessModel"
-                    value={form.businessModel}
-                    onChange={handleFormChange}
-                    placeholder="e.g., SaaS + per-use fee"
-                    className={inputClassName}
-                  />
-                </label>
-                <label className="block">
-                  <span className={fieldLabelClassName}>Target audience</span>
-                  <input
-                    type="text"
-                    name="targetAudience"
-                    value={form.targetAudience}
-                    onChange={handleFormChange}
-                    placeholder="e.g., Veterinary clinics"
-                    className={inputClassName}
-                  />
-                </label>
-              </div>
+              <label className="block">
+                <span className={fieldLabelClassName}>Timeline</span>
+                <input
+                  type="text"
+                  name="timeline"
+                  value={form.timeline}
+                  onChange={handleFormChange}
+                  placeholder="e.g., 14 days"
+                  className={inputClassName}
+                />
+              </label>
 
               <button type="submit" className="btn-primary">
                 <Rocket className="h-4 w-4" />
@@ -445,10 +523,14 @@ export default function OpportunitiesPage({ navigate }) {
                       <span className="rounded-full bg-brand-50 px-2.5 py-1 text-xs font-semibold text-brand-700 dark:bg-brand-400/10 dark:text-brand-300">
                         {opp.sector}
                       </span>
-                      <span className="rounded-full bg-ink-100 px-2.5 py-1 text-xs font-semibold text-ink-600 dark:bg-ink-800 dark:text-ink-300">
-                        {opp.stage}
-                      </span>
                     </div>
+                    {opp.image && (
+                      <img
+                        src={opp.image}
+                        alt={opp.title}
+                        className="mt-3 h-48 w-full rounded-2xl object-cover"
+                      />
+                    )}
                     <h3 className="font-display text-xl font-bold text-ink-900 dark:text-ink-50">
                       {opp.title}
                     </h3>
@@ -470,41 +552,34 @@ export default function OpportunitiesPage({ navigate }) {
                   {opp.description}
                 </p>
 
-                <div className="mt-4 grid grid-cols-2 gap-3">
-                  <div className="rounded-2xl bg-white/50 p-3 dark:bg-ink-950/40">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-brand-700 dark:text-brand-300">
-                      Funding goal
-                    </p>
-                    <p className="mt-1 font-display text-lg font-bold text-ink-900 dark:text-ink-50">
-                      {opp.fundingGoal}
-                    </p>
-                    <p className="text-xs text-ink-500 dark:text-ink-400">
-                      {opp.raised} raised
-                    </p>
+                  <div className="mt-4 grid grid-cols-2 gap-3">
+                    <div className="rounded-2xl bg-white/50 p-3 dark:bg-ink-950/40">
+                      <p className="text-xs font-semibold uppercase tracking-wider text-brand-700 dark:text-brand-300">
+                        Funding goal
+                      </p>
+                      <p className="mt-1 font-display text-lg font-bold text-ink-900 dark:text-ink-50">
+                        {opp.fundingGoal}
+                      </p>
+                      <p className="text-xs text-ink-500 dark:text-ink-400">
+                        {opp.raised} raised
+                      </p>
+                    </div>
+                    <div className="rounded-2xl bg-white/50 p-3 dark:bg-ink-950/40">
+                      <p className="text-xs font-semibold uppercase tracking-wider text-brand-700 dark:text-brand-300">
+                        Timeline
+                      </p>
+                      <p className="mt-1 font-display text-lg font-bold text-ink-900 dark:text-ink-50">
+                        {opp.timeline}
+                      </p>
+                    </div>
                   </div>
-                  <div className="rounded-2xl bg-white/50 p-3 dark:bg-ink-950/40">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-brand-700 dark:text-brand-300">
-                      Timeline
-                    </p>
-                    <p className="mt-1 font-display text-lg font-bold text-ink-900 dark:text-ink-50">
-                      {opp.timeline}
-                    </p>
-                    <p className="text-xs text-ink-500 dark:text-ink-400">
-                      {opp.nextMilestone}
-                    </p>
-                  </div>
-                </div>
 
-                <div className="mt-4 flex items-center gap-4 text-xs text-ink-500 dark:text-ink-400">
-                  <span className="flex items-center gap-1">
-                    <MapPin className="h-3.5 w-3.5" />
-                    {opp.location}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <Globe className="h-3.5 w-3.5" />
-                    {opp.businessModel}
-                  </span>
-                </div>
+                  <div className="mt-4 flex items-center gap-4 text-xs text-ink-500 dark:text-ink-400">
+                    <span className="flex items-center gap-1">
+                      <MapPin className="h-3.5 w-3.5" />
+                      {opp.location}
+                    </span>
+                  </div>
 
                 <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-ink-100 dark:bg-ink-800">
                   <div
@@ -552,7 +627,7 @@ export default function OpportunitiesPage({ navigate }) {
             <ul className="mt-4 space-y-3 text-sm text-ink-600 dark:text-ink-300">
               <li className="flex items-start gap-2">
                 <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-brand-600" />
-                Add business model, stage, goals, and timeline
+                Add sector, goals, and timeline
               </li>
               <li className="flex items-start gap-2">
                 <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-brand-600" />
@@ -575,11 +650,11 @@ export default function OpportunitiesPage({ navigate }) {
               </li>
               <li className="flex items-start gap-2">
                 <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-brand-600" />
-                Business model, stage, and target audience
+                Sector, funding target, and timeline
               </li>
               <li className="flex items-start gap-2">
                 <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-brand-600" />
-                Funding target, timeline, and next milestone
+                Cover image and description
               </li>
             </ul>
           </div>
