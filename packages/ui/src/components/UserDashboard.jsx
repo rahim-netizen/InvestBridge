@@ -130,12 +130,7 @@ export default function UserDashboard({ navigate }) {
 
   const filteredProjects = allOpportunities.filter((o) => {
     const q = searchQuery.toLowerCase();
-    return (
-      o.title.toLowerCase().includes(q) ||
-      o.company.toLowerCase().includes(q) ||
-      o.sector.toLowerCase().includes(q) ||
-      (o.stage || "").toLowerCase().includes(q)
-    );
+    return o.title.toLowerCase().includes(q);
   });
 
   const confirmDelete = (id) => setDeleteId(id);
@@ -285,7 +280,7 @@ export default function UserDashboard({ navigate }) {
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search your projects..."
+                  placeholder="Search by title..."
                   className={`${inputWrapperClassName} pl-11`}
                 />
               </div>

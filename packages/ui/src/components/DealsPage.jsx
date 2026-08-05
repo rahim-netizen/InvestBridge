@@ -12,6 +12,7 @@ import {
   Star,
   ChevronDown,
   Trash2,
+  X,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { deleteOpportunity, getAllOpportunities } from "../api/opportunities";
@@ -29,18 +30,14 @@ const getStoredUser = () => {
   }
 };
 
-const sectors = ["All", "HealthTech", "CleanEnergy", "E-commerce", "AgriTech", "FinTech", "EdTech"];
-const stages = ["All", "Pre-seed", "Seed", "Series A", "Series B", "Series C+", "Growth"];
-const geographies = ["All", "US", "DE", "IN", "KE", "SG", "BR"];
+const sectors = ["All", "HealthTech", "CleanEnergy", "E-commerce", "AgriTech", "FinTech", "EdTech", "Others"];
 
 export default function DealsPage({ navigate }) {
   const user = getStoredUser();
   const [deals, setDeals] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [sectorFilter, setSectorFilter] = useState("All");
-  const [stageFilter, setStageFilter] = useState("All");
-  const [geoFilter, setGeoFilter] = useState("All");
-  const [sortBy, setSortBy] = useState("pct");
+  const [sortBy, setSortBy] = useState("none");
   const [view, setView] = useState("grid");
   const [selectedDeal, setSelectedDeal] = useState(null);
   const [imageErrors, setImageErrors] = useState({});
@@ -88,7 +85,6 @@ export default function DealsPage({ navigate }) {
       const updated = deals.filter((d) => d.id !== id);
       setDeals(updated);
       setDeleteId(null);
-      window.dispatchEvent(new CustomEvent("opportunity-changed"));
     } catch {
       setDeleteId(null);
     }
@@ -128,22 +124,19 @@ export default function DealsPage({ navigate }) {
   const filteredDeals = deals
     .filter((d) => {
       const matchesSearch =
-        d.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        d.sector.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        d.blurb.toLowerCase().includes(searchQuery.toLowerCase());
+        d.location.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesSector = sectorFilter === "All" || d.sector === sectorFilter;
-      const matchesStage = stageFilter === "All" || d.stage === stageFilter;
-      const matchesGeo =
-        geoFilter === "All" || d.location.includes(geoFilter);
-      return matchesSearch && matchesSector && matchesStage && matchesGeo;
+      return matchesSearch && matchesSector;
     })
     .sort((a, b) => {
-      if (sortBy === "pct") return b.pct - a.pct;
-      if (sortBy === "raised") {
+      if (sortBy === "highToLow") {
         const parseMoney = (m) => parseFloat(m.replace(/[$MKB]/g, "")) * (m.includes("M") ? 1000000 : m.includes("K") ? 1000 : 1);
-        return parseMoney(b.raised) - parseMoney(a.raised);
+        return parseMoney(b.goal) - parseMoney(a.goal);
       }
-      if (sortBy === "daysLeft") return a.daysLeft - b.daysLeft;
+      if (sortBy === "lowToHigh") {
+        const parseMoney = (m) => parseFloat(m.replace(/[$MKB]/g, "")) * (m.includes("M") ? 1000000 : m.includes("K") ? 1000 : 1);
+        return parseMoney(a.goal) - parseMoney(b.goal);
+      }
       return 0;
     });
 
@@ -182,7 +175,7 @@ export default function DealsPage({ navigate }) {
             Explore vetted opportunities that match your thesis.
           </h1>
           <p className="mt-3 max-w-xl text-lg leading-relaxed text-ink-600 dark:text-ink-300">
-            Filter by sector, stage, geography, and momentum to find
+            Filter by sector and momentum to find
             opportunities worth your time.
           </p>
         </div>
@@ -195,7 +188,7 @@ export default function DealsPage({ navigate }) {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search deals, sectors, or keywords..."
+                placeholder="Search by location..."
                 className={`${inputWrapperClassName} pl-11`}
               />
             </div>
@@ -210,31 +203,13 @@ export default function DealsPage({ navigate }) {
                 ))}
               </select>
               <select
-                value={stageFilter}
-                onChange={(e) => setStageFilter(e.target.value)}
-                className={inputWrapperClassName}
-              >
-                {stages.map((s) => (
-                  <option key={s} value={s}>{s}</option>
-                ))}
-              </select>
-              <select
-                value={geoFilter}
-                onChange={(e) => setGeoFilter(e.target.value)}
-                className={inputWrapperClassName}
-              >
-                {geographies.map((g) => (
-                  <option key={g} value={g}>{g}</option>
-                ))}
-              </select>
-              <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
                 className={inputWrapperClassName}
               >
-                <option value="pct">Most funded</option>
-                <option value="raised">Highest raised</option>
-                <option value="daysLeft">Ending soon</option>
+                <option value="none">None</option>
+                <option value="highToLow">High to Low</option>
+                <option value="lowToHigh">Low to High</option>
               </select>
             </div>
           </div>
@@ -255,12 +230,10 @@ export default function DealsPage({ navigate }) {
                 <p className="text-ink-500 dark:text-ink-400">No deals match your filters.</p>
                 <button
                   type="button"
-                  onClick={() => {
-                    setSearchQuery("");
-                    setSectorFilter("All");
-                    setStageFilter("All");
-                    setGeoFilter("All");
-                  }}
+onClick={() => {
+                     setSearchQuery("");
+                     setSectorFilter("All");
+                   }}
                   className="mt-4 text-sm font-semibold text-brand-700 hover:text-brand-800 dark:text-brand-400"
                 >
                   Clear all filters
