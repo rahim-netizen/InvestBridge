@@ -40,9 +40,6 @@ class OpportunityController extends Controller
         $opportunity = Opportunity::create([
             'user_id' => $user->id,
             ...$validated,
-            'stage' => 'TBD',
-            'pct' => 0,
-            'raised' => '$0',
         ]);
 
         return response()->json([

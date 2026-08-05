@@ -54,7 +54,6 @@ export default function DealsPage({ navigate }) {
               name: opp.company,
               logo: opp.company.slice(0, 2).toUpperCase(),
               sector: opp.sector,
-              stage: "TBD",
               location: opp.location || "TBD",
               goal: opp.funding_goal || "$0",
               raised: "$0",
@@ -100,7 +99,6 @@ export default function DealsPage({ navigate }) {
             name: opp.company,
             logo: opp.company.slice(0, 2).toUpperCase(),
             sector: opp.sector,
-            stage: "TBD",
             location: opp.location || "TBD",
             goal: opp.funding_goal || "$0",
             raised: "$0",
@@ -261,14 +259,11 @@ onClick={() => {
                        </div>
                      )}
                     <div className="absolute inset-0 bg-gradient-to-t from-ink-950/70 via-ink-950/10 to-transparent" />
-                    <div className="absolute left-4 top-4 flex gap-2">
-                      <span className="rounded-full bg-white/90 px-2.5 py-1 text-xs font-semibold text-ink-800 backdrop-blur">
-                        {deal.sector}
-                      </span>
-                      <span className="rounded-full bg-brand-600/90 px-2.5 py-1 text-xs font-semibold text-white backdrop-blur">
-                        {deal.stage}
-                      </span>
-                    </div>
+<div className="absolute left-4 top-4 flex gap-2">
+                       <span className="rounded-full bg-white/90 px-2.5 py-1 text-xs font-semibold text-ink-800 backdrop-blur">
+                         {deal.sector}
+                       </span>
+                     </div>
                     <div className="absolute bottom-4 left-4 flex items-center gap-2 text-white">
                       <span className="grid h-9 w-9 place-items-center rounded-lg bg-white/20 font-display text-sm font-bold backdrop-blur">
                         {deal.logo}
@@ -361,9 +356,6 @@ onClick={() => {
                     <h3 className="font-display text-lg font-bold text-ink-900 dark:text-ink-50">
                       {deal.name}
                     </h3>
-                    <span className="rounded-full bg-brand-50 px-2.5 py-1 text-xs font-semibold text-brand-700 dark:bg-brand-400/10 dark:text-brand-300">
-                      {deal.stage}
-                    </span>
                     <span className="rounded-full bg-ink-100 px-2.5 py-1 text-xs font-semibold text-ink-600 dark:bg-ink-800 dark:text-ink-300">
                       {deal.sector}
                     </span>
@@ -452,9 +444,6 @@ onClick={() => {
               <div className="flex flex-wrap gap-2 mb-4">
                 <span className="rounded-full bg-brand-50 px-3 py-1 text-xs font-semibold text-brand-700 dark:bg-brand-400/10 dark:text-brand-300">
                   {selectedDeal.sector}
-                </span>
-                <span className="rounded-full bg-ink-100 px-3 py-1 text-xs font-semibold text-ink-600 dark:bg-ink-800 dark:text-ink-300">
-                  {selectedDeal.stage}
                 </span>
                 <span className="rounded-full bg-ink-100 px-3 py-1 text-xs font-semibold text-ink-600 dark:bg-ink-800 dark:text-ink-300">
                   {selectedDeal.location}
