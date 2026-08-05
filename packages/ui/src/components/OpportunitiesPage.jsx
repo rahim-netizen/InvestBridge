@@ -22,7 +22,7 @@ import {
   Image as ImageIcon,
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { createOpportunity, getAllOpportunities, deleteOpportunity } from "../api/opportunities";
+import { createOpportunity, deleteOpportunity } from "../api/opportunities";
 
 const getStoredUser = () => {
   if (typeof window === "undefined") {
@@ -131,73 +131,6 @@ export default function OpportunitiesPage({ navigate }) {
     saveOpportunities(opportunities);
   }, [opportunities]);
 
-  useEffect(() => {
-    async function loadOpportunities() {
-      try {
-        const data = await getAllOpportunities();
-        if (data.opportunities && data.opportunities.length > 0) {
-          const mapped = data.opportunities.map((opp) => ({
-            id: opp.id,
-            title: opp.title,
-            company: opp.company,
-            sector: opp.sector,
-            location: opp.location || "TBD",
-            fundingGoal: opp.funding_goal || "$0",
-            raised: "$0",
-            pct: 0,
-            description: opp.description || "",
-            timeline: opp.timeline || "TBD",
-            image: opp.image || null,
-            postedBy: opp.user?.email || null,
-            postedByName: opp.user?.name || opp.user?.email || "Anonymous",
-            createdAt: opp.created_at,
-          }));
-          setOpportunities(mapped);
-        }
-      } catch {
-        // keep localStorage fallback
-      }
-    }
-
-    loadOpportunities();
-  }, []);
-
-  useEffect(() => {
-    const handler = () => {
-      async function loadOpportunities() {
-        try {
-          const data = await getAllOpportunities();
-          if (data.opportunities && data.opportunities.length > 0) {
-            const mapped = data.opportunities.map((opp) => ({
-              id: opp.id,
-              title: opp.title,
-              company: opp.company,
-              sector: opp.sector,
-              location: opp.location || "TBD",
-              fundingGoal: opp.funding_goal || "$0",
-              raised: "$0",
-              pct: 0,
-              description: opp.description || "",
-              timeline: opp.timeline || "TBD",
-              image: opp.image || null,
-              postedBy: opp.user?.email || null,
-              postedByName: opp.user?.name || opp.user?.email || "Anonymous",
-              createdAt: opp.created_at,
-            }));
-            setOpportunities(mapped);
-          }
-        } catch {
-          // keep localStorage fallback
-        }
-      }
-      loadOpportunities();
-    };
-    window.addEventListener("opportunity-changed", handler);
-    return () => {
-      window.removeEventListener("opportunity-changed", handler);
-    };
-  }, []);
-
   const filteredOpportunities = opportunities.filter((o) => {
     const matchesSearch =
       o.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -264,7 +197,6 @@ export default function OpportunitiesPage({ navigate }) {
         createdAt: response.opportunity.created_at,
       };
 
-      setOpportunities((prev) => [newOpp, ...prev]);
       window.dispatchEvent(new CustomEvent("opportunity-changed"));
       setFormStatus("Opportunity posted successfully!");
       setForm({
