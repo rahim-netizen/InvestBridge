@@ -47,9 +47,11 @@ const saveOpportunities = (opportunities) => {
 
 export default function UserDashboard({ navigate }) {
   const [user, setUser] = useState(() => getStoredUser());
-  const [allOpportunities, setAllOpportunities] = useState(() =>
-    getStoredOpportunities(),
-  );
+  const [allOpportunities, setAllOpportunities] = useState(() => {
+    const stored = getStoredOpportunities();
+    const sessionUser = getStoredUser();
+    return stored.filter((o) => o.postedBy === sessionUser?.email);
+  });
   const [searchQuery, setSearchQuery] = useState("");
   const [deleteId, setDeleteId] = useState(null);
 
@@ -67,7 +69,6 @@ export default function UserDashboard({ navigate }) {
             title: opp.title,
             company: opp.company,
             sector: opp.sector,
-            stage: "TBD",
             location: opp.location || "TBD",
             goal: opp.funding_goal || "$0",
             raised: "$0",
@@ -101,7 +102,6 @@ export default function UserDashboard({ navigate }) {
               title: opp.title,
               company: opp.company,
               sector: opp.sector,
-              stage: "TBD",
               location: opp.location || "TBD",
               goal: opp.funding_goal || "$0",
               raised: "$0",
@@ -317,9 +317,6 @@ export default function UserDashboard({ navigate }) {
                       <div className="absolute left-4 top-4 flex gap-2">
                         <span className="rounded-full bg-white/90 px-2.5 py-1 text-xs font-semibold text-ink-800 backdrop-blur">
                           {opp.sector}
-                        </span>
-                        <span className="rounded-full bg-brand-600/90 px-2.5 py-1 text-xs font-semibold text-white backdrop-blur">
-                          {opp.stage || "TBD"}
                         </span>
                       </div>
                       <div className="absolute bottom-4 left-4 flex items-center gap-2 text-white">

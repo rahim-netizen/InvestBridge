@@ -21,36 +21,8 @@ import {
   Search,
   Image as ImageIcon,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { createOpportunity, deleteOpportunity } from "../api/opportunities";
-
-const getStoredUser = () => {
-  if (typeof window === "undefined") {
-    return null;
-  }
-  try {
-    return JSON.parse(
-      localStorage.getItem("investbridgeSessionUser") || "null",
-    );
-  } catch {
-    return null;
-  }
-};
-
-const getStoredOpportunities = () => {
-  if (typeof window === "undefined") {
-    return [];
-  }
-  try {
-    return JSON.parse(localStorage.getItem("investbridgeOpportunities") || "[]");
-  } catch {
-    return [];
-  }
-};
-
-const saveOpportunities = (opportunities) => {
-  localStorage.setItem("investbridgeOpportunities", JSON.stringify(opportunities));
-};
 
 const defaultOpportunities = [
   {
@@ -58,7 +30,6 @@ const defaultOpportunities = [
     title: "AI-Powered Veterinary Diagnostics",
     company: "NovaVet AI",
     sector: "HealthTech",
-    stage: "Series A",
     location: "San Francisco, US",
     fundingGoal: "$1.5M",
     raised: "$920K",
@@ -74,7 +45,6 @@ const defaultOpportunities = [
     title: "Decentralized Solar Microgrids",
     company: "Lumen Grid",
     sector: "CleanEnergy",
-    stage: "Seed",
     location: "Berlin, DE",
     fundingGoal: "$800K",
     raised: "$540K",
@@ -90,7 +60,6 @@ const defaultOpportunities = [
     title: "Headless Checkout for Every Link",
     company: "Cartful",
     sector: "E-commerce",
-    stage: "Pre-seed",
     location: "Bengaluru, IN",
     fundingGoal: "$400K",
     raised: "$210K",
@@ -103,16 +72,12 @@ const defaultOpportunities = [
   },
 ];
 
-const stages = ["Pre-seed", "Seed", "Series A", "Series B", "Series C+", "Growth"];
 const sectors = ["All", "HealthTech", "CleanEnergy", "E-commerce", "AgriTech", "FinTech", "EdTech","Others"];
 
 export default function OpportunitiesPage({ navigate }) {
-  const [opportunities, setOpportunities] = useState(() => {
-    const stored = getStoredOpportunities();
-    return stored.length > 0 ? stored : defaultOpportunities;
-  });
-  const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({
+   const [opportunities, setOpportunities] = useState(defaultOpportunities);
+   const [showForm, setShowForm] = useState(false);
+   const [form, setForm] = useState({
     title: "",
     company: "",
     sector: "",
@@ -125,13 +90,9 @@ export default function OpportunitiesPage({ navigate }) {
   const [formStatus, setFormStatus] = useState("");
   const [sectorFilter, setSectorFilter] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+   const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    saveOpportunities(opportunities);
-  }, [opportunities]);
-
-  const filteredOpportunities = opportunities.filter((o) => {
+   const filteredOpportunities = opportunities.filter((o) => {
     const matchesSearch =
       o.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       o.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -158,18 +119,16 @@ export default function OpportunitiesPage({ navigate }) {
   const handleSubmit = async (event) => {
     event.preventDefault();
     setFormStatus("");
-    setIsLoading(true);
+     setIsLoading(true);
 
-    const sessionUser = getStoredUser();
-
-    if (!form.title.trim() || !form.company.trim()) {
+     if (!form.title.trim() || !form.company.trim()) {
       setFormStatus("Please fill in the title and company fields.");
       setIsLoading(false);
       return;
     }
 
     try {
-      const response = await createOpportunity({
+      await createOpportunity({
         title: form.title,
         company: form.company,
         sector: form.sector || "Other",
@@ -179,23 +138,6 @@ export default function OpportunitiesPage({ navigate }) {
         timeline: form.timeline || "TBD",
         image: form.image || null,
       });
-
-      const newOpp = {
-        id: response.opportunity.id,
-        title: response.opportunity.title,
-        company: response.opportunity.company,
-        sector: response.opportunity.sector,
-        location: response.opportunity.location || "TBD",
-        fundingGoal: response.opportunity.funding_goal || "$0",
-        raised: "$0",
-        pct: 0,
-        description: response.opportunity.description || "",
-        timeline: response.opportunity.timeline || "TBD",
-        image: response.opportunity.image || form.image,
-        postedBy: sessionUser?.email || null,
-        postedByName: sessionUser?.name || sessionUser?.email || "Anonymous",
-        createdAt: response.opportunity.created_at,
-      };
 
       window.dispatchEvent(new CustomEvent("opportunity-changed"));
       setFormStatus("Opportunity posted successfully!");
@@ -224,7 +166,6 @@ export default function OpportunitiesPage({ navigate }) {
       await deleteOpportunity(id);
       const updated = opportunities.filter((o) => o.id !== id);
       setOpportunities(updated);
-      saveOpportunities(updated);
       window.dispatchEvent(new CustomEvent("opportunity-changed"));
     } catch {
       // keep local state on error
