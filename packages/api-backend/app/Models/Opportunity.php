@@ -14,7 +14,8 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
     'funding_goal',
     'description',
     'timeline',
-])]
+    'image',
+    ])]
 class Opportunity extends Model
 {
     protected $table = 'opportunities';

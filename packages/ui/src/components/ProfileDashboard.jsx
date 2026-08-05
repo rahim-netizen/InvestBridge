@@ -173,7 +173,7 @@ export default function ProfileDashboard({ navigate }) {
       setStatus("Profile saved. Your dashboard is ready to go.");
       navigate("/");
     } catch (err) {
-      setStatus("Failed to save profile. Please try again.");
+      setStatus(err.message || "Failed to save profile. Please try again.");
     }
   };
 

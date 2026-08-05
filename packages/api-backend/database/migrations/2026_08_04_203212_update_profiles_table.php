@@ -18,7 +18,7 @@ return new class extends Migration
             $table->string('industry')->nullable();
             $table->string('position')->nullable();
             $table->string('website')->nullable();
-            $table->string('mission')->nullable();
+            $table->text('mission')->nullable();
             $table->text('notes')->nullable();
             $table->boolean('profile_complete')->default(false);
             $table->timestamps();

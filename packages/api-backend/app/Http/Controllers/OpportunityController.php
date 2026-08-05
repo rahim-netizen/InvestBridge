@@ -35,6 +35,7 @@ class OpportunityController extends Controller
             'funding_goal' => ['nullable', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:2000'],
             'timeline' => ['nullable', 'string', 'max:255'],
+            'image' => ['nullable', 'string', 'max:65535'],
         ]);
 
         $opportunity = Opportunity::create([
