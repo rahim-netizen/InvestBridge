@@ -9,7 +9,6 @@ import {
   Trash2,
   UserRound,
   X,
-  Users,
   Clock,
 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -28,30 +27,12 @@ const getStoredUser = () => {
   }
 };
 
-const getStoredOpportunities = () => {
-  if (typeof window === "undefined") {
-    return [];
-  }
-  try {
-    return JSON.parse(
-      localStorage.getItem("investbridgeOpportunities") || "[]",
-    );
-  } catch {
-    return [];
-  }
-};
-
-const saveOpportunities = (opportunities) => {
-  localStorage.setItem("investbridgeOpportunities", JSON.stringify(opportunities));
-};
+const DEFAULT_DEAL_IMAGE =
+  "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='200' viewBox='0 0 400 200'><rect width='400' height='200' fill='%23e5e7eb'/><text x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%239ca3af' font-family='sans-serif' font-size='16'>No image</text></svg>";
 
 export default function UserDashboard({ navigate }) {
   const [user, setUser] = useState(() => getStoredUser());
-  const [allOpportunities, setAllOpportunities] = useState(() => {
-    const stored = getStoredOpportunities();
-    const sessionUser = getStoredUser();
-    return stored.filter((o) => o.postedBy === sessionUser?.email);
-  });
+  const [allOpportunities, setAllOpportunities] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [deleteId, setDeleteId] = useState(null);
 
@@ -71,12 +52,9 @@ export default function UserDashboard({ navigate }) {
             sector: opp.sector,
             location: opp.location || "TBD",
             goal: opp.funding_goal || "$0",
-            raised: "$0",
-            pct: 0,
             blurb: opp.description || "",
             image: opp.image || null,
-            investors: 0,
-            daysLeft: opp.timeline || "TBD",
+            timeline: opp.timeline || "TBD",
             postedBy: opp.user?.email || null,
             postedByName: opp.user?.name || opp.user?.email || "Anonymous",
             createdAt: opp.created_at,
@@ -84,7 +62,7 @@ export default function UserDashboard({ navigate }) {
           setAllOpportunities(mapped);
         }
       } catch {
-        // keep localStorage fallback
+        // keep empty state on error
       }
     }
 
@@ -93,33 +71,6 @@ export default function UserDashboard({ navigate }) {
 
   useEffect(() => {
     const handler = () => {
-      async function loadOpportunities() {
-        try {
-          const data = await getMyOpportunities();
-          if (data.opportunities) {
-            const mapped = data.opportunities.map((opp) => ({
-              id: opp.id,
-              title: opp.title,
-              company: opp.company,
-              sector: opp.sector,
-              location: opp.location || "TBD",
-              goal: opp.funding_goal || "$0",
-              raised: "$0",
-              pct: 0,
-              blurb: opp.description || "",
-              image: opp.image || null,
-              investors: 0,
-              daysLeft: opp.timeline || "TBD",
-              postedBy: opp.user?.email || null,
-              postedByName: opp.user?.name || opp.user?.email || "Anonymous",
-              createdAt: opp.created_at,
-            }));
-            setAllOpportunities(mapped);
-          }
-        } catch {
-          // keep localStorage fallback
-        }
-      }
       loadOpportunities();
     };
     window.addEventListener("opportunity-changed", handler);
@@ -141,7 +92,6 @@ export default function UserDashboard({ navigate }) {
       await deleteOpportunity(id);
       const updated = allOpportunities.filter((o) => o.id !== id);
       setAllOpportunities(updated);
-      saveOpportunities(updated);
       setDeleteId(null);
       window.dispatchEvent(new CustomEvent("opportunity-changed"));
     } catch {
@@ -183,8 +133,6 @@ export default function UserDashboard({ navigate }) {
   }
 
   const totalProjects = allOpportunities.length;
-  const raisingNow = allOpportunities.filter((o) => o.pct < 100).length;
-  const fullyFunded = allOpportunities.filter((o) => o.pct >= 100).length;
 
   return (
     <section className="relative min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top_left,_rgba(45,97,255,0.16),_transparent_36%),radial-gradient(circle_at_80%_12%,_rgba(16,185,129,0.12),_transparent_28%),linear-gradient(135deg,_#f8fbff_0%,_#eef4ff_100%)] px-4 py-20 transition-colors duration-300 sm:px-6 lg:px-8 dark:bg-gradient-to-br dark:from-ink-950 dark:via-ink-950 dark:to-ink-900">
@@ -257,18 +205,24 @@ export default function UserDashboard({ navigate }) {
               </div>
               <div className="rounded-3xl border border-white/30 bg-white/70 p-5 shadow-soft backdrop-blur-xl dark:border-white/10 dark:bg-ink-950/55">
                 <p className="text-xs font-semibold uppercase tracking-wider text-brand-700 dark:text-brand-300">
-                  Raising now
+                  Total funding goal
                 </p>
                 <p className="mt-2 font-display text-2xl font-bold text-ink-900 dark:text-ink-50">
-                  {raisingNow}
+                  {allOpportunities.reduce((sum, o) => {
+                    const val = parseFloat((o.goal || "$0").replace(/[^0-9.]/g, "")) || 0;
+                    return sum + val;
+                  }, 0).toLocaleString(undefined, { style: "currency", currency: "USD", maximumFractionDigits: 0 })}
                 </p>
               </div>
               <div className="rounded-3xl border border-white/30 bg-white/70 p-5 shadow-soft backdrop-blur-xl dark:border-white/10 dark:bg-ink-950/55">
                 <p className="text-xs font-semibold uppercase tracking-wider text-brand-700 dark:text-brand-300">
-                  Fully funded
+                  Latest post
                 </p>
-                <p className="mt-2 font-display text-2xl font-bold text-ink-900 dark:text-ink-50">
-                  {fullyFunded}
+                <p className="mt-2 font-display text-lg font-bold text-ink-900 dark:text-ink-50 truncate">
+                  {allOpportunities[0]?.title || "N/A"}
+                </p>
+                <p className="text-xs text-ink-500 dark:text-ink-400">
+                  {allOpportunities[0]?.createdAt ? new Date(allOpportunities[0].createdAt).toLocaleDateString() : "N/A"}
                 </p>
               </div>
             </div>
@@ -298,23 +252,17 @@ export default function UserDashboard({ navigate }) {
                 {filteredProjects.map((opp) => (
                   <article
                     key={opp.id}
-                    className="card holo-card group overflow-hidden hover:shadow-lift"
+                    className="glass-panel-strong holo-card group overflow-hidden hover:shadow-lift"
                   >
-                     <div className="relative h-40 overflow-hidden">
-                       {opp.image ? (
-                         <img
-                           src={opp.image}
-                           alt={opp.title}
-                           loading="lazy"
-                           className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                         />
-                       ) : (
-                         <div className="h-full w-full bg-ink-900 flex items-center justify-center">
-                           <span className="text-ink-500 text-xs">No image</span>
-                         </div>
-                       )}
-                      <div className="absolute inset-0 bg-gradient-to-t from-ink-950/70 via-ink-950/10 to-transparent" />
-                      <div className="absolute left-4 top-4 flex gap-2">
+                    <div className="relative h-40 overflow-hidden bg-ink-100 dark:bg-ink-800">
+                      <img
+                        src={opp.image || DEFAULT_DEAL_IMAGE}
+                        alt={opp.title}
+                        loading="lazy"
+                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-ink-950/40 to-transparent" />
+                      <div className="absolute left-4 top-4">
                         <span className="rounded-full bg-white/90 px-2.5 py-1 text-xs font-semibold text-ink-800 backdrop-blur">
                           {opp.sector}
                         </span>
@@ -330,38 +278,20 @@ export default function UserDashboard({ navigate }) {
                     </div>
 
                     <div className="p-5">
-                      <p className="text-sm leading-relaxed text-ink-600 dark:text-ink-400">
+                      <h3 className="font-display text-lg font-bold text-ink-900 dark:text-ink-50">
+                        {opp.title}
+                      </h3>
+                      <p className="mt-2 text-sm leading-relaxed text-ink-600 dark:text-ink-400">
                         {opp.blurb || "No description provided."}
                       </p>
-                      <div className="mt-3 flex items-center gap-1.5 text-xs text-ink-500 dark:text-ink-400">
-                        <MapPin className="h-3.5 w-3.5" />
-                        {opp.location || "TBD"}
-                      </div>
-
-                      <div className="mt-4">
-                        <div className="mb-1.5 flex justify-between text-xs font-medium text-ink-500">
-                          <span>
-                            {opp.raised || "$0"}{" "}
-                            <span className="text-ink-400">of {opp.goal || "$0"}</span>
-                          </span>
-                          <span className="text-brand-700">{opp.pct || 0}%</span>
-                        </div>
-                        <div className="h-2 w-full overflow-hidden rounded-full bg-ink-100 dark:bg-ink-800">
-                          <div
-                            className="h-full rounded-full bg-gradient-to-r from-brand-500 to-brand-700"
-                            style={{ width: `${opp.pct || 0}%` }}
-                          />
-                        </div>
-                      </div>
-
-                      <div className="mt-4 flex items-center justify-between text-xs text-ink-500 dark:text-ink-400">
+                      <div className="mt-3 flex items-center gap-4 text-xs text-ink-500 dark:text-ink-400">
                         <span className="flex items-center gap-1">
-                          <Users className="h-3.5 w-3.5" />
-                          {opp.investors || 0} investors
+                          <MapPin className="h-3.5 w-3.5" />
+                          {opp.location || "TBD"}
                         </span>
                         <span className="flex items-center gap-1">
                           <Clock className="h-3.5 w-3.5" />
-                          {opp.daysLeft || "TBD"}
+                          {opp.timeline || "TBD"}
                         </span>
                       </div>
 

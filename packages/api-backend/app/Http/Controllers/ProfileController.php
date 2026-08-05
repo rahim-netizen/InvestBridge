@@ -37,11 +37,15 @@ class ProfileController extends Controller
             'company_name' => ['nullable', 'string', 'max:255'],
             'industry' => ['nullable', 'string', 'max:255'],
             'position' => ['nullable', 'string', 'max:255'],
-            'website' => ['nullable', 'url', 'max:255'],
-            'mission' => ['nullable', 'string', 'max:255'],
+            'website' => ['nullable', 'string', 'max:255'],
+            'mission' => ['nullable', 'string', 'max:2000'],
             'notes' => ['nullable', 'string', 'max:2000'],
             'profile_complete' => ['nullable', 'boolean'],
         ]);
+
+        if (!empty($validated['website']) && !preg_match('#^https?://#i', $validated['website'])) {
+            $validated['website'] = 'https://' . $validated['website'];
+        }
 
         if (!empty($validated['full_name'])) {
             $user->update(['name' => $validated['full_name']]);
