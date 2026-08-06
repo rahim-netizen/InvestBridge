@@ -30,6 +30,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/opportunities', [\App\Http\Controllers\OpportunityController::class, 'index']);
     Route::post('/opportunities', [\App\Http\Controllers\OpportunityController::class, 'store']);
     Route::get('/opportunities/{id}', [\App\Http\Controllers\OpportunityController::class, 'show']);
+    Route::put('/opportunities/{id}', [\App\Http\Controllers\OpportunityController::class, 'update']);
     Route::delete('/opportunities/{id}', [\App\Http\Controllers\OpportunityController::class, 'destroy']);
 
     Route::get('/connected-opportunities', [\App\Http\Controllers\ConnectedOpportunityController::class, 'index']);

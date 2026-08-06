@@ -39,4 +39,8 @@ return [
         'api_key' => env('GEMINI_API_KEY'),
     ],
 
+    'cloudinary' => [
+        'url' => env('CLOUDINARY_URL'),
+    ],
+
 ];

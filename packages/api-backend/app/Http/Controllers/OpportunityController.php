@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Opportunity;
 use App\Models\User;
+use App\Services\CloudinaryService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -13,7 +14,8 @@ class OpportunityController extends Controller
     {
         $user = Auth::user();
 
-        $opportunities = Opportunity::where('user_id', $user->id)
+        $opportunities = Opportunity::with('user')
+            ->where('user_id', $user->id)
             ->orderByDesc('created_at')
             ->get();
 
@@ -35,8 +37,15 @@ class OpportunityController extends Controller
             'funding_goal' => ['nullable', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:2000'],
             'timeline' => ['nullable', 'string', 'max:255'],
-            'image' => ['nullable', 'string', 'max:65535'],
+            'image' => ['nullable', 'string'],
         ]);
+
+        if (!empty($validated['image']) && str_starts_with((string) $validated['image'], 'data:')) {
+            $uploaded = (new CloudinaryService())->uploadImage($validated['image'], 'investbridge/opportunities');
+            if ($uploaded) {
+                $validated['image'] = $uploaded;
+            }
+        }
 
         $opportunity = Opportunity::create([
             'user_id' => $user->id,
@@ -56,6 +65,40 @@ class OpportunityController extends Controller
         $opportunity = Opportunity::where('user_id', $user->id)
             ->where('id', $id)
             ->firstOrFail();
+
+        return response()->json([
+            'opportunity' => $opportunity,
+            'user' => $user,
+        ]);
+    }
+
+    public function update(Request $request, $id)
+    {
+        $user = Auth::user();
+
+        $opportunity = Opportunity::where('user_id', $user->id)
+            ->where('id', $id)
+            ->firstOrFail();
+
+        $validated = $request->validate([
+            'title' => ['required', 'string', 'max:255'],
+            'company' => ['required', 'string', 'max:255'],
+            'sector' => ['required', 'string', 'max:255'],
+            'location' => ['nullable', 'string', 'max:255'],
+            'funding_goal' => ['nullable', 'string', 'max:255'],
+            'description' => ['nullable', 'string', 'max:2000'],
+            'timeline' => ['nullable', 'string', 'max:255'],
+            'image' => ['nullable', 'string'],
+        ]);
+
+        if (!empty($validated['image']) && str_starts_with((string) $validated['image'], 'data:')) {
+            $uploaded = (new CloudinaryService())->uploadImage($validated['image'], 'investbridge/opportunities');
+            if ($uploaded) {
+                $validated['image'] = $uploaded;
+            }
+        }
+
+        $opportunity->update($validated);
 
         return response()->json([
             'opportunity' => $opportunity,

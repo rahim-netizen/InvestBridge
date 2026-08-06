@@ -14,6 +14,9 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
     'website',
     'mission',
     'notes',
+    'profile_image',
+    'company_personnel_photos',
+    'nid_photos',
     'profile_complete',
 ])]
 class Profile extends Model
@@ -22,6 +25,8 @@ class Profile extends Model
 
     protected $casts = [
         'profile_complete' => 'boolean',
+        'company_personnel_photos' => 'array',
+        'nid_photos' => 'array',
     ];
 
     public function user()
