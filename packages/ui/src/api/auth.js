@@ -53,7 +53,7 @@ export async function getCsrfToken() {
 /**
  * Build default headers including X-XSRF-TOKEN for cookie authentication
  */
-function getHeaders(customHeaders = {}) {
+export function getHeaders(customHeaders = {}) {
   const headers = {
     "Content-Type": "application/json",
     Accept: "application/json",

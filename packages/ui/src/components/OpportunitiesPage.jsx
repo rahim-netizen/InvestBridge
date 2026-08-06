@@ -128,7 +128,7 @@ export default function OpportunitiesPage({ navigate }) {
     }
 
     try {
-      await createOpportunity({
+      const result = await createOpportunity({
         title: form.title,
         company: form.company,
         sector: form.sector || "Other",
@@ -138,6 +138,27 @@ export default function OpportunitiesPage({ navigate }) {
         timeline: form.timeline || "TBD",
         image: form.image || null,
       });
+
+      if (result.opportunity) {
+        setOpportunities((prev) => [
+          {
+            id: result.opportunity.id,
+            title: result.opportunity.title,
+            company: result.opportunity.company,
+            sector: result.opportunity.sector,
+            location: result.opportunity.location || "TBD",
+            fundingGoal: result.opportunity.funding_goal || "$0",
+            raised: "$0",
+            pct: 0,
+            description: result.opportunity.description || "",
+            timeline: result.opportunity.timeline || "TBD",
+            nextMilestone: "",
+            businessModel: "",
+            targetAudience: "",
+          },
+          ...prev,
+        ]);
+      }
 
       window.dispatchEvent(new CustomEvent("opportunity-changed"));
       setFormStatus("Opportunity posted successfully!");

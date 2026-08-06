@@ -6,14 +6,16 @@ import {
   MapPin,
   PenLine,
   Plus,
+  Rocket,
   Search,
   Trash2,
   UserRound,
   X,
   Clock,
+  Image as ImageIcon,
 } from "lucide-react";
-import { useEffect, useState } from "react";
-import { deleteOpportunity, getMyOpportunities } from "../api/opportunities";
+import { useCallback, useEffect, useState } from "react";
+import { deleteOpportunity, getMyOpportunities, updateOpportunity } from "../api/opportunities";
 import {
   getConnectedOpportunities,
   disconnectOpportunity,
@@ -41,39 +43,54 @@ export default function UserDashboard({ navigate }) {
   const [connectedOpportunities, setConnectedOpportunities] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [pendingDelete, setPendingDelete] = useState(null);
+  const [editTarget, setEditTarget] = useState(null);
+  const [editForm, setEditForm] = useState({
+    title: "",
+    company: "",
+    sector: "",
+    location: "",
+    fundingGoal: "",
+    description: "",
+    timeline: "",
+    image: null,
+  });
+  const [editStatus, setEditStatus] = useState("");
+  const [editLoading, setEditLoading] = useState(false);
+
+  const sectors = ["HealthTech", "CleanEnergy", "E-commerce", "AgriTech", "FinTech", "EdTech", "Others"];
 
   useEffect(() => {
     setUser(getStoredUser());
   }, []);
 
-  useEffect(() => {
-    async function loadOpportunities() {
-      try {
-        const data = await getMyOpportunities();
-        if (data.opportunities) {
-          const mapped = data.opportunities.map((opp) => ({
-            id: opp.id,
-            title: opp.title,
-            company: opp.company,
-            sector: opp.sector,
-            location: opp.location || "TBD",
-            goal: opp.funding_goal || "$0",
-            blurb: opp.description || "",
-            image: opp.image || null,
-            timeline: opp.timeline || "TBD",
-            postedBy: opp.user?.email || null,
-            postedByName: opp.user?.name || opp.user?.email || "Anonymous",
-            createdAt: opp.created_at,
-          }));
-          setAllOpportunities(mapped);
-        }
-      } catch {
-        // keep empty state on error
+  const loadOpportunities = useCallback(async () => {
+    try {
+      const data = await getMyOpportunities();
+      if (data.opportunities) {
+        const mapped = data.opportunities.map((opp) => ({
+          id: opp.id,
+          title: opp.title,
+          company: opp.company,
+          sector: opp.sector,
+          location: opp.location || "TBD",
+          goal: opp.funding_goal || "$0",
+          blurb: opp.description || "",
+          image: opp.image || null,
+          timeline: opp.timeline || "TBD",
+          postedBy: opp.user?.email || null,
+          postedByName: opp.user?.name || opp.user?.email || "Anonymous",
+          createdAt: opp.created_at,
+        }));
+        setAllOpportunities(mapped);
       }
+    } catch {
+      // keep empty state on error
     }
-
-    loadOpportunities();
   }, []);
+
+  useEffect(() => {
+    loadOpportunities();
+  }, [loadOpportunities]);
 
   useEffect(() => {
     async function loadConnected() {
@@ -118,7 +135,7 @@ export default function UserDashboard({ navigate }) {
     return () => {
       window.removeEventListener("opportunity-changed", handler);
     };
-  }, []);
+  }, [loadOpportunities]);
 
   const filteredProjects = allOpportunities.filter((o) => {
     const q = searchQuery.toLowerCase();
@@ -154,8 +171,94 @@ export default function UserDashboard({ navigate }) {
     }
   };
 
+  const openEdit = (opp) => {
+    setEditTarget(opp);
+    setEditForm({
+      title: opp.title || "",
+      company: opp.company || "",
+      sector: opp.sector || "",
+      location: opp.location || "",
+      fundingGoal: opp.goal || "",
+      description: opp.blurb || "",
+      timeline: opp.timeline || "",
+      image: opp.image || null,
+    });
+    setEditStatus("");
+  };
+
+  const handleEditChange = (event) => {
+    const { name, value } = event.target;
+    setEditForm((current) => ({ ...current, [name]: value }));
+  };
+
+  const handleEditImageChange = (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      setEditForm((current) => ({ ...current, image: reader.result }));
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const closeEdit = () => setEditTarget(null);
+
+  const handleEditSubmit = async (event) => {
+    event.preventDefault();
+    if (!editTarget) return;
+    setEditLoading(true);
+    setEditStatus("");
+
+    if (!editForm.title.trim() || !editForm.company.trim()) {
+      setEditStatus("Please fill in the title and company fields.");
+      setEditLoading(false);
+      return;
+    }
+
+    try {
+      await updateOpportunity(editTarget.id, {
+        title: editForm.title,
+        company: editForm.company,
+        sector: editForm.sector || "Others",
+        location: editForm.location || "TBD",
+        funding_goal: editForm.fundingGoal || "$0",
+        description: editForm.description || "",
+        timeline: editForm.timeline || "TBD",
+        image: editForm.image || null,
+      });
+
+      const updated = allOpportunities.map((o) =>
+        o.id === editTarget.id
+          ? {
+              ...o,
+              title: editForm.title,
+              company: editForm.company,
+              sector: editForm.sector,
+              location: editForm.location,
+              goal: editForm.fundingGoal,
+              blurb: editForm.description,
+              timeline: editForm.timeline,
+              image: editForm.image,
+            }
+          : o,
+      );
+      setAllOpportunities(updated);
+      window.dispatchEvent(new CustomEvent("opportunity-changed"));
+      setEditStatus("Opportunity updated successfully!");
+      setTimeout(() => setEditTarget(null), 800);
+    } catch (err) {
+      setEditStatus(err.message || "Failed to update opportunity.");
+    } finally {
+      setEditLoading(false);
+    }
+  };
+
   const inputWrapperClassName =
     "surface-rim flex items-center gap-3 rounded-2xl px-4 py-3";
+  const inputClassName =
+    "w-full rounded-2xl border border-white/20 bg-white/35 px-4 py-3 text-sm text-ink-900 outline-none placeholder:text-ink-400 backdrop-blur-sm dark:border-white/10 dark:bg-ink-950/35 dark:text-ink-50 dark:placeholder:text-ink-500";
+  const fieldLabelClassName =
+    "mb-2 block text-sm font-medium text-ink-700 dark:text-ink-300";
 
   if (!user) {
     return (
@@ -354,7 +457,7 @@ export default function UserDashboard({ navigate }) {
                         <div className="flex items-center gap-3">
                           <button
                             type="button"
-                            onClick={() => navigate("/connect")}
+                            onClick={() => openEdit(opp)}
                             className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-700 transition-colors hover:text-brand-800 dark:text-brand-400"
                           >
                             <PenLine className="h-4 w-4" />
@@ -531,8 +634,180 @@ export default function UserDashboard({ navigate }) {
               </div>
             </div>
           </div>
-        )}
-      </div>
-    </section>
+         )}
+
+         {editTarget && (
+           <div className="fixed inset-0 z-50 grid place-items-center bg-black/30 px-4">
+             <div className="glass-panel-strong holo-card w-full max-w-lg rounded-[2rem] p-8">
+               <div className="flex items-start justify-between gap-4">
+                 <div>
+                   <h2 className="font-display text-xl font-bold text-ink-900 dark:text-ink-50">
+                     Edit opportunity
+                   </h2>
+                   <p className="mt-1 text-sm text-ink-500 dark:text-ink-400">
+                     Update the details below and save your changes.
+                   </p>
+                 </div>
+                 <button
+                   type="button"
+                   onClick={closeEdit}
+                   className="text-ink-400 hover:text-ink-700 dark:text-ink-500 dark:hover:text-ink-300"
+                   aria-label="Close"
+                 >
+                   <X className="h-5 w-5" />
+                 </button>
+               </div>
+
+               {editStatus && (
+                 <p
+                   className={`mt-4 text-sm ${editStatus.includes("successfully") ? "text-brand-700 dark:text-brand-300" : "text-rose-600 dark:text-rose-400"}`}
+                 >
+                   {editStatus}
+                 </p>
+               )}
+
+               <form className="mt-6 space-y-4" onSubmit={handleEditSubmit}>
+                 <div className="flex flex-col items-center">
+                   <label className="group relative cursor-pointer">
+                     <input
+                       type="file"
+                       accept="image/*"
+                       onChange={handleEditImageChange}
+                       className="sr-only"
+                     />
+                     <div className="flex h-48 w-48 items-center justify-center overflow-hidden rounded-3xl border-2 border-dashed border-ink-300 bg-ink-50 transition group-hover:border-brand-400 group-hover:bg-brand-50 dark:border-ink-600 dark:bg-ink-800 dark:group-hover:border-brand-500 dark:group-hover:bg-brand-900/20">
+                       {editForm.image ? (
+                         <img
+                           src={editForm.image}
+                           alt="Opportunity preview"
+                           className="h-full w-full object-cover"
+                         />
+                       ) : (
+                         <div className="flex flex-col items-center gap-1 text-ink-400 dark:text-ink-500">
+                           <ImageIcon className="h-8 w-8" />
+                           <span className="text-xs font-medium">Opportunity image</span>
+                         </div>
+                       )}
+                     </div>
+                   </label>
+                   <p className="mt-2 text-xs text-ink-500 dark:text-ink-400">
+                     Upload a cover image (optional)
+                   </p>
+                 </div>
+
+                 <div className="grid gap-4 md:grid-cols-2">
+                   <label className="block">
+                     <span className={fieldLabelClassName}>Title *</span>
+                     <input
+                       type="text"
+                       name="title"
+                       value={editForm.title}
+                       onChange={handleEditChange}
+                       required
+                       placeholder="e.g., AI-Powered Diagnostic Platform"
+                       className={inputClassName}
+                     />
+                   </label>
+                   <label className="block">
+                     <span className={fieldLabelClassName}>Company *</span>
+                     <input
+                       type="text"
+                       name="company"
+                       value={editForm.company}
+                       onChange={handleEditChange}
+                       required
+                       placeholder="e.g., NovaVet AI"
+                       className={inputClassName}
+                     />
+                   </label>
+                 </div>
+
+                 <div className="grid gap-4 md:grid-cols-3">
+                   <label className="block">
+                     <span className={fieldLabelClassName}>Sector *</span>
+                     <select
+                       name="sector"
+                       value={editForm.sector}
+                       onChange={handleEditChange}
+                       required
+                       className={inputClassName}
+                     >
+                       <option value="">Select a sector</option>
+                       {sectors.filter((s) => s !== "All").map((s) => (
+                         <option key={s} value={s}>{s}</option>
+                       ))}
+                     </select>
+                   </label>
+                   <label className="block">
+                     <span className={fieldLabelClassName}>Location</span>
+                     <input
+                       type="text"
+                       name="location"
+                       value={editForm.location}
+                       onChange={handleEditChange}
+                       placeholder="e.g., San Francisco, US"
+                       className={inputClassName}
+                     />
+                   </label>
+                   <label className="block">
+                     <span className={fieldLabelClassName}>Funding goal</span>
+                     <input
+                       type="text"
+                       name="fundingGoal"
+                       value={editForm.fundingGoal}
+                       onChange={handleEditChange}
+                       placeholder="e.g., $1.5M"
+                       className={inputClassName}
+                     />
+                   </label>
+                 </div>
+
+                 <label className="block">
+                   <span className={fieldLabelClassName}>Description</span>
+                   <textarea
+                     name="description"
+                     value={editForm.description}
+                     onChange={handleEditChange}
+                     rows="3"
+                     placeholder="Describe the opportunity, what problem it solves, and why it matters..."
+                     className={inputClassName}
+                   />
+                 </label>
+
+                 <label className="block">
+                   <span className={fieldLabelClassName}>Timeline</span>
+                   <input
+                     type="text"
+                     name="timeline"
+                     value={editForm.timeline}
+                     onChange={handleEditChange}
+                     placeholder="e.g., 14 days"
+                     className={inputClassName}
+                   />
+                 </label>
+
+                 <div className="flex items-center justify-end gap-3">
+                   <button
+                     type="button"
+                     onClick={closeEdit}
+                     className="btn-ghost"
+                   >
+                     Cancel
+                   </button>
+                   <button
+                     type="submit"
+                     className="btn-primary"
+                     disabled={editLoading}
+                   >
+                     <Rocket className="h-4 w-4" />
+                     {editLoading ? "Saving..." : "Save changes"}
+                   </button>
+                 </div>
+               </form>
+             </div>
+           </div>
+         )}
+       </div>
+     </section>
   );
 }

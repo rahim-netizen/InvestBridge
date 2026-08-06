@@ -67,6 +67,7 @@ export default function Navbar({ navigate, theme, toggleTheme }) {
   const showProfileMenu = Boolean(currentUser);
   const profileLabel = currentUser?.name || currentUser?.email || "Profile";
   const profileInitial = String(profileLabel).charAt(0).toUpperCase();
+  const profileImage = currentUser?.profile?.profile_image || null;
 
   return (
     <header
@@ -152,10 +153,18 @@ export default function Navbar({ navigate, theme, toggleTheme }) {
               <button
                 type="button"
                 onClick={() => setProfileMenuOpen((value) => !value)}
-                className="grid h-10 w-10 place-items-center rounded-full border border-brand-400/40 bg-gradient-to-br from-brand-500 to-brand-700 text-sm font-semibold text-white shadow-[0_0_0_3px_rgba(16,185,129,0.15)] backdrop-blur-sm"
+                className="grid h-10 w-10 place-items-center overflow-hidden rounded-full border border-brand-400/40 bg-gradient-to-br from-brand-500 to-brand-700 text-sm font-semibold text-white shadow-[0_0_0_3px_rgba(16,185,129,0.15)] backdrop-blur-sm"
                 aria-label="Open profile menu"
               >
-                {profileInitial}
+                {profileImage ? (
+                  <img
+                    src={profileImage}
+                    alt={profileLabel}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  profileInitial
+                )}
               </button>
               {profileMenuOpen && (
                 <div className="absolute right-0 mt-3 w-72 rounded-3xl border border-brand-500/20 bg-ink-950/95 p-4 shadow-[0_24px_60px_rgba(2,6,23,0.55)] backdrop-blur-2xl">

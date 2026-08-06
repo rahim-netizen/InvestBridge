@@ -1,5 +1,7 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 
+import { getHeaders } from "./auth";
+
 async function parseJsonResponse(response) {
   const text = await response.text();
   let data = {};
@@ -14,10 +16,7 @@ async function parseJsonResponse(response) {
 export async function getProfile() {
   const response = await fetch(`${API_BASE_URL}/api/profile`, {
     method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-    },
+    headers: getHeaders(),
     credentials: "include",
   });
 
@@ -33,10 +32,7 @@ export async function getProfile() {
 export async function updateProfile(profileData) {
   const response = await fetch(`${API_BASE_URL}/api/profile`, {
     method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-    },
+    headers: getHeaders(),
     credentials: "include",
     body: JSON.stringify(profileData),
   });

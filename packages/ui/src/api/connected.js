@@ -1,5 +1,7 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 
+import { getHeaders } from "./auth";
+
 async function parseJsonResponse(response) {
   const text = await response.text();
   let data = {};
@@ -14,10 +16,7 @@ async function parseJsonResponse(response) {
 export async function getConnectedOpportunities() {
   const response = await fetch(`${API_BASE_URL}/api/connected-opportunities`, {
     method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-    },
+    headers: getHeaders(),
     credentials: "include",
   });
 
@@ -33,10 +32,7 @@ export async function getConnectedOpportunities() {
 export async function connectOpportunity(opportunityId) {
   const response = await fetch(`${API_BASE_URL}/api/connected-opportunities`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-    },
+    headers: getHeaders(),
     credentials: "include",
     body: JSON.stringify({ opportunity_id: opportunityId }),
   });
@@ -58,10 +54,7 @@ export async function disconnectOpportunity(connectionId) {
     `${API_BASE_URL}/api/connected-opportunities/${connectionId}`,
     {
       method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
+      headers: getHeaders(),
       credentials: "include",
     },
   );

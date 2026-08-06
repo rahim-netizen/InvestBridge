@@ -42,9 +42,9 @@ function mapBackendProfileToForm(backendProfile) {
     website: backendProfile.website || "",
     mission: backendProfile.mission || "",
     notes: backendProfile.notes || "",
-    companyPersonnelPhotos: [],
-    nidPhotos: [],
-    profileImage: null,
+    companyPersonnelPhotos: backendProfile.company_personnel_photos || [],
+    nidPhotos: backendProfile.nid_photos || [],
+    profileImage: backendProfile.profile_image || null,
   };
 }
 
@@ -142,6 +142,9 @@ export default function ProfileDashboard({ navigate }) {
       website: form.website,
       mission: form.mission,
       notes: form.notes,
+      profile_image: form.profileImage,
+      company_personnel_photos: form.companyPersonnelPhotos || [],
+      nid_photos: form.nidPhotos || [],
       profile_complete: true,
     };
 
