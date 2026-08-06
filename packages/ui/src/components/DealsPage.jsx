@@ -10,6 +10,11 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { deleteOpportunity, getAllOpportunities } from "../api/opportunities";
+import {
+  connectOpportunity,
+  disconnectOpportunity,
+  getConnectedOpportunities,
+} from "../api/connected";
 
 const getStoredUser = () => {
   if (typeof window === "undefined") {
@@ -36,6 +41,9 @@ export default function DealsPage({ navigate }) {
   const [sectorFilter, setSectorFilter] = useState("All");
   const [goalSort, setGoalSort] = useState("None");
   const [selectedDeal, setSelectedDeal] = useState(null);
+  const [connectedMap, setConnectedMap] = useState({});
+  const [connectingId, setConnectingId] = useState(null);
+  const [connectStatus, setConnectStatus] = useState("");
 
   const loadDeals = useCallback(async () => {
     try {
@@ -75,6 +83,74 @@ export default function DealsPage({ navigate }) {
       window.removeEventListener("opportunity-changed", handler);
     };
   }, [loadDeals]);
+
+  const loadConnected = useCallback(async () => {
+    if (!user) return;
+    try {
+      const data = await getConnectedOpportunities();
+      if (data.connections) {
+        const map = {};
+        data.connections.forEach((c) => {
+          map[c.opportunity_id] = c.id;
+        });
+        setConnectedMap(map);
+      }
+    } catch {
+      // keep empty state on error
+    }
+  }, [user]);
+
+  useEffect(() => {
+    loadConnected();
+  }, [loadConnected]);
+
+  useEffect(() => {
+    const handler = () => {
+      loadConnected();
+    };
+    window.addEventListener("connection-changed", handler);
+    return () => {
+      window.removeEventListener("connection-changed", handler);
+    };
+  }, [loadConnected]);
+
+  const handleConnect = async (deal) => {
+    if (!user) {
+      navigate("/login");
+      return;
+    }
+    setConnectingId(deal.id);
+    setConnectStatus("");
+    try {
+      const data = await connectOpportunity(deal.id);
+      setConnectedMap((prev) => ({ ...prev, [deal.id]: data.connection.id }));
+      setConnectStatus("Saved to your dashboard.");
+    } catch (err) {
+      setConnectStatus(err.message || "Could not save this opportunity.");
+    } finally {
+      setConnectingId(null);
+    }
+  };
+
+  const handleDisconnect = async (deal) => {
+    const connectionId = connectedMap[deal.id];
+    if (!connectionId) return;
+    setConnectingId(deal.id);
+    setConnectStatus("");
+    try {
+      await disconnectOpportunity(connectionId);
+      setConnectedMap((prev) => {
+        const next = { ...prev };
+        delete next[deal.id];
+        return next;
+      });
+      setConnectStatus("Removed from your dashboard.");
+    } catch (err) {
+      setConnectStatus(err.message || "Could not remove this opportunity.");
+    } finally {
+      setConnectingId(null);
+    }
+  };
 
   const handleDelete = async (id) => {
     if (!window.confirm("Remove this opportunity?")) return;
@@ -197,7 +273,7 @@ export default function DealsPage({ navigate }) {
               <article
                 key={deal.id}
                 className="glass-panel-strong holo-card group overflow-hidden hover:shadow-lift cursor-pointer"
-                onClick={() => setSelectedDeal(deal)}
+                 onClick={() => { setSelectedDeal(deal); setConnectStatus(""); }}
               >
                 <div className="relative h-48 overflow-hidden bg-ink-100 dark:bg-ink-800">
                   <img
@@ -207,10 +283,15 @@ export default function DealsPage({ navigate }) {
                     className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-ink-950/40 to-transparent" />
-                  <div className="absolute left-4 top-4">
+                  <div className="absolute left-4 top-4 flex flex-col gap-2">
                     <span className="rounded-full bg-white/90 px-2.5 py-1 text-xs font-semibold text-ink-800 backdrop-blur">
                       {deal.sector}
                     </span>
+                    {connectedMap[deal.id] && (
+                      <span className="rounded-full bg-brand-600 px-2.5 py-1 text-xs font-semibold text-white backdrop-blur">
+                        Saved
+                      </span>
+                    )}
                   </div>
                 </div>
                 <div className="p-6">
@@ -243,7 +324,7 @@ export default function DealsPage({ navigate }) {
                     href="#"
                     onClick={(e) => {
                       e.stopPropagation();
-                      setSelectedDeal(deal);
+                      setSelectedDeal(deal); setConnectStatus("");
                     }}
                     className="inline-flex items-center gap-1 text-sm font-semibold text-brand-700 transition-colors hover:text-brand-800"
                   >
@@ -329,13 +410,44 @@ export default function DealsPage({ navigate }) {
               </div>
 
               <div className="flex gap-3">
-                <button
-                  type="button"
-                  onClick={() => navigate("/connect")}
-                  className="btn-primary flex-1"
-                >
-                  Connect
-                </button>
+                {!user ? (
+                  <button
+                    type="button"
+                    onClick={() => navigate("/login")}
+                    className="btn-primary flex-1"
+                  >
+                    Connect
+                  </button>
+                ) : selectedDeal.postedBy === user.email ? (
+                  <button
+                    type="button"
+                    disabled
+                    className="btn-ghost flex-1 cursor-not-allowed opacity-60"
+                  >
+                    Your post
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    disabled={connectingId === selectedDeal?.id}
+                    onClick={() =>
+                      connectedMap[selectedDeal.id]
+                        ? handleDisconnect(selectedDeal)
+                        : handleConnect(selectedDeal)
+                    }
+                    className={
+                      connectedMap[selectedDeal.id]
+                        ? "btn-ghost flex-1"
+                        : "btn-primary flex-1"
+                    }
+                  >
+                    {connectingId === selectedDeal?.id
+                      ? "Please wait..."
+                      : connectedMap[selectedDeal.id]
+                      ? "Remove from dashboard"
+                      : "Connect"}
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={() => setSelectedDeal(null)}
@@ -344,6 +456,12 @@ export default function DealsPage({ navigate }) {
                   Close
                 </button>
               </div>
+
+              {connectStatus && (
+                <p className="mt-3 text-center text-sm font-semibold text-brand-700 dark:text-brand-300">
+                  {connectStatus}
+                </p>
+              )}
             </div>
           </div>
         )}

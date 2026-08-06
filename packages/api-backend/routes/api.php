@@ -31,6 +31,10 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/opportunities', [\App\Http\Controllers\OpportunityController::class, 'store']);
     Route::get('/opportunities/{id}', [\App\Http\Controllers\OpportunityController::class, 'show']);
     Route::delete('/opportunities/{id}', [\App\Http\Controllers\OpportunityController::class, 'destroy']);
+
+    Route::get('/connected-opportunities', [\App\Http\Controllers\ConnectedOpportunityController::class, 'index']);
+    Route::post('/connected-opportunities', [\App\Http\Controllers\ConnectedOpportunityController::class, 'store']);
+    Route::delete('/connected-opportunities/{id}', [\App\Http\Controllers\ConnectedOpportunityController::class, 'destroy']);
 });
 
 Route::post('/chatbot/message', [\App\Http\Controllers\ChatbotController::class, 'message']);
