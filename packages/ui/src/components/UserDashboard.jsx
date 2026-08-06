@@ -1,6 +1,7 @@
 import {
   ArrowLeft,
   BarChart3,
+  Bookmark,
   Briefcase,
   MapPin,
   PenLine,
@@ -13,6 +14,10 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { deleteOpportunity, getMyOpportunities } from "../api/opportunities";
+import {
+  getConnectedOpportunities,
+  disconnectOpportunity,
+} from "../api/connected";
 
 const getStoredUser = () => {
   if (typeof window === "undefined") {
@@ -33,8 +38,9 @@ const DEFAULT_DEAL_IMAGE =
 export default function UserDashboard({ navigate }) {
   const [user, setUser] = useState(() => getStoredUser());
   const [allOpportunities, setAllOpportunities] = useState([]);
+  const [connectedOpportunities, setConnectedOpportunities] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [deleteId, setDeleteId] = useState(null);
+  const [pendingDelete, setPendingDelete] = useState(null);
 
   useEffect(() => {
     setUser(getStoredUser());
@@ -70,6 +76,41 @@ export default function UserDashboard({ navigate }) {
   }, []);
 
   useEffect(() => {
+    async function loadConnected() {
+      try {
+        const data = await getConnectedOpportunities();
+        if (data.connections) {
+          const mapped = data.connections
+            .filter((c) => c.opportunity)
+            .map((c) => {
+              const opp = c.opportunity;
+              return {
+                connectionId: c.id,
+                id: opp.id,
+                title: opp.title,
+                company: opp.company,
+                sector: opp.sector,
+                location: opp.location || "TBD",
+                goal: opp.funding_goal || "$0",
+                blurb: opp.description || "",
+                image: opp.image || null,
+                timeline: opp.timeline || "TBD",
+                postedBy: opp.user?.email || null,
+                postedByName: opp.user?.name || opp.user?.email || "Anonymous",
+                createdAt: opp.created_at,
+              };
+            });
+          setConnectedOpportunities(mapped);
+        }
+      } catch {
+        // keep empty state on error
+      }
+    }
+
+    loadConnected();
+  }, []);
+
+  useEffect(() => {
     const handler = () => {
       loadOpportunities();
     };
@@ -84,18 +125,32 @@ export default function UserDashboard({ navigate }) {
     return o.title.toLowerCase().includes(q);
   });
 
-  const confirmDelete = (id) => setDeleteId(id);
-  const cancelDelete = () => setDeleteId(null);
+  const confirmDelete = (id, type) => setPendingDelete({ id, type });
+  const cancelDelete = () => setPendingDelete(null);
 
   const handleDelete = async (id) => {
     try {
       await deleteOpportunity(id);
       const updated = allOpportunities.filter((o) => o.id !== id);
       setAllOpportunities(updated);
-      setDeleteId(null);
+      setPendingDelete(null);
       window.dispatchEvent(new CustomEvent("opportunity-changed"));
     } catch {
-      setDeleteId(null);
+      setPendingDelete(null);
+    }
+  };
+
+  const handleDisconnect = async (connectionId) => {
+    try {
+      await disconnectOpportunity(connectionId);
+      const updated = connectedOpportunities.filter(
+        (o) => o.connectionId !== connectionId,
+      );
+      setConnectedOpportunities(updated);
+      setPendingDelete(null);
+      window.dispatchEvent(new CustomEvent("connection-changed"));
+    } catch {
+      setPendingDelete(null);
     }
   };
 
@@ -308,7 +363,7 @@ export default function UserDashboard({ navigate }) {
                         </div>
                         <button
                           type="button"
-                          onClick={() => confirmDelete(opp.id)}
+                          onClick={() => confirmDelete(opp.id, "own")}
                           className="text-xs font-semibold text-rose-500 transition-colors hover:text-rose-700"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
@@ -323,7 +378,106 @@ export default function UserDashboard({ navigate }) {
           </>
         )}
 
-        {deleteId !== null && (
+        <div className="mt-14">
+          <div className="mb-6">
+            <span className="eyebrow dark:text-brand-400">
+              <Bookmark className="h-3.5 w-3.5" />
+              Saved from discovery
+            </span>
+            <h2 className="mt-4 font-display text-3xl font-extrabold tracking-tight text-ink-900 sm:text-4xl">
+              Opportunities you connected with
+            </h2>
+            <p className="mt-3 max-w-xl text-lg leading-relaxed text-ink-600 dark:text-ink-300">
+              Posts you saved from the discovery feed. You can remove them from
+              your dashboard at any time without affecting the original post.
+            </p>
+          </div>
+
+          {connectedOpportunities.length === 0 ? (
+            <div className="glass-panel-strong holo-card rounded-[2rem] p-8 text-center">
+              <Bookmark className="mx-auto h-12 w-12 text-ink-300 dark:text-ink-600" />
+              <p className="mt-4 text-ink-500 dark:text-ink-400">
+                You haven&apos;t saved any opportunities yet.
+              </p>
+              <button
+                type="button"
+                onClick={() => navigate("/deals")}
+                className="btn-primary mt-4"
+              >
+                <Plus className="h-4 w-4" />
+                Browse deals
+              </button>
+            </div>
+          ) : (
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {connectedOpportunities.map((opp) => (
+                <article
+                  key={opp.connectionId}
+                  className="glass-panel-strong holo-card group overflow-hidden hover:shadow-lift"
+                >
+                  <div className="relative h-40 overflow-hidden bg-ink-100 dark:bg-ink-800">
+                    <img
+                      src={opp.image || DEFAULT_DEAL_IMAGE}
+                      alt={opp.title}
+                      loading="lazy"
+                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-ink-950/40 to-transparent" />
+                    <div className="absolute left-4 top-4">
+                      <span className="rounded-full bg-white/90 px-2.5 py-1 text-xs font-semibold text-ink-800 backdrop-blur">
+                        {opp.sector}
+                      </span>
+                    </div>
+                    <div className="absolute bottom-4 left-4 flex items-center gap-2 text-white">
+                      <span className="grid h-9 w-9 place-items-center rounded-lg bg-white/20 font-display text-sm font-bold backdrop-blur">
+                        {opp.company?.slice(0, 2).toUpperCase() || "OP"}
+                      </span>
+                      <span className="font-display text-lg font-bold">
+                        {opp.company}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="p-5">
+                    <h3 className="font-display text-lg font-bold text-ink-900 dark:text-ink-50">
+                      {opp.title}
+                    </h3>
+                    <p className="mt-2 text-sm leading-relaxed text-ink-600 dark:text-ink-400">
+                      {opp.blurb || "No description provided."}
+                    </p>
+                    <div className="mt-3 flex items-center gap-4 text-xs text-ink-500 dark:text-ink-400">
+                      <span className="flex items-center gap-1">
+                        <MapPin className="h-3.5 w-3.5" />
+                        {opp.location || "TBD"}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Clock className="h-3.5 w-3.5" />
+                        {opp.timeline || "TBD"}
+                      </span>
+                    </div>
+
+                    <div className="mt-4 flex items-center justify-between">
+                      <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-700 dark:text-brand-400">
+                        <Bookmark className="h-3.5 w-3.5" />
+                        Saved
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => confirmDelete(opp.connectionId, "connected")}
+                        className="text-xs font-semibold text-rose-500 transition-colors hover:text-rose-700"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                        Remove
+                      </button>
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {pendingDelete && (
           <div className="fixed inset-0 z-50 grid place-items-center bg-black/30 px-4">
             <div className="glass-panel-strong holo-card w-full max-w-md rounded-[2rem] p-6">
               <div className="flex items-start justify-between gap-4">
@@ -333,11 +487,14 @@ export default function UserDashboard({ navigate }) {
                   </div>
                   <div>
                     <h2 className="font-display text-xl font-bold text-ink-900 dark:text-ink-50">
-                      Remove project?
+                      {pendingDelete.type === "connected"
+                        ? "Remove saved opportunity?"
+                        : "Remove project?"}
                     </h2>
                     <p className="mt-1 text-sm text-ink-600 dark:text-ink-300">
-                      This action cannot be undone. This project will be removed
-                      from your dashboard and discovery.
+                      {pendingDelete.type === "connected"
+                        ? "This only removes the post from your dashboard. The original post stays on discovery for everyone."
+                        : "This action cannot be undone. This project will be removed from your dashboard and discovery."}
                     </p>
                   </div>
                 </div>
@@ -360,10 +517,16 @@ export default function UserDashboard({ navigate }) {
                 </button>
                 <button
                   type="button"
-                  onClick={() => handleDelete(deleteId)}
+                  onClick={() =>
+                    pendingDelete.type === "connected"
+                      ? handleDisconnect(pendingDelete.id)
+                      : handleDelete(pendingDelete.id)
+                  }
                   className="rounded-full bg-rose-600 px-5 py-2.5 text-sm font-semibold text-white shadow-soft transition-colors hover:bg-rose-700"
                 >
-                  Remove project
+                  {pendingDelete.type === "connected"
+                    ? "Remove from dashboard"
+                    : "Remove project"}
                 </button>
               </div>
             </div>
