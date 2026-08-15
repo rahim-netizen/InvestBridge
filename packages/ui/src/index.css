@@ -1,0 +1,96 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply bg-ink-50 text-ink-900 font-sans antialiased;
+  }
+  .dark body {
+    @apply bg-ink-950 text-ink-50;
+  }
+
+  .dark .bg-white {
+    background-color: #0f172a !important;
+  }
+
+  .dark .bg-ink-50 {
+    background-color: #111827 !important;
+  }
+
+  .dark .bg-white\/80 {
+    background-color: rgba(15, 23, 42, 0.8) !important;
+  }
+
+  .dark .bg-white\/90 {
+    background-color: rgba(15, 23, 42, 0.9) !important;
+  }
+
+  .dark .text-ink-900 {
+    color: #f8fafc !important;
+  }
+
+  .dark .text-ink-600,
+  .dark .text-ink-500,
+  .dark .text-ink-400,
+  .dark .text-ink-300 {
+    color: #cbd5e1 !important;
+  }
+
+  .dark .border-ink-100,
+  .dark .border-ink-200 {
+    border-color: #334155 !important;
+  }
+
+  .dark .shadow-soft {
+    box-shadow:
+      0 1px 2px rgba(15, 23, 42, 0.1),
+      0 8px 24px rgba(15, 23, 42, 0.16) !important;
+  }
+
+  ::selection {
+    @apply bg-brand-200 text-brand-900;
+  }
+}
+
+@layer components {
+  .container-page {
+    @apply mx-auto w-full max-w-7xl px-5 sm:px-8;
+  }
+  @keyframes btn-hover {
+    from {
+      transform: translateY(0) scale(1);
+    }
+    50% {
+      transform: translateY(-0.125rem) scale(1.03);
+    }
+    to {
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-full bg-brand-600 px-6 py-3 text-sm font-semibold text-white shadow-soft transition-all duration-200 hover:bg-brand-700 hover:shadow-glow hover:-translate-y-0.5 active:translate-y-0;
+  }
+  .btn-primary:hover {
+    animation: btn-hover 0.35s ease;
+  }
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 rounded-full border border-ink-200 bg-white px-6 py-3 text-sm font-semibold text-ink-700 transition-all duration-200 hover:border-brand-300 hover:text-brand-700 hover:-translate-y-0.5;
+  }
+  .dark .btn-ghost {
+    @apply border-ink-700 bg-ink-950 text-ink-100;
+  }
+  .btn-ghost:hover {
+    animation: btn-hover 0.35s ease;
+  }
+  .eyebrow {
+    @apply inline-flex items-center gap-2 rounded-full border border-brand-200 bg-brand-50 px-3.5 py-1.5 text-xs font-semibold uppercase tracking-wider text-brand-700;
+  }
+  .card {
+    @apply rounded-2xl border border-ink-100 bg-white shadow-soft;
+  }
+}
