@@ -7,13 +7,14 @@ import {
   Sparkles,
   Upload,
 } from "lucide-react";
+import PageBackground from "./PageBackground.jsx";
 
 export default function WorkflowRoutePage({ navigate, content, variant }) {
   const Icon = content.icon;
 
   return (
     <section className="relative min-h-screen overflow-hidden px-4 py-20 transition-colors duration-300 sm:px-6 lg:px-8">
-      <div className="pointer-events-none absolute inset-0 -z-20 bg-[radial-gradient(circle_at_top_left,_rgba(45,97,255,0.18),_transparent_34%),radial-gradient(circle_at_80%_15%,_rgba(245,158,11,0.12),_transparent_24%),linear-gradient(135deg,_#f8fbff_0%,_#eef4ff_100%)] dark:bg-gradient-to-br dark:from-ink-950 dark:via-ink-950 dark:to-ink-900" />
+      <PageBackground />
       <div className="pointer-events-none absolute inset-0 -z-10 opacity-60">
         <div className="absolute left-[-6rem] top-20 h-72 w-72 rounded-full bg-brand-200/35 blur-3xl" />
         <div className="absolute right-[-5rem] bottom-12 h-80 w-80 rounded-full bg-gold-200/20 blur-3xl" />
@@ -28,17 +29,17 @@ export default function WorkflowRoutePage({ navigate, content, variant }) {
           <div className="mt-4 inline-flex rounded-full border border-brand-200 bg-brand-50 px-4 py-2 text-xs font-semibold uppercase tracking-wider text-brand-700 dark:border-brand-400/30 dark:bg-brand-400/10 dark:text-brand-300">
             {content.badge}
           </div>
-          <h1 className="mt-6 font-display text-4xl font-extrabold tracking-tight text-ink-900 sm:text-5xl">
+          <h1 className="mt-6 font-display text-4xl font-extrabold tracking-tight text-white sm:text-5xl">
             {content.title}
           </h1>
-          <p className="mt-4 max-w-xl text-lg leading-relaxed text-ink-600 dark:text-ink-300">
+          <p className="mt-4 max-w-xl text-lg leading-relaxed text-white/80">
             {content.description}
           </p>
-          <p className="mt-4 max-w-xl text-sm leading-relaxed text-ink-500 dark:text-ink-400">
+          <p className="mt-4 max-w-xl text-sm leading-relaxed text-white/70">
             {content.summary}
           </p>
 
-          <ul className="mt-8 space-y-3 text-sm text-ink-600 dark:text-ink-300">
+          <ul className="mt-8 space-y-3 text-sm text-white/80">
             {content.highlights.map((item) => (
               <li key={item} className="flex items-start gap-2">
                 <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-brand-600" />

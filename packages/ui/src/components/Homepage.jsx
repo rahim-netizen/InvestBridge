@@ -2,7 +2,6 @@ import {
   ArrowRight,
   ArrowUpRight,
   BarChart3,
-  CheckCircle2,
   Handshake,
   LineChart,
   MapPin,
@@ -12,12 +11,28 @@ import {
   Rocket,
   Search,
   ShieldCheck,
-  Sparkles,
   Star,
-  TrendingUp,
   Users,
 } from "lucide-react";
-import { useState } from "react";
+import { motion, useScroll, useTransform } from "framer-motion";
+import { useRef, useState } from "react";
+import PageBackground from "./PageBackground.jsx";
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 28 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.6, ease: "easeOut" },
+  },
+};
+
+const stagger = {
+  hidden: {},
+  visible: {
+    transition: { staggerChildren: 0.12 },
+  },
+};
 
 const stats = [
   { value: "$240M+", label: "Total capital deployed" },
@@ -227,161 +242,65 @@ const testimonials = [
   },
 ];
 
-function Hero({ navigate }) {
+function Hero() {
+  const sectionRef = useRef(null);
+  // Tracks the hero's own scroll position through the viewport: progress is
+  // 0 while its top edge sits at the viewport top, and reaches 1 once its
+  // bottom edge has scrolled up to the viewport top — i.e. exactly the span
+  // during which the hero is passing out of view underneath the sticky nav.
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ["start start", "end start"],
+  });
+
+  const heroY = useTransform(scrollYProgress, [0, 1], [0, 120]);
+  const heroScale = useTransform(scrollYProgress, [0, 1], [1, 1.06]);
+  const heroOpacity = useTransform(scrollYProgress, [0, 1], [1, 0.1]);
+
   return (
-    <section id="home" className="relative overflow-hidden pt-28 sm:pt-36">
-      <div className="pointer-events-none absolute inset-0 -z-10">
-        <div className="absolute -top-24 left-1/2 h-[36rem] w-[36rem] -translate-x-1/2 rounded-full bg-brand-200/40 blur-3xl" />
-        <div className="absolute right-0 top-40 h-72 w-72 rounded-full bg-gold-200/30 blur-3xl" />
-        <div
-          className="absolute inset-0 opacity-[0.04]"
-          style={{
-            backgroundImage:
-              "linear-gradient(to right, #0f1620 1px, transparent 1px), linear-gradient(to bottom, #0f1620 1px, transparent 1px)",
-            backgroundSize: "48px 48px",
-          }}
-        />
-      </div>
-
-      <div className="container-page">
-        <div className="grid items-center gap-12 lg:grid-cols-[1.05fr_0.95fr]">
-          <div className="animate-fadeUp">
-            <span className="eyebrow">
-              <Sparkles className="h-3.5 w-3.5" />
-              The bridge between ideas and capital
-            </span>
-            <h1 className="mt-5 font-display text-4xl font-extrabold leading-[1.08] tracking-tight text-ink-900 sm:text-5xl lg:text-6xl">
-              Where ambitious founders meet{" "}
-              <span className="bg-gradient-to-r from-brand-600 to-brand-800 bg-clip-text text-transparent">
-                serious investors
-              </span>
-            </h1>
-            <p className="mt-5 max-w-xl text-lg leading-relaxed text-ink-600">
-              InvestBridge helps entrepreneurs showcase their startups to a
-              curated network of investors — and gives investors a front-row
-              seat to the next big thing.
-            </p>
-
-            <div className="mt-8 flex flex-wrap items-center gap-3">
-              <a href="#startups" className="btn-primary">
-                Explore startups
-                <ArrowRight className="h-4 w-4" />
-              </a>
-              <button
-                type="button"
-                onClick={() => navigate("/opportunities")}
-                className="btn-ghost"
-              >
-                Pitch your startup
-              </button>
-            </div>
-
-            <ul className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-sm text-ink-600">
-              {[
-                "No setup fees",
-                "Vetted opportunities",
-                "Global investor network",
-              ].map((t) => (
-                <li key={t} className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-brand-600" />
-                  {t}
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div className="relative animate-fadeUp [animation-delay:120ms] holo-scene">
-            <div className="relative mx-auto max-w-md">
-              <div className="card holo-card overflow-hidden p-0 shadow-lift">
-                <div className="flex items-center justify-between border-b border-ink-100 bg-ink-50 px-5 py-4 holo-layer-soft">
-                  <div className="flex items-center gap-3">
-                    <div className="grid h-10 w-10 place-items-center rounded-xl bg-brand-600 text-white font-display font-bold">
-                      NV
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-ink-900">
-                        NovaVet AI
-                      </p>
-                      <p className="text-xs text-ink-500">
-                        Series A · HealthTech
-                      </p>
-                    </div>
-                  </div>
-                  <span className="rounded-full bg-brand-50 px-2.5 py-1 text-xs font-semibold text-brand-700">
-                    Raising
-                  </span>
-                </div>
-                <div className="space-y-4 p-5 holo-layer-soft">
-                  <div className="flex items-end justify-between holo-layer">
-                    <div>
-                      <p className="text-xs text-ink-500">Target raise</p>
-                      <p className="font-display text-2xl font-bold text-ink-900">
-                        $1.5M
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-xs text-ink-500">Committed</p>
-                      <p className="font-display text-2xl font-bold text-brand-600">
-                        $920K
-                      </p>
-                    </div>
-                  </div>
-                  <div>
-                    <div className="mb-1.5 flex justify-between text-xs text-ink-500">
-                      <span>61% funded</span>
-                      <span>14 days left</span>
-                    </div>
-                    <div className="h-2 w-full overflow-hidden rounded-full bg-ink-100">
-                      <div
-                        className="h-full rounded-full bg-gradient-to-r from-brand-500 to-brand-700"
-                        style={{ width: "61%" }}
-                      />
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 text-xs text-ink-500 holo-layer-soft">
-                    <TrendingUp className="h-4 w-4 text-brand-600" />
-                    3.2x projected return over 5 years
-                  </div>
-                </div>
-              </div>
-
-              <div className="absolute -bottom-8 -left-6 w-44 animate-floatUp rounded-2xl border border-white/40 bg-white/70 p-4 shadow-lift backdrop-blur-xl holo-card dark:border-white/10 dark:bg-ink-900/60 sm:-left-10">
-                <p className="text-xs text-ink-500">New investment</p>
-                <p className="mt-1 font-display text-lg font-bold text-ink-900">
-                  $50,000
-                </p>
-                <p className="text-xs text-brand-600">
-                  from 2 investors · just now
-                </p>
-              </div>
-
-              <div className="absolute -right-4 -top-6 hidden animate-floatUp rounded-2xl border border-white/40 bg-white/70 px-4 py-3 shadow-lift backdrop-blur-xl holo-card dark:border-white/10 dark:bg-ink-900/60 [animation-delay:1.5s] sm:block">
-                <p className="text-xs font-semibold text-ink-900">Live deals</p>
-                <p className="font-display text-xl font-extrabold text-brand-600">
-                  128
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+    <section
+      id="home"
+      ref={sectionRef}
+      className="relative pt-16 sm:pt-20 overflow-hidden"
+    >
+      <motion.div style={{ y: heroY, scale: heroScale, opacity: heroOpacity }}>
+        <motion.video
+          autoPlay
+          muted
+          loop
+          playsInline
+          poster="/homepage-bg.jpg"
+          className="block w-full h-auto"
+          initial={{ opacity: 0, scale: 1.03 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.9, ease: "easeOut" }}
+        >
+          <source src="/investbridge-hero.mp4" type="video/mp4" />
+        </motion.video>
+      </motion.div>
     </section>
   );
 }
 
 function Stats() {
   return (
-    <section className="border-y border-ink-100 bg-white py-12">
-      <div className="container-page grid grid-cols-2 gap-8 lg:grid-cols-4">
+    <section className="border-y border-white/10 py-12">
+      <motion.div
+        className="container-page grid grid-cols-2 gap-8 lg:grid-cols-4"
+        variants={stagger}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.4 }}
+      >
         {stats.map((s) => (
-          <div key={s.label} className="text-center">
-            <p className="font-display text-3xl font-extrabold text-ink-900 sm:text-4xl">
+          <motion.div key={s.label} className="text-center" variants={fadeUp}>
+            <p className="font-display text-3xl font-extrabold text-white sm:text-4xl">
               {s.value}
             </p>
-            <p className="mt-1 text-sm text-ink-500">{s.label}</p>
-          </div>
+            <p className="mt-1 text-sm text-white/70">{s.label}</p>
+          </motion.div>
         ))}
-      </div>
+      </motion.div>
     </section>
   );
 }
@@ -390,24 +309,38 @@ function HowItWorks({ navigate }) {
   return (
     <section id="how-it-works" className="py-20 sm:py-28">
       <div className="container-page">
-        <div className="mx-auto max-w-2xl text-center">
+        <motion.div
+          className="mx-auto max-w-2xl text-center"
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.4 }}
+          variants={fadeUp}
+        >
           <span className="eyebrow">How it works</span>
-          <h2 className="mt-4 font-display text-3xl font-extrabold tracking-tight text-ink-900 sm:text-4xl">
+          <h2 className="mt-4 font-display text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
             Three steps from pitch to funded
           </h2>
-          <p className="mt-4 text-lg text-ink-600">
+          <p className="mt-4 text-lg text-white/75">
             A transparent process that keeps founders focused on building and
             investors confident in their commitments.
           </p>
-        </div>
+        </motion.div>
 
-        <div className="mt-14 grid gap-6 md:grid-cols-3">
+        <motion.div
+          className="mt-14 grid gap-6 md:grid-cols-3"
+          variants={stagger}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.2 }}
+        >
           {steps.map((s, i) => (
-            <button
+            <motion.button
               key={s.title}
               type="button"
               onClick={() => navigate(s.route)}
-              className="card holo-card relative p-7 text-left transition-transform hover:-translate-y-0.5 hover:shadow-lift"
+              className="card holo-card relative p-7 text-left"
+              variants={fadeUp}
+              whileHover={{ y: -4, transition: { duration: 0.25 } }}
             >
               <span className="absolute right-6 top-6 font-display text-5xl font-extrabold text-ink-100">
                 {i + 1}
@@ -425,9 +358,9 @@ function HowItWorks({ navigate }) {
                 {s.action}
                 <ArrowUpRight className="h-4 w-4" />
               </span>
-            </button>
+            </motion.button>
           ))}
-        </div>
+        </motion.div>
       </div>
     </section>
   );
@@ -435,15 +368,21 @@ function HowItWorks({ navigate }) {
 
 function FeaturedStartups({ imageErrors, handleImageError }) {
   return (
-    <section id="startups" className="bg-ink-50 py-20 sm:py-28">
+    <section id="startups" className="py-20 sm:py-28">
       <div className="container-page">
-        <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-end">
+        <motion.div
+          className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-end"
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.4 }}
+          variants={fadeUp}
+        >
           <div className="max-w-2xl">
             <span className="eyebrow">Live deals</span>
-            <h2 className="mt-4 font-display text-3xl font-extrabold tracking-tight text-ink-900 sm:text-4xl">
+            <h2 className="mt-4 font-display text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
               Featured startups raising now
             </h2>
-            <p className="mt-4 text-lg text-ink-600">
+            <p className="mt-4 text-lg text-white/75">
               A snapshot of vetted rounds currently open for investment on
               InvestBridge.
             </p>
@@ -452,13 +391,20 @@ function FeaturedStartups({ imageErrors, handleImageError }) {
             Browse all deals
             <ArrowUpRight className="h-4 w-4" />
           </a>
-        </div>
+        </motion.div>
 
-        <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <motion.div
+          className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3"
+          variants={stagger}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.15 }}
+        >
           {startups.map((s) => (
-            <article
+            <motion.article
               key={s.name}
               className="card holo-card group overflow-hidden hover:shadow-lift"
+              variants={fadeUp}
             >
               <div className="relative h-40 overflow-hidden">
                 {!imageErrors[s.name] ? (
@@ -528,9 +474,9 @@ function FeaturedStartups({ imageErrors, handleImageError }) {
                   <ArrowUpRight className="h-4 w-4" />
                 </a>
               </div>
-            </article>
+            </motion.article>
           ))}
-        </div>
+        </motion.div>
       </div>
     </section>
   );
@@ -540,21 +486,37 @@ function ForWho() {
   return (
     <section id="investors" className="py-20 sm:py-28">
       <div className="container-page">
-        <div className="mx-auto max-w-2xl text-center mb-12">
+        <motion.div
+          className="mx-auto max-w-2xl text-center mb-12"
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.4 }}
+          variants={fadeUp}
+        >
           <span className="eyebrow">Features for everyone</span>
-          <h2 className="mt-4 font-display text-3xl font-extrabold tracking-tight text-ink-900 sm:text-4xl">
+          <h2 className="mt-4 font-display text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
             Everything you need on one platform
           </h2>
-          <p className="mt-3 text-ink-600">
+          <p className="mt-3 text-white/75">
             Whether you're looking to share an opportunity, find an investment,
             or build your network, InvestBridge gives you all the tools you
             need.
           </p>
-        </div>
+        </motion.div>
 
-        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+        <motion.div
+          className="grid gap-8 md:grid-cols-2 lg:grid-cols-3"
+          variants={stagger}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.15 }}
+        >
           {universalBenefits.map((b) => (
-            <div key={b.title} className="card holo-card p-8 hover:shadow-lift">
+            <motion.div
+              key={b.title}
+              className="card holo-card p-8 hover:shadow-lift"
+              variants={fadeUp}
+            >
               <span className="grid h-12 w-12 place-items-center rounded-xl bg-brand-50 text-brand-700">
                 <b.icon className="h-6 w-6" />
               </span>
@@ -564,9 +526,9 @@ function ForWho() {
               <p className="mt-2 text-sm leading-relaxed text-ink-600">
                 {b.desc}
               </p>
-            </div>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       </div>
     </section>
   );
@@ -574,25 +536,35 @@ function ForWho() {
 
 function Testimonials({ imageErrors, handleImageError }) {
   return (
-    <section
-      id="stories"
-      className="bg-white py-20 text-ink-900 sm:py-28 dark:bg-ink-950 dark:text-white"
-    >
+    <section id="stories" className="py-20 text-white sm:py-28">
       <div className="container-page">
-        <div className="mx-auto max-w-2xl text-center">
+        <motion.div
+          className="mx-auto max-w-2xl text-center"
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.4 }}
+          variants={fadeUp}
+        >
           <span className="inline-flex items-center gap-2 rounded-full border border-ink-200 bg-ink-50 px-3.5 py-1.5 text-xs font-semibold uppercase tracking-wider text-brand-600 dark:border-white/15 dark:bg-white/5 dark:text-brand-300">
             Success stories
           </span>
           <h2 className="mt-4 font-display text-3xl font-extrabold tracking-tight sm:text-4xl">
             Trusted by founders and investors alike
           </h2>
-        </div>
+        </motion.div>
 
-        <div className="mt-14 grid gap-6 md:grid-cols-3">
+        <motion.div
+          className="mt-14 grid gap-6 md:grid-cols-3"
+          variants={stagger}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.15 }}
+        >
           {testimonials.map((t) => (
-            <figure
+            <motion.figure
               key={t.name}
               className="holo-card relative rounded-2xl border border-white/10 bg-white/[0.04] p-7 backdrop-blur transition-colors hover:bg-white/[0.07]"
+              variants={fadeUp}
             >
               <Quote className="h-8 w-8 text-brand-400/60" />
               <blockquote className="mt-4 text-sm leading-relaxed text-ink-200">
@@ -626,9 +598,9 @@ function Testimonials({ imageErrors, handleImageError }) {
                   <Star key={i} className="h-4 w-4 fill-current" />
                 ))}
               </div>
-            </figure>
+            </motion.figure>
           ))}
-        </div>
+        </motion.div>
       </div>
     </section>
   );
@@ -657,7 +629,13 @@ function CTA({ navigate }) {
   return (
     <section className="py-20 sm:py-28">
       <div className="container-page">
-        <div className="holo-scene">
+        <motion.div
+          className="holo-scene"
+          initial={{ opacity: 0, y: 28, scale: 0.98 }}
+          whileInView={{ opacity: 1, y: 0, scale: 1 }}
+          viewport={{ once: true, amount: 0.4 }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
+        >
           <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-700 via-brand-600 to-brand-800 px-6 py-16 text-center shadow-lift holo-card sm:px-12">
             <div className="pointer-events-none absolute inset-0 opacity-20">
               <div
@@ -695,7 +673,7 @@ function CTA({ navigate }) {
               </div>
             </div>
           </div>
-        </div>
+        </motion.div>
       </div>
     </section>
   );
@@ -710,7 +688,8 @@ export default function Homepage({ navigate }) {
 
   return (
     <>
-      <Hero navigate={navigate} />
+      <PageBackground />
+      <Hero />
       <Stats />
       <HowItWorks navigate={navigate} />
       <FeaturedStartups

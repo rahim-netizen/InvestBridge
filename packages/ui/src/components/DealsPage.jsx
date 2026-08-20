@@ -7,8 +7,10 @@ import {
   Trash2,
   X,
   DollarSign,
+  CreditCard,
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
+import PageBackground from "./PageBackground.jsx";
 import { deleteOpportunity, getAllOpportunities } from "../api/opportunities";
 import {
   connectOpportunity,
@@ -193,7 +195,8 @@ export default function DealsPage({ navigate }) {
     "surface-rim flex items-center gap-3 rounded-2xl px-4 py-3";
 
   return (
-    <section className="relative min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top_left,_rgba(45,97,255,0.16),_transparent_36%),radial-gradient(circle_at_80%_12%,_rgba(16,185,129,0.12),_transparent_28%),linear-gradient(135deg,_#f8fbff_0%,_#eef4ff_100%)] px-4 py-20 transition-colors duration-300 sm:px-6 lg:px-8 dark:bg-gradient-to-br dark:from-ink-950 dark:via-ink-950 dark:to-ink-900">
+    <section className="relative min-h-screen overflow-hidden px-4 py-20 transition-colors duration-300 sm:px-6 lg:px-8">
+      <PageBackground />
       <div className="pointer-events-none absolute inset-0 -z-10 opacity-60">
         <div className="absolute left-[-5rem] top-24 h-72 w-72 rounded-full bg-brand-200/35 blur-3xl" />
         <div className="absolute right-[-4rem] bottom-10 h-80 w-80 rounded-full bg-gold-200/20 blur-3xl" />
@@ -205,10 +208,10 @@ export default function DealsPage({ navigate }) {
             <Sparkles className="h-3.5 w-3.5" />
             Browse and discover deals
           </span>
-          <h1 className="mt-4 font-display text-3xl font-extrabold tracking-tight text-ink-900 sm:text-4xl">
+          <h1 className="mt-4 font-display text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
             Explore vetted opportunities that match your thesis.
           </h1>
-          <p className="mt-3 max-w-xl text-lg leading-relaxed text-ink-600 dark:text-ink-300">
+          <p className="mt-3 max-w-xl text-lg leading-relaxed text-white/80">
             Filter by sector and momentum to find
             opportunities worth your time.
           </p>
@@ -409,49 +412,59 @@ export default function DealsPage({ navigate }) {
                 </div>
               </div>
 
-              <div className="flex gap-3">
+              <div className="flex flex-col gap-3">
                 {!user ? (
                   <button
                     type="button"
                     onClick={() => navigate("/login")}
-                    className="btn-primary flex-1"
+                    className="btn-primary w-full"
                   >
-                    Connect
+                    Sign in to invest
                   </button>
                 ) : selectedDeal.postedBy === user.email ? (
                   <button
                     type="button"
                     disabled
-                    className="btn-ghost flex-1 cursor-not-allowed opacity-60"
+                    className="btn-ghost w-full cursor-not-allowed opacity-60"
                   >
                     Your post
                   </button>
                 ) : (
-                  <button
-                    type="button"
-                    disabled={connectingId === selectedDeal?.id}
-                    onClick={() =>
-                      connectedMap[selectedDeal.id]
-                        ? handleDisconnect(selectedDeal)
-                        : handleConnect(selectedDeal)
-                    }
-                    className={
-                      connectedMap[selectedDeal.id]
-                        ? "btn-ghost flex-1"
-                        : "btn-primary flex-1"
-                    }
-                  >
-                    {connectingId === selectedDeal?.id
-                      ? "Please wait..."
-                      : connectedMap[selectedDeal.id]
-                      ? "Remove from dashboard"
-                      : "Connect"}
-                  </button>
+                  <>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        navigate(`/payment/${selectedDeal.id}`, {
+                          state: { deal: selectedDeal },
+                        })
+                      }
+                      className="btn-primary w-full"
+                    >
+                      <CreditCard className="h-4 w-4" />
+                      Invest now
+                    </button>
+                    <button
+                      type="button"
+                      disabled={connectingId === selectedDeal?.id}
+                      onClick={() =>
+                        connectedMap[selectedDeal.id]
+                          ? handleDisconnect(selectedDeal)
+                          : handleConnect(selectedDeal)
+                      }
+                      className="btn-ghost w-full"
+                    >
+                      {connectingId === selectedDeal?.id
+                        ? "Please wait..."
+                        : connectedMap[selectedDeal.id]
+                        ? "Remove from dashboard"
+                        : "Save to dashboard"}
+                    </button>
+                  </>
                 )}
                 <button
                   type="button"
                   onClick={() => setSelectedDeal(null)}
-                  className="btn-ghost flex-1"
+                  className="btn-ghost w-full"
                 >
                   Close
                 </button>
