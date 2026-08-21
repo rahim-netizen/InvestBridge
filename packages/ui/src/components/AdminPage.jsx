@@ -13,36 +13,168 @@ import {
 
 export default function AdminPage({ navigate }) {
   const [users, setUsers] = useState([
-    { id: 1, name: "Amina Rahman", email: "amina.rahman@invest.com", role: "Investor" },
+    {
+      id: 1,
+      name: "Amina Rahman",
+      email: "amina.rahman@invest.com",
+      role: "Investor",
+    },
     { id: 2, name: "John Doe", email: "john.doe@angel.co", role: "Investor" },
-    { id: 3, name: "Sarah Chen", email: "sarah.chen@capital.io", role: "Investor" },
-    { id: 4, name: "Carlos Gomez", email: "carlos@greenfarms.org", role: "Farmowner" },
-    { id: 5, name: "Fatima Al-Fayed", email: "fatima@agri-bridge.com", role: "Farmowner" },
-    { id: 6, name: "Elena Petrova", email: "elena.petrova@expertnetwork.org", role: "Expert" },
-    { id: 7, name: "Kenji Sato", email: "sato@organic-consulting.jp", role: "Expert" },
+    {
+      id: 3,
+      name: "Sarah Chen",
+      email: "sarah.chen@capital.io",
+      role: "Investor",
+    },
+    {
+      id: 4,
+      name: "Carlos Gomez",
+      email: "carlos@greenfarms.org",
+      role: "Entrepreneur",
+    },
+    {
+      id: 5,
+      name: "Fatima Al-Fayed",
+      email: "fatima@agri-bridge.com",
+      role: "Entrepreneur",
+    },
+    {
+      id: 6,
+      name: "Elena Petrova",
+      email: "elena.petrova@expertnetwork.org",
+      role: "Entrepreneur",
+    },
+    {
+      id: 7,
+      name: "Kenji Sato",
+      email: "sato@organic-consulting.jp",
+      role: "Entrepreneur",
+    },
   ]);
 
   const [projects, setProjects] = useState([
-    { id: 1, name: "EcoAgro Vertical Farm", founder: "Carlos Gomez", status: "Active", fundingGoal: "$500,000" },
-    { id: 2, name: "HydroGrow Smart Seeds", founder: "Fatima Al-Fayed", status: "Active", fundingGoal: "$250,000" },
-    { id: 3, name: "SunSoil Organic Orchards", founder: "David Miller", status: "Active", fundingGoal: "$1,200,000" },
+    {
+      id: 1,
+      name: "EcoAgro Vertical Farm",
+      founder: "Carlos Gomez",
+      status: "Active",
+      fundingGoal: "$500,000",
+    },
+    {
+      id: 2,
+      name: "HydroGrow Smart Seeds",
+      founder: "Fatima Al-Fayed",
+      status: "Active",
+      fundingGoal: "$250,000",
+    },
+    {
+      id: 3,
+      name: "SunSoil Organic Orchards",
+      founder: "David Miller",
+      status: "Active",
+      fundingGoal: "$1,200,000",
+    },
   ]);
 
   const [complaints, setComplaints] = useState([
-    { id: 1, reporter: "Amina Rahman", subject: "Spam behavior", detail: "Received unsolicited promotional messages from a project founder.", status: "Pending" },
-    { id: 2, reporter: "Carlos Gomez", subject: "Incorrect project stats", detail: "The system is displaying incorrect historical yield stats on my profile.", status: "Pending" },
-    { id: 3, reporter: "Elena Petrova", subject: "Expert verification delay", detail: "My operator credentials have been pending verification for over a week.", status: "Resolved" },
+    {
+      id: 1,
+      reporter: "Amina Rahman",
+      subject: "Spam behavior",
+      detail:
+        "Received unsolicited promotional messages from a project founder.",
+      status: "Pending",
+    },
+    {
+      id: 2,
+      reporter: "Carlos Gomez",
+      subject: "Incorrect project stats",
+      detail:
+        "The system is displaying incorrect historical yield stats on my profile.",
+      status: "Pending",
+    },
+    {
+      id: 3,
+      reporter: "Elena Petrova",
+      subject: "Expert verification delay",
+      detail:
+        "My operator credentials have been pending verification for over a week.",
+      status: "Resolved",
+    },
   ]);
 
   const [activeTab, setActiveTab] = useState("users"); // "users", "projects", "complaints"
-  const [roleFilter, setRoleFilter] = useState("All"); // "All", "Investor", "Farmowner", "Expert"
+  const [roleFilter, setRoleFilter] = useState("All"); // "All", "Investor", "Entrepreneur"
 
-  const pendingComplaintsCount = complaints.filter((c) => c.status === "Pending").length;
+  const pendingComplaintsCount = complaints.filter(
+    (c) => c.status === "Pending",
+  ).length;
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(45,97,255,0.16),_transparent_40%),linear-gradient(135deg,_#f8fbff_0%,_#eef4ff_100%)] px-4 py-10 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-6xl space-y-8">
-        <section className="rounded-[32px] border border-brand-100 bg-white/80 p-8 shadow-lift backdrop-blur sm:p-10">
+    <div className="relative min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top_left,_rgba(45,97,255,0.16),_transparent_36%),radial-gradient(circle_at_85%_10%,_rgba(16,185,129,0.12),_transparent_28%),linear-gradient(135deg,_#f8fbff_0%,_#eef4ff_100%)] px-4 py-10 sm:px-6 lg:px-8 dark:bg-gradient-to-br dark:from-ink-950 dark:via-ink-950 dark:to-ink-900">
+      <div className="pointer-events-none absolute inset-0 -z-10 opacity-60">
+        <div className="absolute left-[-5rem] top-24 h-80 w-80 rounded-full bg-brand-200/30 blur-3xl" />
+        <div className="absolute right-[-5rem] bottom-12 h-96 w-96 rounded-full bg-gold-200/20 blur-3xl" />
+      </div>
+      <div className="mx-auto max-w-6xl space-y-8 holo-scene">
+        <header className="glass-panel-strong sticky top-4 z-40 rounded-[2rem] px-5 py-4 sm:px-6">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex items-center gap-3">
+              <span className="grid h-11 w-11 place-items-center rounded-2xl border border-white/20 bg-brand-600/90 text-white shadow-soft backdrop-blur-sm">
+                <ShieldCheck className="h-5 w-5" />
+              </span>
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-brand-700 dark:text-brand-300">
+                  Admin navigation
+                </p>
+                <h1 className="font-display text-xl font-bold text-ink-900 dark:text-ink-50">
+                  InvestBridge control center
+                </h1>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              {[
+                { key: "users", label: "Users" },
+                { key: "projects", label: "Projects" },
+                { key: "complaints", label: "Complaints" },
+              ].map((tab) => (
+                <button
+                  key={tab.key}
+                  type="button"
+                  onClick={() => setActiveTab(tab.key)}
+                  className={`rounded-full px-4 py-2 text-sm font-semibold transition-all ${
+                    activeTab === tab.key
+                      ? "bg-brand-600 text-white shadow-soft"
+                      : "bg-white/55 text-ink-600 hover:bg-white/80 hover:text-ink-900 dark:bg-ink-950/40 dark:text-ink-200 dark:hover:bg-ink-950/60"
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={() => navigate("/")}
+                className="btn-ghost"
+              >
+                Back to site
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate("/")}
+                className="btn-primary"
+              >
+                <LogOut className="h-4 w-4" />
+                Logout
+              </button>
+            </div>
+          </div>
+        </header>
+
+        <section className="glass-panel-strong rounded-[2rem] p-8 sm:p-10">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
             <div className="max-w-2xl">
               <span className="eyebrow">
@@ -53,21 +185,22 @@ export default function AdminPage({ navigate }) {
                 Welcome back, your platform is looking strong.
               </h1>
               <p className="mt-3 text-lg leading-relaxed text-ink-600">
-                Review users, monitor activity, and keep the InvestBridge experience polished for every investor and founder.
+                Review users, monitor activity, and keep the InvestBridge
+                experience polished for every investor and founder.
               </p>
             </div>
 
-            <div className="flex flex-wrap gap-3">
+            <div className="hidden flex-wrap gap-3 lg:flex">
               <button
                 type="button"
-                onClick={() => navigate("home")}
+                onClick={() => navigate("/")}
                 className="btn-ghost"
               >
                 Back to site
               </button>
               <button
                 type="button"
-                onClick={() => navigate("home")}
+                onClick={() => navigate("/")}
                 className="btn-primary"
               >
                 <LogOut className="h-4 w-4" />
@@ -78,31 +211,37 @@ export default function AdminPage({ navigate }) {
         </section>
 
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
-          <div className="card p-6">
+          <div className="glass-panel holo-card p-6">
             <div className="flex items-center gap-4">
               <div className="rounded-2xl bg-brand-100 p-3 text-brand-700">
                 <Users className="h-6 w-6" />
               </div>
               <div>
                 <p className="text-sm font-medium text-ink-500">Total users</p>
-                <p className="text-2xl font-bold text-ink-900">{users.length}</p>
+                <p className="text-2xl font-bold text-ink-900">
+                  {users.length}
+                </p>
               </div>
             </div>
           </div>
 
-          <div className="card p-6">
+          <div className="glass-panel holo-card p-6">
             <div className="flex items-center gap-4">
               <div className="rounded-2xl bg-emerald-100 p-3 text-emerald-700">
                 <LayoutDashboard className="h-6 w-6" />
               </div>
               <div>
-                <p className="text-sm font-medium text-ink-500">Active projects</p>
-                <p className="text-2xl font-bold text-ink-900">{projects.length}</p>
+                <p className="text-sm font-medium text-ink-500">
+                  Active projects
+                </p>
+                <p className="text-2xl font-bold text-ink-900">
+                  {projects.length}
+                </p>
               </div>
             </div>
           </div>
 
-          <div className="card p-6">
+          <div className="glass-panel holo-card p-6">
             <div className="flex items-center gap-4">
               <div className="rounded-2xl bg-purple-100 p-3 text-purple-700">
                 <ShieldCheck className="h-6 w-6" />
@@ -114,20 +253,22 @@ export default function AdminPage({ navigate }) {
             </div>
           </div>
 
-          <div className="card p-6">
+          <div className="glass-panel holo-card p-6">
             <div className="flex items-center gap-4">
               <div className="rounded-2xl bg-rose-100 p-3 text-rose-700">
                 <AlertCircle className="h-6 w-6" />
               </div>
               <div>
                 <p className="text-sm font-medium text-ink-500">Complaints</p>
-                <p className="text-2xl font-bold text-ink-900">{pendingComplaintsCount}</p>
+                <p className="text-2xl font-bold text-ink-900">
+                  {pendingComplaintsCount}
+                </p>
               </div>
             </div>
           </div>
         </div>
 
-        <section className="card p-8">
+        <section className="glass-panel rounded-[2rem] p-8 holo-card">
           <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between border-b border-ink-100 pb-6">
             <div>
               <p className="text-sm font-semibold text-brand-700">Your Tasks</p>
@@ -135,15 +276,15 @@ export default function AdminPage({ navigate }) {
                 Manage Platform Records
               </h2>
             </div>
-            
+
             <div className="flex flex-wrap gap-2">
               <button
                 type="button"
                 onClick={() => setActiveTab("users")}
                 className={`px-4 py-2 text-sm font-semibold rounded-xl transition-all ${
                   activeTab === "users"
-                    ? "bg-brand-600 text-white shadow-soft"
-                    : "bg-ink-50 text-ink-600 hover:bg-ink-100"
+                    ? "bg-brand-600 text-white shadow-soft dark:shadow-glow"
+                    : "bg-ink-50 text-ink-600 hover:bg-ink-100 dark:hover:shadow-glow"
                 }`}
               >
                 Users ({users.length})
@@ -153,8 +294,8 @@ export default function AdminPage({ navigate }) {
                 onClick={() => setActiveTab("projects")}
                 className={`px-4 py-2 text-sm font-semibold rounded-xl transition-all ${
                   activeTab === "projects"
-                    ? "bg-brand-600 text-white shadow-soft"
-                    : "bg-ink-50 text-ink-600 hover:bg-ink-100"
+                    ? "bg-brand-600 text-white shadow-soft dark:shadow-glow"
+                    : "bg-ink-50 text-ink-600 hover:bg-ink-100 dark:hover:shadow-glow"
                 }`}
               >
                 Projects ({projects.length})
@@ -164,8 +305,8 @@ export default function AdminPage({ navigate }) {
                 onClick={() => setActiveTab("complaints")}
                 className={`px-4 py-2 text-sm font-semibold rounded-xl transition-all ${
                   activeTab === "complaints"
-                    ? "bg-brand-600 text-white shadow-soft"
-                    : "bg-ink-50 text-ink-600 hover:bg-ink-100"
+                    ? "bg-brand-600 text-white shadow-soft dark:shadow-glow"
+                    : "bg-ink-50 text-ink-600 hover:bg-ink-100 dark:hover:shadow-glow"
                 }`}
               >
                 Complaints ({pendingComplaintsCount} pending)
@@ -177,15 +318,15 @@ export default function AdminPage({ navigate }) {
             {activeTab === "users" && (
               <div className="space-y-6">
                 <div className="flex items-center gap-2 border-b border-ink-100/50 pb-4">
-                  {["All", "Investor", "Farmowner", "Expert"].map((role) => (
+                  {["All", "Investor", "Entrepreneur"].map((role) => (
                     <button
                       key={role}
                       type="button"
                       onClick={() => setRoleFilter(role)}
                       className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
                         roleFilter === role
-                          ? "bg-brand-100 text-brand-700"
-                          : "text-ink-500 hover:bg-ink-50"
+                          ? "bg-brand-100 text-brand-700 dark:shadow-glow"
+                          : "text-ink-500 hover:bg-ink-50 dark:hover:shadow-glow"
                       }`}
                     >
                       {role === "All" ? "All Roles" : `${role}s`}
@@ -205,27 +346,42 @@ export default function AdminPage({ navigate }) {
                     </thead>
                     <tbody className="divide-y divide-ink-50 text-sm">
                       {users
-                        .filter((u) => roleFilter === "All" || u.role === roleFilter)
+                        .filter(
+                          (u) => roleFilter === "All" || u.role === roleFilter,
+                        )
                         .map((user) => (
-                          <tr key={user.id} className="hover:bg-ink-50/50 transition-colors">
-                            <td className="py-3.5 px-4 font-semibold text-ink-900">{user.name}</td>
-                            <td className="py-3.5 px-4 text-ink-500">{user.email}</td>
+                          <tr
+                            key={user.id}
+                            className="hover:bg-ink-50/50 transition-colors"
+                          >
+                            <td className="py-3.5 px-4 font-semibold text-ink-900">
+                              {user.name}
+                            </td>
+                            <td className="py-3.5 px-4 text-ink-500">
+                              {user.email}
+                            </td>
                             <td className="py-3.5 px-4">
-                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                user.role === "Investor"
-                                  ? "bg-blue-100 text-blue-800"
-                                  : user.role === "Farmowner"
-                                  ? "bg-emerald-100 text-emerald-800"
-                                  : "bg-purple-100 text-purple-800"
-                              }`}>
+                              <span
+                                className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                  user.role === "Investor"
+                                    ? "bg-blue-100 text-blue-800"
+                                    : user.role === "Entrepreneur"
+                                      ? "bg-emerald-100 text-emerald-800"
+                                      : "bg-purple-100 text-purple-800"
+                                }`}
+                              >
                                 {user.role}
                               </span>
                             </td>
                             <td className="py-3.5 px-4 text-right">
                               <button
                                 type="button"
-                                onClick={() => setUsers((current) => current.filter((u) => u.id !== user.id))}
-                                className="inline-flex items-center gap-1.5 text-xs font-semibold text-rose-600 hover:text-rose-800 transition-colors"
+                                onClick={() =>
+                                  setUsers((current) =>
+                                    current.filter((u) => u.id !== user.id),
+                                  )
+                                }
+                                className="inline-flex items-center gap-1.5 rounded-lg border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-700 transition-all hover:border-rose-300 hover:bg-rose-100 hover:text-rose-800"
                               >
                                 <Trash2 className="h-3.5 w-3.5" />
                                 Remove
@@ -233,9 +389,14 @@ export default function AdminPage({ navigate }) {
                             </td>
                           </tr>
                         ))}
-                      {users.filter((u) => roleFilter === "All" || u.role === roleFilter).length === 0 && (
+                      {users.filter(
+                        (u) => roleFilter === "All" || u.role === roleFilter,
+                      ).length === 0 && (
                         <tr>
-                          <td colSpan="4" className="py-8 text-center text-ink-400">
+                          <td
+                            colSpan="4"
+                            className="py-8 text-center text-ink-400"
+                          >
                             No users found in this category.
                           </td>
                         </tr>
@@ -260,10 +421,19 @@ export default function AdminPage({ navigate }) {
                   </thead>
                   <tbody className="divide-y divide-ink-50 text-sm">
                     {projects.map((project) => (
-                      <tr key={project.id} className="hover:bg-ink-50/50 transition-colors">
-                        <td className="py-3.5 px-4 font-semibold text-ink-900">{project.name}</td>
-                        <td className="py-3.5 px-4 text-ink-500">{project.founder}</td>
-                        <td className="py-3.5 px-4 font-medium text-ink-900">{project.fundingGoal}</td>
+                      <tr
+                        key={project.id}
+                        className="hover:bg-ink-50/50 transition-colors"
+                      >
+                        <td className="py-3.5 px-4 font-semibold text-ink-900">
+                          {project.name}
+                        </td>
+                        <td className="py-3.5 px-4 text-ink-500">
+                          {project.founder}
+                        </td>
+                        <td className="py-3.5 px-4 font-medium text-ink-900">
+                          {project.fundingGoal}
+                        </td>
                         <td className="py-3.5 px-4">
                           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
                             {project.status}
@@ -272,8 +442,12 @@ export default function AdminPage({ navigate }) {
                         <td className="py-3.5 px-4 text-right">
                           <button
                             type="button"
-                            onClick={() => setProjects((current) => current.filter((p) => p.id !== project.id))}
-                            className="inline-flex items-center gap-1.5 text-xs font-semibold text-rose-600 hover:text-rose-800 transition-colors"
+                            onClick={() =>
+                              setProjects((current) =>
+                                current.filter((p) => p.id !== project.id),
+                              )
+                            }
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-700 transition-all hover:border-rose-300 hover:bg-rose-100 hover:text-rose-800"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
                             Remove
@@ -283,7 +457,10 @@ export default function AdminPage({ navigate }) {
                     ))}
                     {projects.length === 0 && (
                       <tr>
-                        <td colSpan="5" className="py-8 text-center text-ink-400">
+                        <td
+                          colSpan="5"
+                          className="py-8 text-center text-ink-400"
+                        >
                           No active projects found.
                         </td>
                       </tr>
@@ -296,29 +473,49 @@ export default function AdminPage({ navigate }) {
             {activeTab === "complaints" && (
               <div className="space-y-4">
                 {complaints.map((complaint) => (
-                  <div key={complaint.id} className="rounded-2xl border border-ink-100 bg-ink-50/50 p-5 transition-all hover:border-ink-200">
+                  <div
+                    key={complaint.id}
+                    className="glass-panel rounded-2xl p-5 transition-all hover:border-white/35 hover:bg-white/80 dark:hover:bg-ink-900/80"
+                  >
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                       <div>
                         <div className="flex items-center gap-2">
-                          <p className="text-sm font-semibold text-ink-900">{complaint.subject}</p>
-                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                            complaint.status === "Pending"
-                              ? "bg-amber-100 text-amber-800"
-                              : "bg-emerald-100 text-emerald-800"
-                          }`}>
+                          <p className="text-sm font-semibold text-ink-900">
+                            {complaint.subject}
+                          </p>
+                          <span
+                            className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                              complaint.status === "Pending"
+                                ? "bg-amber-100 text-amber-800"
+                                : "bg-emerald-100 text-emerald-800"
+                            }`}
+                          >
                             {complaint.status}
                           </span>
                         </div>
-                        <p className="mt-1 text-xs text-ink-400">Reported by: <span className="font-semibold">{complaint.reporter}</span></p>
-                        <p className="mt-2 text-sm text-ink-600 leading-relaxed">{complaint.detail}</p>
+                        <p className="mt-1 text-xs text-ink-400">
+                          Reported by:{" "}
+                          <span className="font-semibold">
+                            {complaint.reporter}
+                          </span>
+                        </p>
+                        <p className="mt-2 text-sm text-ink-600 leading-relaxed">
+                          {complaint.detail}
+                        </p>
                       </div>
                       <div className="flex items-center gap-2 self-end sm:self-start">
                         {complaint.status === "Pending" && (
                           <button
                             type="button"
-                            onClick={() => setComplaints((current) =>
-                              current.map((c) => (c.id === complaint.id ? { ...c, status: "Resolved" } : c))
-                            )}
+                            onClick={() =>
+                              setComplaints((current) =>
+                                current.map((c) =>
+                                  c.id === complaint.id
+                                    ? { ...c, status: "Resolved" }
+                                    : c,
+                                ),
+                              )
+                            }
                             className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-lg transition-colors border border-emerald-200"
                           >
                             <Check className="h-3.5 w-3.5" />
@@ -327,7 +524,11 @@ export default function AdminPage({ navigate }) {
                         )}
                         <button
                           type="button"
-                          onClick={() => setComplaints((current) => current.filter((c) => c.id !== complaint.id))}
+                          onClick={() =>
+                            setComplaints((current) =>
+                              current.filter((c) => c.id !== complaint.id),
+                            )
+                          }
                           className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 rounded-lg transition-colors border border-rose-200"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
@@ -349,4 +550,4 @@ export default function AdminPage({ navigate }) {
       </div>
     </div>
   );
-}
+}

@@ -1,14 +1,27 @@
-import { useEffect, useMemo, useState } from "react";
-import Navbar from "./components/Navbar.jsx";
-import Footer from "./components/Footer.jsx";
+import { useEffect, useState } from "react";
+import { Navigate, Route, Routes, useNavigate } from "react-router-dom";
+import PageLayout from "./components/PageLayout.jsx";
 import Homepage from "./components/Homepage.jsx";
 import AdminPage from "./components/AdminPage";
 import LoginPage from "./components/LoginPage.jsx";
 import RegisterPage from "./components/RegisterPage.jsx";
+import VerifyEmailPending from "./components/VerifyEmailPending.jsx";
+import ProfileDashboard from "./components/ProfileDashboard.jsx";
+import UserDashboard from "./components/UserDashboard.jsx";
+import OpportunitiesPage from "./components/OpportunitiesPage.jsx";
+import DealsPage from "./components/DealsPage.jsx";
+import ConnectPage from "./components/ConnectPage.jsx";
+import ChatbotWidget from "./components/ChatbotWidget.jsx";
+import { getCurrentUser } from "./api/auth";
 
 export default function App() {
-  const [view, setView] = useState("home");
   const [theme, setTheme] = useState("light");
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Automatically verify active cookie session with Laravel server
+    getCurrentUser();
+  }, []);
 
   useEffect(() => {
     const storedTheme = localStorage.getItem("theme");
@@ -32,30 +45,92 @@ export default function App() {
     setTheme((current) => (current === "dark" ? "light" : "dark"));
   };
 
-  const page = useMemo(() => {
-    switch (view) {
-      case "login":
-        return <LoginPage navigate={setView} />;
-      case "register":
-        return <RegisterPage navigate={setView} />;
-      case "adminPage":
-        return <AdminPage navigate={setView} />;
-      default:
-        return (
-          <div className="min-h-screen bg-ink-50 text-ink-900 transition-colors duration-300 dark:bg-ink-950 dark:text-ink-50">
-            <Navbar
-              navigate={setView}
-              theme={theme}
-              toggleTheme={toggleTheme}
-            />
-            <main>
-              <Homepage />
-            </main>
-            <Footer />
-          </div>
-        );
-    }
-  }, [view, theme]);
-
-  return page;
+  return (
+    <>
+      <Routes>
+        <Route
+          path="/"
+          element={
+            <PageLayout navigate={navigate} theme={theme} toggleTheme={toggleTheme}>
+              <Homepage navigate={navigate} />
+            </PageLayout>
+          }
+        />
+        <Route
+          path="/login"
+          element={
+            <PageLayout navigate={navigate} theme={theme} toggleTheme={toggleTheme}>
+              <LoginPage navigate={navigate} />
+            </PageLayout>
+          }
+        />
+        <Route
+          path="/register"
+          element={
+            <PageLayout navigate={navigate} theme={theme} toggleTheme={toggleTheme}>
+              <RegisterPage navigate={navigate} />
+            </PageLayout>
+          }
+        />
+        <Route
+          path="/verify-email-pending"
+          element={
+            <PageLayout navigate={navigate} theme={theme} toggleTheme={toggleTheme}>
+              <VerifyEmailPending navigate={navigate} />
+            </PageLayout>
+          }
+        />
+         <Route
+           path="/profile"
+           element={
+             <PageLayout navigate={navigate} theme={theme} toggleTheme={toggleTheme}>
+               <ProfileDashboard navigate={navigate} />
+             </PageLayout>
+           }
+         />
+         <Route
+           path="/dashboard"
+           element={
+             <PageLayout navigate={navigate} theme={theme} toggleTheme={toggleTheme}>
+               <UserDashboard navigate={navigate} />
+             </PageLayout>
+           }
+         />
+        <Route
+          path="/opportunities"
+          element={
+            <PageLayout navigate={navigate} theme={theme} toggleTheme={toggleTheme}>
+              <OpportunitiesPage navigate={navigate} />
+            </PageLayout>
+          }
+        />
+        <Route
+          path="/deals"
+          element={
+            <PageLayout navigate={navigate} theme={theme} toggleTheme={toggleTheme}>
+              <DealsPage navigate={navigate} />
+            </PageLayout>
+          }
+        />
+        <Route
+          path="/connect"
+          element={
+            <PageLayout navigate={navigate} theme={theme} toggleTheme={toggleTheme}>
+              <ConnectPage navigate={navigate} />
+            </PageLayout>
+          }
+        />
+        <Route
+          path="/admin"
+          element={
+            <PageLayout navigate={navigate} theme={theme} toggleTheme={toggleTheme}>
+              <AdminPage navigate={navigate} />
+            </PageLayout>
+          }
+        />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+      <ChatbotWidget />
+    </>
+  );
 }

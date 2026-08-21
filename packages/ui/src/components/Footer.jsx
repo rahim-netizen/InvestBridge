@@ -21,7 +21,7 @@ const columns = [
 
 export default function Footer() {
   return (
-    <footer className="border-t border-ink-100 bg-white">
+    <footer className="border-t border-white/40 bg-white/60 backdrop-blur-2xl dark:border-white/10 dark:bg-ink-950/60">
       <div className="container-page py-14">
         <div className="grid gap-10 lg:grid-cols-[1.4fr_repeat(4,1fr)]">
           <div>
@@ -42,7 +42,7 @@ export default function Footer() {
                 <a
                   key={i}
                   href="#"
-                  className="grid h-9 w-9 place-items-center rounded-lg border border-ink-200 text-ink-500 transition-colors hover:border-brand-300 hover:text-brand-700"
+                  className="social-link grid h-9 w-9 place-items-center rounded-lg border border-ink-200 text-ink-500 transition-colors hover:border-brand-300 hover:text-brand-700"
                   aria-label="social link"
                 >
                   <Icon className="h-4 w-4" />
@@ -57,7 +57,7 @@ export default function Footer() {
               <ul className="mt-4 space-y-2.5">
                 {col.links.map((l) => (
                   <li key={l}>
-                    <a href="#" className="text-sm text-ink-500 transition-colors hover:text-brand-700">
+                    <a href="#" className="footer-link text-sm text-ink-500 transition-colors hover:text-brand-700">
                       {l}
                     </a>
                   </li>
@@ -67,7 +67,7 @@ export default function Footer() {
           ))}
         </div>
 
-        <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-ink-100 pt-6 sm:flex-row">
+        <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-white/40 pt-6 dark:border-white/10 sm:flex-row">
           <p className="text-xs text-ink-500">
             © {new Date().getFullYear()} InvestBridge. All rights reserved.
           </p>
