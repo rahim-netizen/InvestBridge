@@ -1,5 +1,4 @@
 import {
-  Search,
   Sparkles,
   MapPin,
   Clock,
@@ -9,6 +8,7 @@ import {
   DollarSign,
   CreditCard,
 } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
 import { useCallback, useEffect, useState } from "react";
 import PageBackground from "./PageBackground.jsx";
 import { deleteOpportunity, getAllOpportunities } from "../api/opportunities";
@@ -17,6 +17,20 @@ import {
   disconnectOpportunity,
   getConnectedOpportunities,
 } from "../api/connected";
+import {
+  fadeUp,
+  fadeUpBlur,
+  modalOverlay,
+  modalPanel,
+  stagger,
+  useTilt,
+} from "../lib/motion.jsx";
+import {
+  FilterChip,
+  FilterPopover,
+  IconSearchToggle,
+  PopoverSelect,
+} from "./FilterControls.jsx";
 
 const getStoredUser = () => {
   if (typeof window === "undefined") {
@@ -35,6 +49,95 @@ const sectors = ["All", "HealthTech", "CleanEnergy", "E-commerce", "AgriTech", "
 
 const DEFAULT_DEAL_IMAGE =
   "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='200' viewBox='0 0 400 200'><rect width='400' height='200' fill='%23e5e7eb'/><text x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%239ca3af' font-family='sans-serif' font-size='16'>No image</text></svg>";
+
+function DealCard({ deal, user, saved, onOpen, onDelete }) {
+  const tilt = useTilt(5);
+
+  return (
+    <motion.article
+      ref={tilt.ref}
+      onMouseMove={tilt.onMouseMove}
+      onMouseLeave={tilt.onMouseLeave}
+      style={tilt.style}
+      className="glass-panel-strong holo-card group overflow-hidden hover:shadow-lift cursor-pointer"
+      variants={fadeUp}
+      whileHover={{ y: -4, transition: { duration: 0.25 } }}
+      onClick={onOpen}
+    >
+      <div className="relative h-48 overflow-hidden bg-ink-100 dark:bg-ink-800">
+        <img
+          src={deal.image || DEFAULT_DEAL_IMAGE}
+          alt={deal.name}
+          loading="lazy"
+          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-ink-950/40 to-transparent" />
+        <div className="absolute left-4 top-4 flex flex-col gap-2">
+          <span className="rounded-full bg-white/90 px-2.5 py-1 text-xs font-semibold text-ink-800 backdrop-blur">
+            {deal.sector}
+          </span>
+          {saved && (
+            <span className="rounded-full bg-brand-600 px-2.5 py-1 text-xs font-semibold text-white backdrop-blur">
+              Saved
+            </span>
+          )}
+        </div>
+      </div>
+      <div className="p-6">
+        <h3 className="font-display text-xl font-bold text-ink-900 dark:text-ink-50">
+          {deal.name}
+        </h3>
+        <p className="mt-1 text-sm text-ink-500 dark:text-ink-400">
+          by {deal.company}
+        </p>
+        <p className="mt-3 text-sm leading-relaxed text-ink-600 dark:text-ink-400">
+          {deal.blurb}
+        </p>
+        <div className="mt-3 flex items-center gap-4 text-xs text-ink-500 dark:text-ink-400">
+          <span className="flex items-center gap-1">
+            <MapPin className="h-3.5 w-3.5" />
+            {deal.location}
+          </span>
+          <span className="flex items-center gap-1">
+            <Clock className="h-3.5 w-3.5" />
+            {deal.timeline}
+          </span>
+          <span className="flex items-center gap-1">
+            <DollarSign className="h-3.5 w-3.5" />
+            {deal.goal}
+          </span>
+        </div>
+      </div>
+      <div className="flex items-center justify-between border-t border-white/30 px-6 py-3 dark:border-white/10">
+        <a
+          href="#"
+          onClick={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            onOpen();
+          }}
+          className="inline-flex items-center gap-1 text-sm font-semibold text-brand-700 transition-colors hover:text-brand-800"
+        >
+          View deal room
+          <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1 group-hover:-translate-y-0.5" />
+        </a>
+        {deal.postedBy === user?.email && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete();
+            }}
+            className="inline-flex items-center gap-1 text-xs font-semibold text-rose-500 transition-colors hover:text-rose-700"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+            Remove
+          </button>
+        )}
+      </div>
+    </motion.article>
+  );
+}
 
 export default function DealsPage({ navigate }) {
   const user = getStoredUser();
@@ -191,8 +294,8 @@ export default function DealsPage({ navigate }) {
     return 0;
   });
 
-  const inputWrapperClassName =
-    "surface-rim flex items-center gap-3 rounded-2xl px-4 py-3";
+  const hasActiveFilters =
+    searchQuery.trim() !== "" || sectorFilter !== "All" || goalSort !== "None";
 
   return (
     <section className="relative min-h-screen overflow-hidden px-4 py-20 transition-colors duration-300 sm:px-6 lg:px-8">
@@ -203,59 +306,111 @@ export default function DealsPage({ navigate }) {
       </div>
 
       <div className="mx-auto max-w-7xl">
-        <div className="mb-8">
-          <span className="eyebrow">
-            <Sparkles className="h-3.5 w-3.5" />
-            Browse and discover deals
-          </span>
-          <h1 className="mt-4 font-display text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
-            Explore vetted opportunities that match your thesis.
-          </h1>
-          <p className="mt-3 max-w-xl text-lg leading-relaxed text-white/80">
-            Filter by sector and momentum to find
-            opportunities worth your time.
-          </p>
-        </div>
+        <motion.div
+          className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between"
+          initial="hidden"
+          animate="visible"
+          variants={fadeUpBlur}
+        >
+          <div>
+            <span className="eyebrow">
+              <Sparkles className="h-3.5 w-3.5" />
+              Browse and discover deals
+            </span>
+            <h1 className="mt-4 font-display text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
+              Explore vetted opportunities that match your thesis.
+            </h1>
+            <p className="mt-3 max-w-xl text-lg leading-relaxed text-white/80">
+              Filter by sector and momentum to find
+              opportunities worth your time.
+            </p>
+          </div>
 
-        <div className="glass-panel-strong holo-card rounded-[2rem] p-6 mb-6">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
-            <div className="flex-1 relative">
-              <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                 placeholder="Search by location..."
-                className={`${inputWrapperClassName} pl-11`}
+          <div className="flex shrink-0 items-center gap-2">
+            <IconSearchToggle
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search by location..."
+            />
+            <FilterPopover
+              label="Filter deals"
+              activeCount={
+                (sectorFilter !== "All" ? 1 : 0) + (goalSort !== "None" ? 1 : 0)
+              }
+            >
+              <PopoverSelect
+                label="Sector"
+                value={sectorFilter}
+                onChange={(e) => setSectorFilter(e.target.value)}
+                options={sectors}
               />
-            </div>
-             <select
-               value={sectorFilter}
-               onChange={(e) => setSectorFilter(e.target.value)}
-               className={inputWrapperClassName}
-             >
-               {sectors.map((s) => (
-                 <option key={s} value={s}>{s}</option>
-               ))}
-             </select>
-             <select
-               value={goalSort}
-               onChange={(e) => setGoalSort(e.target.value)}
-               className={inputWrapperClassName}
-             >
-               <option value="None">None</option>
-               <option value="High to Low">High to Low</option>
-               <option value="Low to High">Low to High</option>
-             </select>
-           </div>
+              <PopoverSelect
+                label="Sort by goal"
+                value={goalSort}
+                onChange={(e) => setGoalSort(e.target.value)}
+                options={["None", "High to Low", "Low to High"]}
+              />
+            </FilterPopover>
+          </div>
+        </motion.div>
 
-           <div className="mt-4 flex items-center justify-between text-sm text-ink-500 dark:text-ink-400">
-             <span>{sortedDeals.length} deal{sortedDeals.length !== 1 ? "s" : ""} found</span>
-             <span>Active filters applied</span>
-           </div>
-        </div>
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.15, ease: "easeOut" }}
+          className="mb-6 flex flex-wrap items-center gap-3"
+        >
+          <span className="text-sm font-medium text-white/70">
+            <span className="font-display font-bold text-white">
+              {sortedDeals.length}
+            </span>{" "}
+            deal{sortedDeals.length !== 1 ? "s" : ""} found
+          </span>
 
-         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <AnimatePresence>
+            {searchQuery.trim() !== "" && (
+              <FilterChip
+                key="search"
+                label={`"${searchQuery}"`}
+                onRemove={() => setSearchQuery("")}
+              />
+            )}
+            {sectorFilter !== "All" && (
+              <FilterChip
+                key="sector"
+                label={sectorFilter}
+                onRemove={() => setSectorFilter("All")}
+              />
+            )}
+            {goalSort !== "None" && (
+              <FilterChip
+                key="sort"
+                label={goalSort}
+                onRemove={() => setGoalSort("None")}
+              />
+            )}
+          </AnimatePresence>
+          {hasActiveFilters && (
+            <button
+              type="button"
+              onClick={() => {
+                setSearchQuery("");
+                setSectorFilter("All");
+                setGoalSort("None");
+              }}
+              className="text-xs font-semibold text-white/60 underline-offset-2 transition-colors hover:text-white hover:underline"
+            >
+              Clear all
+            </button>
+          )}
+        </motion.div>
+
+         <motion.div
+           className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3"
+           variants={stagger}
+           initial="hidden"
+           animate="visible"
+         >
            {sortedDeals.length === 0 ? (
              <div className="col-span-full glass-panel-strong holo-card rounded-[2rem] p-8 text-center">
                <p className="text-ink-500 dark:text-ink-400">No deals match your filters.</p>
@@ -273,89 +428,36 @@ export default function DealsPage({ navigate }) {
              </div>
            ) : (
              sortedDeals.map((deal) => (
-              <article
+              <DealCard
                 key={deal.id}
-                className="glass-panel-strong holo-card group overflow-hidden hover:shadow-lift cursor-pointer"
-                 onClick={() => { setSelectedDeal(deal); setConnectStatus(""); }}
-              >
-                <div className="relative h-48 overflow-hidden bg-ink-100 dark:bg-ink-800">
-                  <img
-                    src={deal.image || DEFAULT_DEAL_IMAGE}
-                    alt={deal.name}
-                    loading="lazy"
-                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-ink-950/40 to-transparent" />
-                  <div className="absolute left-4 top-4 flex flex-col gap-2">
-                    <span className="rounded-full bg-white/90 px-2.5 py-1 text-xs font-semibold text-ink-800 backdrop-blur">
-                      {deal.sector}
-                    </span>
-                    {connectedMap[deal.id] && (
-                      <span className="rounded-full bg-brand-600 px-2.5 py-1 text-xs font-semibold text-white backdrop-blur">
-                        Saved
-                      </span>
-                    )}
-                  </div>
-                </div>
-                <div className="p-6">
-                  <h3 className="font-display text-xl font-bold text-ink-900 dark:text-ink-50">
-                    {deal.name}
-                  </h3>
-                  <p className="mt-1 text-sm text-ink-500 dark:text-ink-400">
-                    by {deal.company}
-                  </p>
-                  <p className="mt-3 text-sm leading-relaxed text-ink-600 dark:text-ink-400">
-                    {deal.blurb}
-                  </p>
-                  <div className="mt-3 flex items-center gap-4 text-xs text-ink-500 dark:text-ink-400">
-                    <span className="flex items-center gap-1">
-                      <MapPin className="h-3.5 w-3.5" />
-                      {deal.location}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Clock className="h-3.5 w-3.5" />
-                      {deal.timeline}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <DollarSign className="h-3.5 w-3.5" />
-                      {deal.goal}
-                    </span>
-                  </div>
-                </div>
-                <div className="flex items-center justify-between border-t border-white/30 px-6 py-3 dark:border-white/10">
-                  <a
-                    href="#"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setSelectedDeal(deal); setConnectStatus("");
-                    }}
-                    className="inline-flex items-center gap-1 text-sm font-semibold text-brand-700 transition-colors hover:text-brand-800"
-                  >
-                    View deal room
-                    <ArrowUpRight className="h-4 w-4" />
-                  </a>
-                  {deal.postedBy === user?.email && (
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDelete(deal.id);
-                      }}
-                      className="inline-flex items-center gap-1 text-xs font-semibold text-rose-500 transition-colors hover:text-rose-700"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                      Remove
-                    </button>
-                  )}
-                </div>
-              </article>
+                deal={deal}
+                user={user}
+                saved={Boolean(connectedMap[deal.id])}
+                onOpen={() => {
+                  setSelectedDeal(deal);
+                  setConnectStatus("");
+                }}
+                onDelete={() => handleDelete(deal.id)}
+              />
             ))
           )}
-        </div>
+        </motion.div>
 
-        {selectedDeal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink-950/50 backdrop-blur-sm p-4">
-            <div className="glass-panel-strong holo-card rounded-[2rem] p-8 max-w-lg w-full max-h-[85vh] overflow-y-auto dark:bg-ink-950/90">
+        <AnimatePresence>
+          {selectedDeal && (
+            <motion.div
+              className="fixed inset-0 z-50 flex items-center justify-center bg-ink-950/50 backdrop-blur-sm p-4"
+              variants={modalOverlay}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+              onClick={() => setSelectedDeal(null)}
+            >
+              <motion.div
+                className="glass-panel-strong holo-card rounded-[2rem] p-8 max-w-lg w-full max-h-[85vh] overflow-y-auto dark:bg-ink-950/90"
+                variants={modalPanel}
+                onClick={(e) => e.stopPropagation()}
+              >
               <div className="flex items-center justify-between mb-6">
                 <h2 className="font-display text-2xl font-bold text-ink-900 dark:text-ink-50">
                   {selectedDeal.name}
@@ -475,9 +577,10 @@ export default function DealsPage({ navigate }) {
                   {connectStatus}
                 </p>
               )}
-            </div>
-          </div>
-        )}
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </section>
   );

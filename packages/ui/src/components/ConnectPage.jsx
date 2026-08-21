@@ -12,8 +12,10 @@ import {
   Filter,
   Search,
 } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import PageBackground from "./PageBackground.jsx";
+import { fadeUp, fadeUpBlur, stagger } from "../lib/motion.jsx";
 
 const getStoredUser = () => {
   if (typeof window === "undefined") {
@@ -192,7 +194,12 @@ export default function ConnectPage({ navigate }) {
       </div>
 
       <div className="mx-auto max-w-6xl">
-        <div className="mb-8 flex items-center gap-4">
+        <motion.div
+          className="mb-8 flex items-center gap-4"
+          initial="hidden"
+          animate="visible"
+          variants={fadeUpBlur}
+        >
           {view === "chat" && (
             <button
               type="button"
@@ -213,10 +220,18 @@ export default function ConnectPage({ navigate }) {
                 : "Keep the conversation moving in one place."}
             </h1>
           </div>
-        </div>
+        </motion.div>
 
+        <AnimatePresence mode="wait">
         {view === "list" ? (
-          <div className="grid gap-6 lg:grid-cols-[1fr_0.92fr]">
+          <motion.div
+            key="list"
+            className="grid gap-6 lg:grid-cols-[1fr_0.92fr]"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.25, ease: "easeOut" }}
+          >
             <div className="glass-panel-strong holo-card rounded-[2rem] p-6">
               <div className="flex items-center gap-3 mb-4">
                 <Search className="h-4 w-4 text-ink-400" />
@@ -229,18 +244,25 @@ export default function ConnectPage({ navigate }) {
                 />
               </div>
 
-              <div className="space-y-3">
+              <motion.div
+                className="space-y-3"
+                variants={stagger}
+                initial="hidden"
+                animate="visible"
+              >
                 {filteredThreads.length === 0 ? (
                   <p className="py-8 text-center text-sm text-ink-500 dark:text-ink-400">
                     No conversations found. Start a new thread from an opportunity.
                   </p>
                 ) : (
                   filteredThreads.map((thread) => (
-                    <button
+                    <motion.button
                       key={thread.id}
                       type="button"
                       onClick={() => openThread(thread)}
                       className="w-full text-left rounded-2xl border border-white/20 bg-white/50 p-4 transition hover:bg-white/80 dark:border-white/10 dark:bg-ink-950/45 dark:hover:bg-ink-950/60"
+                      variants={fadeUp}
+                      whileHover={{ y: -2, transition: { duration: 0.2 } }}
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
@@ -261,10 +283,10 @@ export default function ConnectPage({ navigate }) {
                         <Clock className="h-3 w-3" />
                         {thread.updatedAt}
                       </div>
-                    </button>
+                    </motion.button>
                   ))
                 )}
-              </div>
+              </motion.div>
             </div>
 
             <div className="glass-panel-strong holo-card rounded-[2rem] p-6">
@@ -358,9 +380,16 @@ export default function ConnectPage({ navigate }) {
                 </ul>
               </div>
             </div>
-          </div>
+          </motion.div>
         ) : (
-          <div className="grid gap-6 lg:grid-cols-[1fr_0.92fr]">
+          <motion.div
+            key="chat"
+            className="grid gap-6 lg:grid-cols-[1fr_0.92fr]"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.25, ease: "easeOut" }}
+          >
             <div className="glass-panel-strong holo-card rounded-[2rem] p-6 flex flex-col" style={{ maxHeight: "70vh" }}>
               <div className="flex items-center justify-between mb-4">
                 <div>
@@ -377,24 +406,35 @@ export default function ConnectPage({ navigate }) {
                 </span>
               </div>
 
-              <div className="flex-1 overflow-y-auto space-y-3 mb-4 pr-2">
-                {activeThread?.messages.map((msg) => (
-                  <div
-                    key={msg.id}
-                    className={`max-w-[85%] rounded-3xl px-4 py-3 text-sm leading-relaxed shadow-soft ${
-                      msg.self
-                        ? "ml-auto bg-brand-600 text-white"
-                        : "bg-white/70 text-ink-700 border border-white/20 backdrop-blur-md dark:border-white/10 dark:bg-ink-950/55 dark:text-ink-200"
-                    }`}
-                  >
-                    <p className="font-semibold text-xs mb-1 opacity-70">
-                      {msg.sender}
-                    </p>
-                    <p>{msg.text}</p>
-                    <p className="mt-1 text-xs opacity-50">{msg.time}</p>
-                  </div>
-                ))}
-              </div>
+              <motion.div
+                className="flex-1 overflow-y-auto space-y-3 mb-4 pr-2"
+                variants={stagger}
+                initial="hidden"
+                animate="visible"
+              >
+                <AnimatePresence initial={false}>
+                  {activeThread?.messages.map((msg) => (
+                    <motion.div
+                      key={msg.id}
+                      layout
+                      initial={{ opacity: 0, y: 12, scale: 0.97 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      transition={{ duration: 0.25, ease: "easeOut" }}
+                      className={`max-w-[85%] rounded-3xl px-4 py-3 text-sm leading-relaxed shadow-soft ${
+                        msg.self
+                          ? "ml-auto bg-brand-600 text-white"
+                          : "bg-white/70 text-ink-700 border border-white/20 backdrop-blur-md dark:border-white/10 dark:bg-ink-950/55 dark:text-ink-200"
+                      }`}
+                    >
+                      <p className="font-semibold text-xs mb-1 opacity-70">
+                        {msg.sender}
+                      </p>
+                      <p>{msg.text}</p>
+                      <p className="mt-1 text-xs opacity-50">{msg.time}</p>
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+              </motion.div>
 
               <div className="flex items-center gap-2">
                 <div className={inputWrapperClassName}>
@@ -459,8 +499,9 @@ export default function ConnectPage({ navigate }) {
                 <p className="mt-1">Less than 24 hours for all threads.</p>
               </div>
             </div>
-          </div>
+          </motion.div>
         )}
+        </AnimatePresence>
       </div>
     </section>
   );

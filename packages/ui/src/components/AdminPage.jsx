@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import PageBackground from "./PageBackground.jsx";
 import {
   AlertCircle,
@@ -11,6 +12,24 @@ import {
   Trash2,
   Users,
 } from "lucide-react";
+import { fadeUp, fadeUpBlur, stagger, useCountUp, useInView } from "../lib/motion.jsx";
+
+function StatCard({ icon: Icon, iconClass, label, value, isInView }) {
+  const display = useCountUp(String(value), isInView);
+  return (
+    <motion.div className="glass-panel holo-card p-6" variants={fadeUp} whileHover={{ y: -3 }}>
+      <div className="flex items-center gap-4">
+        <div className={`rounded-2xl p-3 ${iconClass}`}>
+          <Icon className="h-6 w-6" />
+        </div>
+        <div>
+          <p className="text-sm font-medium text-ink-500">{label}</p>
+          <p className="text-2xl font-bold text-ink-900">{display}</p>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
 
 export default function AdminPage({ navigate }) {
   const [users, setUsers] = useState([
@@ -111,6 +130,9 @@ export default function AdminPage({ navigate }) {
     (c) => c.status === "Pending",
   ).length;
 
+  const statsRef = useRef(null);
+  const statsInView = useInView(statsRef, { once: true, amount: 0.4 });
+
   return (
     <div className="relative min-h-screen overflow-hidden px-4 py-10 sm:px-6 lg:px-8">
       <PageBackground />
@@ -119,7 +141,12 @@ export default function AdminPage({ navigate }) {
         <div className="absolute right-[-5rem] bottom-12 h-96 w-96 rounded-full bg-gold-200/20 blur-3xl" />
       </div>
       <div className="mx-auto max-w-6xl space-y-8 holo-scene">
-        <header className="glass-panel-strong sticky top-4 z-40 rounded-[2rem] px-5 py-4 sm:px-6">
+        <motion.header
+          className="glass-panel-strong sticky top-4 z-40 rounded-[2rem] px-5 py-4 sm:px-6"
+          initial={{ opacity: 0, y: -16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: "easeOut" }}
+        >
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex items-center gap-3">
               <span className="grid h-11 w-11 place-items-center rounded-2xl border border-white/20 bg-brand-600/90 text-white shadow-soft backdrop-blur-sm">
@@ -174,9 +201,14 @@ export default function AdminPage({ navigate }) {
               </button>
             </div>
           </div>
-        </header>
+        </motion.header>
 
-        <section className="glass-panel-strong rounded-[2rem] p-8 sm:p-10">
+        <motion.section
+          className="glass-panel-strong rounded-[2rem] p-8 sm:p-10"
+          initial="hidden"
+          animate="visible"
+          variants={fadeUpBlur}
+        >
           <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
             <div className="max-w-2xl">
               <span className="eyebrow">
@@ -210,65 +242,44 @@ export default function AdminPage({ navigate }) {
               </button>
             </div>
           </div>
-        </section>
+        </motion.section>
 
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
-          <div className="glass-panel holo-card p-6">
-            <div className="flex items-center gap-4">
-              <div className="rounded-2xl bg-brand-100 p-3 text-brand-700">
-                <Users className="h-6 w-6" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-ink-500">Total users</p>
-                <p className="text-2xl font-bold text-ink-900">
-                  {users.length}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="glass-panel holo-card p-6">
-            <div className="flex items-center gap-4">
-              <div className="rounded-2xl bg-emerald-100 p-3 text-emerald-700">
-                <LayoutDashboard className="h-6 w-6" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-ink-500">
-                  Active projects
-                </p>
-                <p className="text-2xl font-bold text-ink-900">
-                  {projects.length}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="glass-panel holo-card p-6">
-            <div className="flex items-center gap-4">
-              <div className="rounded-2xl bg-purple-100 p-3 text-purple-700">
-                <ShieldCheck className="h-6 w-6" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-ink-500">Payments</p>
-                <p className="text-2xl font-bold text-ink-900">41</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="glass-panel holo-card p-6">
-            <div className="flex items-center gap-4">
-              <div className="rounded-2xl bg-rose-100 p-3 text-rose-700">
-                <AlertCircle className="h-6 w-6" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-ink-500">Complaints</p>
-                <p className="text-2xl font-bold text-ink-900">
-                  {pendingComplaintsCount}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
+        <motion.div
+          ref={statsRef}
+          className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4"
+          variants={stagger}
+          initial="hidden"
+          animate="visible"
+        >
+          <StatCard
+            icon={Users}
+            iconClass="bg-brand-100 text-brand-700"
+            label="Total users"
+            value={users.length}
+            isInView={statsInView}
+          />
+          <StatCard
+            icon={LayoutDashboard}
+            iconClass="bg-emerald-100 text-emerald-700"
+            label="Active projects"
+            value={projects.length}
+            isInView={statsInView}
+          />
+          <StatCard
+            icon={ShieldCheck}
+            iconClass="bg-purple-100 text-purple-700"
+            label="Payments"
+            value={41}
+            isInView={statsInView}
+          />
+          <StatCard
+            icon={AlertCircle}
+            iconClass="bg-rose-100 text-rose-700"
+            label="Complaints"
+            value={pendingComplaintsCount}
+            isInView={statsInView}
+          />
+        </motion.div>
 
         <section className="glass-panel rounded-[2rem] p-8 holo-card">
           <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between border-b border-ink-100 pb-6">
@@ -317,8 +328,16 @@ export default function AdminPage({ navigate }) {
           </div>
 
           <div className="mt-6">
+          <AnimatePresence mode="wait">
             {activeTab === "users" && (
-              <div className="space-y-6">
+              <motion.div
+                key="users"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.2 }}
+                className="space-y-6"
+              >
                 <div className="flex items-center gap-2 border-b border-ink-100/50 pb-4">
                   {["All", "Investor", "Entrepreneur"].map((role) => (
                     <button
@@ -347,13 +366,18 @@ export default function AdminPage({ navigate }) {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-ink-50 text-sm">
+                      <AnimatePresence initial={false}>
                       {users
                         .filter(
                           (u) => roleFilter === "All" || u.role === roleFilter,
                         )
                         .map((user) => (
-                          <tr
+                          <motion.tr
                             key={user.id}
+                            layout
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0, x: 40, transition: { duration: 0.2 } }}
                             className="hover:bg-ink-50/50 transition-colors"
                           >
                             <td className="py-3.5 px-4 font-semibold text-ink-900">
@@ -389,8 +413,9 @@ export default function AdminPage({ navigate }) {
                                 Remove
                               </button>
                             </td>
-                          </tr>
+                          </motion.tr>
                         ))}
+                      </AnimatePresence>
                       {users.filter(
                         (u) => roleFilter === "All" || u.role === roleFilter,
                       ).length === 0 && (
@@ -406,11 +431,18 @@ export default function AdminPage({ navigate }) {
                     </tbody>
                   </table>
                 </div>
-              </div>
+              </motion.div>
             )}
 
             {activeTab === "projects" && (
-              <div className="overflow-x-auto">
+              <motion.div
+                key="projects"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.2 }}
+                className="overflow-x-auto"
+              >
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="border-b border-ink-100 text-xs font-bold uppercase tracking-wider text-ink-400">
@@ -422,9 +454,14 @@ export default function AdminPage({ navigate }) {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-ink-50 text-sm">
+                    <AnimatePresence initial={false}>
                     {projects.map((project) => (
-                      <tr
+                      <motion.tr
                         key={project.id}
+                        layout
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0, x: 40, transition: { duration: 0.2 } }}
                         className="hover:bg-ink-50/50 transition-colors"
                       >
                         <td className="py-3.5 px-4 font-semibold text-ink-900">
@@ -455,8 +492,9 @@ export default function AdminPage({ navigate }) {
                             Remove
                           </button>
                         </td>
-                      </tr>
+                      </motion.tr>
                     ))}
+                    </AnimatePresence>
                     {projects.length === 0 && (
                       <tr>
                         <td
@@ -469,15 +507,27 @@ export default function AdminPage({ navigate }) {
                     )}
                   </tbody>
                 </table>
-              </div>
+              </motion.div>
             )}
 
             {activeTab === "complaints" && (
-              <div className="space-y-4">
+              <motion.div
+                key="complaints"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.2 }}
+                className="space-y-4"
+              >
+                <AnimatePresence initial={false}>
                 {complaints.map((complaint) => (
-                  <div
+                  <motion.div
                     key={complaint.id}
-                    className="glass-panel rounded-2xl p-5 transition-all hover:border-white/35 hover:bg-white/80 dark:hover:bg-ink-900/80"
+                    layout
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, x: 40, transition: { duration: 0.2 } }}
+                    className="glass-panel rounded-2xl p-5 transition-colors hover:border-white/35 hover:bg-white/80 dark:hover:bg-ink-900/80"
                   >
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                       <div>
@@ -538,15 +588,17 @@ export default function AdminPage({ navigate }) {
                         </button>
                       </div>
                     </div>
-                  </div>
+                  </motion.div>
                 ))}
+                </AnimatePresence>
                 {complaints.length === 0 && (
                   <p className="py-8 text-center text-ink-400">
                     No complaints on file.
                   </p>
                 )}
-              </div>
+              </motion.div>
             )}
+          </AnimatePresence>
           </div>
         </section>
       </div>

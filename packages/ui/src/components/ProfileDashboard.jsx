@@ -1,4 +1,5 @@
 import { CheckCircle2, Sparkles, UserRound, Camera } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import PageBackground from "./PageBackground.jsx";
 import { getCurrentUser } from "../api/auth";
@@ -224,7 +225,12 @@ export default function ProfileDashboard({ navigate }) {
     <section className="relative min-h-screen px-4 py-20 sm:px-6 lg:px-8 transition-colors duration-300">
       <PageBackground />
       <div className="mx-auto flex max-w-7xl flex-col gap-8 lg:flex-row">
-        <div className="w-full max-w-xl rounded-3xl border border-white/40 bg-white/70 p-8 shadow-lift backdrop-blur-2xl dark:border-white/10 dark:bg-ink-900/70 dark:text-ink-50">
+        <motion.div
+          className="w-full max-w-xl rounded-3xl border border-white/40 bg-white/70 p-8 shadow-lift backdrop-blur-2xl dark:border-white/10 dark:bg-ink-900/70 dark:text-ink-50"
+          initial={{ opacity: 0, x: -24 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
+        >
           <span className="eyebrow dark:text-brand-400">
             <Sparkles className="h-3.5 w-3.5" />
             Complete your profile
@@ -240,9 +246,14 @@ export default function ProfileDashboard({ navigate }) {
 
           <div className="mt-8 rounded-2xl border border-brand-100 bg-brand-50 p-5 dark:border-brand-900/60 dark:bg-brand-950/40">
             <div className="flex items-center gap-3">
-              <div className="grid h-11 w-11 place-items-center rounded-2xl bg-brand-600 text-white">
+              <motion.div
+                className="grid h-11 w-11 place-items-center rounded-2xl bg-brand-600 text-white"
+                initial={{ scale: 0, rotate: -20 }}
+                animate={{ scale: 1, rotate: 0 }}
+                transition={{ delay: 0.3, duration: 0.4, ease: "backOut" }}
+              >
                 <CheckCircle2 className="h-5 w-5" />
-              </div>
+              </motion.div>
               <div>
                 <p className="text-sm font-semibold text-ink-900 dark:text-ink-50">
                   Welcome back, {user.name || user.email}
@@ -253,9 +264,14 @@ export default function ProfileDashboard({ navigate }) {
               </div>
             </div>
           </div>
-        </div>
+        </motion.div>
 
-        <div className="w-full rounded-3xl border border-white/40 bg-white/70 p-8 shadow-lift backdrop-blur-2xl dark:border-white/10 dark:bg-ink-900/70 dark:text-ink-50">
+        <motion.div
+          className="w-full rounded-3xl border border-white/40 bg-white/70 p-8 shadow-lift backdrop-blur-2xl dark:border-white/10 dark:bg-ink-900/70 dark:text-ink-50"
+          initial={{ opacity: 0, x: 24 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.5, delay: 0.1, ease: "easeOut" }}
+        >
           <div>
             <p className="text-sm font-semibold text-brand-700 dark:text-brand-400">
               Profile dashboard
@@ -476,17 +492,30 @@ export default function ProfileDashboard({ navigate }) {
               )}
             </label>
 
-            <button type="submit" className="btn-primary w-full">
+            <motion.button
+              type="submit"
+              className="btn-primary w-full"
+              whileHover={{ y: -2 }}
+              whileTap={{ scale: 0.98 }}
+            >
               Save profile
-            </button>
+            </motion.button>
           </form>
 
-          {status && (
-            <p className="mt-4 rounded-2xl border border-brand-100 bg-brand-50 px-4 py-3 text-sm text-brand-700 dark:border-brand-900/60 dark:bg-brand-950/40 dark:text-brand-300">
-              {status}
-            </p>
-          )}
-        </div>
+          <AnimatePresence>
+            {status && (
+              <motion.p
+                initial={{ opacity: 0, y: -8, height: 0 }}
+                animate={{ opacity: 1, y: 0, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.25 }}
+                className="mt-4 rounded-2xl border border-brand-100 bg-brand-50 px-4 py-3 text-sm text-brand-700 dark:border-brand-900/60 dark:bg-brand-950/40 dark:text-brand-300"
+              >
+                {status}
+              </motion.p>
+            )}
+          </AnimatePresence>
+        </motion.div>
       </div>
     </section>
   );

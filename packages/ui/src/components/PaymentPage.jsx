@@ -10,10 +10,12 @@ import {
   Sparkles,
   User,
 } from "lucide-react";
+import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { useLocation, useParams } from "react-router-dom";
 import PageBackground from "./PageBackground.jsx";
 import { getAllOpportunities } from "../api/opportunities";
+import { fadeUpBlur } from "../lib/motion.jsx";
 
 const DEFAULT_DEAL_IMAGE =
   "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='200' viewBox='0 0 400 200'><rect width='400' height='200' fill='%23e5e7eb'/><text x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%239ca3af' font-family='sans-serif' font-size='16'>No image</text></svg>";
@@ -226,10 +228,20 @@ export default function PaymentPage({ navigate }) {
       <section className="relative min-h-screen px-4 py-20 sm:px-6 lg:px-8 transition-colors duration-300">
         <PageBackground />
         <div className="mx-auto max-w-xl">
-          <div className="glass-panel-strong holo-card rounded-[2rem] p-8 text-center sm:p-10">
-            <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">
+          <motion.div
+            className="glass-panel-strong holo-card rounded-[2rem] p-8 text-center sm:p-10"
+            initial={{ opacity: 0, y: 24, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
+          >
+            <motion.div
+              className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300"
+              initial={{ scale: 0, rotate: -30 }}
+              animate={{ scale: 1, rotate: 0 }}
+              transition={{ delay: 0.15, duration: 0.5, ease: "backOut" }}
+            >
               <CheckCircle2 className="h-8 w-8" />
-            </div>
+            </motion.div>
             <h1 className="mt-5 font-display text-2xl font-bold text-ink-900 dark:text-ink-50">
               Investment confirmed
             </h1>
@@ -286,7 +298,7 @@ export default function PaymentPage({ navigate }) {
                 Browse more deals
               </button>
             </div>
-          </div>
+          </motion.div>
         </div>
       </section>
     );
@@ -310,7 +322,7 @@ export default function PaymentPage({ navigate }) {
           Back to deals
         </button>
 
-        <div className="mb-8">
+        <motion.div className="mb-8" initial="hidden" animate="visible" variants={fadeUpBlur}>
           <span className="eyebrow">
             <Sparkles className="h-3.5 w-3.5" />
             Secure checkout
@@ -322,12 +334,15 @@ export default function PaymentPage({ navigate }) {
             Confirm your commitment amount and payment details to complete
             this investment.
           </p>
-        </div>
+        </motion.div>
 
         <div className="grid gap-6 lg:grid-cols-[1fr_0.85fr] lg:items-start">
-          <form
+          <motion.form
             onSubmit={handleSubmit}
             className="glass-panel-strong holo-card rounded-[2rem] p-6 sm:p-8"
+            initial={{ opacity: 0, x: -24 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5, delay: 0.1, ease: "easeOut" }}
           >
             <div className="flex items-center gap-3">
               <div className="grid h-11 w-11 place-items-center rounded-2xl bg-brand-600/90 text-white shadow-soft">
@@ -455,24 +470,31 @@ export default function PaymentPage({ navigate }) {
               </div>
             </div>
 
-            <button
+            <motion.button
               type="submit"
               disabled={status === "processing"}
               className="btn-primary mt-6 w-full disabled:cursor-not-allowed disabled:opacity-60"
+              whileHover={status === "processing" ? {} : { y: -2 }}
+              whileTap={status === "processing" ? {} : { scale: 0.98 }}
             >
               <ShieldCheck className="h-4 w-4" />
               {status === "processing"
                 ? "Processing..."
                 : `Confirm investment${form.amount ? ` · $${form.amount}` : ""}`}
-            </button>
+            </motion.button>
 
             <p className="mt-4 flex items-center justify-center gap-1.5 text-center text-xs text-ink-400 dark:text-ink-500">
               <Lock className="h-3.5 w-3.5" />
               Demo checkout — no real payment is processed.
             </p>
-          </form>
+          </motion.form>
 
-          <div className="glass-panel-strong holo-card rounded-[2rem] p-6 sm:p-8">
+          <motion.div
+            className="glass-panel-strong holo-card rounded-[2rem] p-6 sm:p-8"
+            initial={{ opacity: 0, x: 24 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5, delay: 0.2, ease: "easeOut" }}
+          >
             <div className="overflow-hidden rounded-2xl h-40 bg-ink-100 dark:bg-ink-800">
               <img
                 src={deal.image || DEFAULT_DEAL_IMAGE}
@@ -526,7 +548,7 @@ export default function PaymentPage({ navigate }) {
               <ShieldCheck className="h-4 w-4 shrink-0" />
               Your investment details are only used for this demo checkout.
             </div>
-          </div>
+          </motion.div>
         </div>
       </div>
     </section>
