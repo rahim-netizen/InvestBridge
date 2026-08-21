@@ -1,3 +1,4 @@
+import { motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 import { User, Mail, Lock, Eye, EyeOff, Check, Loader2 } from "lucide-react";
 import { apiRegister } from "../api/auth";
@@ -108,10 +109,23 @@ export default function RegisterPage({ navigate }) {
         <div className="absolute left-[-5rem] bottom-12 h-72 w-72 rounded-full bg-gold-200/30 blur-3xl" />
       </div>
 
-      <button type="button" className="ib-back-home" onClick={() => navigate("/")}>
+      <motion.button
+        type="button"
+        className="ib-back-home"
+        onClick={() => navigate("/")}
+        initial={{ opacity: 0, x: -12 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.4, ease: "easeOut" }}
+        whileHover={{ x: -3 }}
+      >
         ← Back home
-      </button>
+      </motion.button>
 
+      <motion.div
+        initial={{ opacity: 0, y: 28, scale: 0.97 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+      >
       <div
         className={`ib-auth-container${eyesClosed ? " hide-password" : ""}${success ? " success" : ""}`}
         style={{ transform: `rotateY(${tilt.x}deg) rotateX(${tilt.y}deg)` }}
@@ -219,6 +233,7 @@ export default function RegisterPage({ navigate }) {
           </button>
         </div>
       </div>
+      </motion.div>
     </section>
   );
 }

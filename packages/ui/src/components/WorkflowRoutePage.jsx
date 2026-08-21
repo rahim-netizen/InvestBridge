@@ -7,7 +7,9 @@ import {
   Sparkles,
   Upload,
 } from "lucide-react";
+import { motion } from "framer-motion";
 import PageBackground from "./PageBackground.jsx";
+import { fadeUp, stagger } from "../lib/motion.jsx";
 
 export default function WorkflowRoutePage({ navigate, content, variant }) {
   const Icon = content.icon;
@@ -21,81 +23,94 @@ export default function WorkflowRoutePage({ navigate, content, variant }) {
       </div>
 
       <div className="mx-auto grid max-w-6xl gap-8 lg:grid-cols-[1fr_0.92fr] lg:items-center">
-        <div>
-          <span className="eyebrow">
+        <motion.div
+          initial="hidden"
+          animate="visible"
+          variants={stagger}
+        >
+          <motion.span className="eyebrow" variants={fadeUp}>
             <Sparkles className="h-3.5 w-3.5" />
             {content.eyebrow}
-          </span>
-          <div className="mt-4 inline-flex rounded-full border border-brand-200 bg-brand-50 px-4 py-2 text-xs font-semibold uppercase tracking-wider text-brand-700 dark:border-brand-400/30 dark:bg-brand-400/10 dark:text-brand-300">
+          </motion.span>
+          <motion.div className="mt-4 inline-flex rounded-full border border-brand-200 bg-brand-50 px-4 py-2 text-xs font-semibold uppercase tracking-wider text-brand-700 dark:border-brand-400/30 dark:bg-brand-400/10 dark:text-brand-300" variants={fadeUp}>
             {content.badge}
-          </div>
-          <h1 className="mt-6 font-display text-4xl font-extrabold tracking-tight text-white sm:text-5xl">
+          </motion.div>
+          <motion.h1 className="mt-6 font-display text-4xl font-extrabold tracking-tight text-white sm:text-5xl" variants={fadeUp}>
             {content.title}
-          </h1>
-          <p className="mt-4 max-w-xl text-lg leading-relaxed text-white/80">
+          </motion.h1>
+          <motion.p className="mt-4 max-w-xl text-lg leading-relaxed text-white/80" variants={fadeUp}>
             {content.description}
-          </p>
-          <p className="mt-4 max-w-xl text-sm leading-relaxed text-white/70">
+          </motion.p>
+          <motion.p className="mt-4 max-w-xl text-sm leading-relaxed text-white/70" variants={fadeUp}>
             {content.summary}
-          </p>
+          </motion.p>
 
-          <ul className="mt-8 space-y-3 text-sm text-white/80">
+          <motion.ul className="mt-8 space-y-3 text-sm text-white/80" variants={fadeUp}>
             {content.highlights.map((item) => (
               <li key={item} className="flex items-start gap-2">
                 <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-brand-600" />
                 <span>{item}</span>
               </li>
             ))}
-          </ul>
+          </motion.ul>
 
-          <div className="mt-8 grid gap-3 sm:grid-cols-3">
-            <div className="rounded-3xl border border-white/30 bg-white/70 p-4 shadow-soft backdrop-blur-xl dark:border-white/10 dark:bg-ink-950/55">
+          <motion.div className="mt-8 grid gap-3 sm:grid-cols-3" variants={stagger}>
+            <motion.div className="rounded-3xl border border-white/30 bg-white/70 p-4 shadow-soft backdrop-blur-xl dark:border-white/10 dark:bg-ink-950/55" variants={fadeUp} whileHover={{ y: -3 }}>
               <p className="text-xs font-semibold uppercase tracking-wider text-brand-700 dark:text-brand-300">
                 {content.statLabel}
               </p>
               <p className="mt-2 font-display text-2xl font-bold text-ink-900 dark:text-ink-50">
                 {content.statValue}
               </p>
-            </div>
-            <div className="rounded-3xl border border-white/30 bg-white/70 p-4 shadow-soft backdrop-blur-xl dark:border-white/10 dark:bg-ink-950/55">
+            </motion.div>
+            <motion.div className="rounded-3xl border border-white/30 bg-white/70 p-4 shadow-soft backdrop-blur-xl dark:border-white/10 dark:bg-ink-950/55" variants={fadeUp} whileHover={{ y: -3 }}>
               <p className="text-xs font-semibold uppercase tracking-wider text-brand-700 dark:text-brand-300">
                 Next step
               </p>
               <p className="mt-2 text-sm font-medium text-ink-700 dark:text-ink-200">
                 {content.steps[0]}
               </p>
-            </div>
-            <div className="rounded-3xl border border-white/30 bg-white/70 p-4 shadow-soft backdrop-blur-xl dark:border-white/10 dark:bg-ink-950/55">
+            </motion.div>
+            <motion.div className="rounded-3xl border border-white/30 bg-white/70 p-4 shadow-soft backdrop-blur-xl dark:border-white/10 dark:bg-ink-950/55" variants={fadeUp} whileHover={{ y: -3 }}>
               <p className="text-xs font-semibold uppercase tracking-wider text-brand-700 dark:text-brand-300">
                 Focus area
               </p>
               <p className="mt-2 text-sm font-medium text-ink-700 dark:text-ink-200">
                 {content.checklist[0]}
               </p>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
 
-          <div className="mt-8 flex flex-wrap gap-3">
-            <button
+          <motion.div className="mt-8 flex flex-wrap gap-3" variants={fadeUp}>
+            <motion.button
               type="button"
               onClick={() => navigate(content.primaryRoute)}
-              className="btn-primary"
+              className="group btn-primary"
+              whileHover={{ y: -2 }}
+              whileTap={{ scale: 0.97 }}
             >
               {content.primaryAction}
-              <ArrowRight className="h-4 w-4" />
-            </button>
-            <button
+              <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+            </motion.button>
+            <motion.button
               type="button"
               onClick={() => navigate(content.secondaryRoute)}
               className="btn-ghost"
+              whileHover={{ y: -2 }}
+              whileTap={{ scale: 0.97 }}
             >
               <ArrowLeft className="h-4 w-4" />
               {content.secondaryAction}
-            </button>
-          </div>
-        </div>
+            </motion.button>
+          </motion.div>
+        </motion.div>
 
-        <div className="glass-panel-strong holo-card rounded-[2rem] p-8">
+        <motion.div
+          className="glass-panel-strong holo-card rounded-[2rem] p-8"
+          initial={{ opacity: 0, x: 24 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.6, delay: 0.15, ease: "easeOut" }}
+        >
           <div className="flex items-center justify-between">
             <div className="grid h-14 w-14 place-items-center rounded-2xl bg-brand-600/90 text-white shadow-soft backdrop-blur-sm">
               <Icon className="h-6 w-6" />
@@ -198,7 +213,7 @@ export default function WorkflowRoutePage({ navigate, content, variant }) {
               </div>
             </div>
           )}
-        </div>
+        </motion.div>
       </div>
     </section>
   );
