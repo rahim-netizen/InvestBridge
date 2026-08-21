@@ -13,6 +13,7 @@ import {
   Search,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import PageBackground from "./PageBackground.jsx";
 
 const getStoredUser = () => {
   if (typeof window === "undefined") {
@@ -183,7 +184,8 @@ export default function ConnectPage({ navigate }) {
     "w-full rounded-2xl border border-white/20 bg-white/35 px-4 py-3 text-sm text-ink-900 outline-none placeholder:text-ink-400 backdrop-blur-sm dark:border-white/10 dark:bg-ink-950/35 dark:text-ink-50 dark:placeholder:text-ink-500";
 
   return (
-    <section className="relative min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top_left,_rgba(45,97,255,0.16),_transparent_36%),radial-gradient(circle_at_80%_12%,_rgba(16,185,129,0.12),_transparent_28%),linear-gradient(135deg,_#f8fbff_0%,_#eef4ff_100%)] px-4 py-20 transition-colors duration-300 sm:px-6 lg:px-8 dark:bg-gradient-to-br dark:from-ink-950 dark:via-ink-950 dark:to-ink-900">
+    <section className="relative min-h-screen overflow-hidden px-4 py-20 transition-colors duration-300 sm:px-6 lg:px-8">
+      <PageBackground />
       <div className="pointer-events-none absolute inset-0 -z-10 opacity-60">
         <div className="absolute left-[-5rem] top-24 h-72 w-72 rounded-full bg-brand-200/35 blur-3xl" />
         <div className="absolute right-[-4rem] bottom-10 h-80 w-80 rounded-full bg-gold-200/20 blur-3xl" />
@@ -201,11 +203,11 @@ export default function ConnectPage({ navigate }) {
             </button>
           )}
           <div>
-            <span className="eyebrow dark:text-brand-400">
+            <span className="eyebrow">
               <MessageCircle className="h-3.5 w-3.5" />
               {view === "chat" ? activeThread?.title : "Connect and grow"}
             </span>
-            <h1 className="mt-2 font-display text-3xl font-bold text-ink-900 dark:text-ink-50">
+            <h1 className="mt-2 font-display text-3xl font-bold text-white">
               {view === "chat"
                 ? "Conversation"
                 : "Keep the conversation moving in one place."}

@@ -22,6 +22,7 @@ import {
   Image as ImageIcon,
 } from "lucide-react";
 import { useState } from "react";
+import PageBackground from "./PageBackground.jsx";
 import { createOpportunity, deleteOpportunity } from "../api/opportunities";
 
 const defaultOpportunities = [
@@ -201,7 +202,8 @@ export default function OpportunitiesPage({ navigate }) {
     "mb-2 block text-sm font-medium text-ink-700 dark:text-ink-300";
 
   return (
-    <section className="relative min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top_left,_rgba(45,97,255,0.16),_transparent_36%),radial-gradient(circle_at_80%_12%,_rgba(16,185,129,0.12),_transparent_28%),linear-gradient(135deg,_#f8fbff_0%,_#eef4ff_100%)] px-4 py-20 transition-colors duration-300 sm:px-6 lg:px-8 dark:bg-gradient-to-br dark:from-ink-950 dark:via-ink-950 dark:to-ink-900">
+    <section className="relative min-h-screen overflow-hidden px-4 py-20 transition-colors duration-300 sm:px-6 lg:px-8">
+      <PageBackground />
       <div className="pointer-events-none absolute inset-0 -z-10 opacity-60">
         <div className="absolute left-[-5rem] top-24 h-72 w-72 rounded-full bg-brand-200/35 blur-3xl" />
         <div className="absolute right-[-4rem] bottom-10 h-80 w-80 rounded-full bg-gold-200/20 blur-3xl" />
@@ -210,14 +212,14 @@ export default function OpportunitiesPage({ navigate }) {
       <div className="mx-auto max-w-7xl">
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <span className="eyebrow dark:text-brand-400">
+            <span className="eyebrow">
               <PenLine className="h-3.5 w-3.5" />
               Everyone can post opportunities
             </span>
-            <h1 className="mt-4 font-display text-3xl font-extrabold tracking-tight text-ink-900 sm:text-4xl">
+            <h1 className="mt-4 font-display text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
               Turn a deal idea into a live opportunity.
             </h1>
-            <p className="mt-3 max-w-xl text-lg leading-relaxed text-ink-600 dark:text-ink-300">
+            <p className="mt-3 max-w-xl text-lg leading-relaxed text-white/80">
               Create a listing, explain the opportunity, and publish it in a
               guided flow designed for founders, sponsors, and partners.
             </p>

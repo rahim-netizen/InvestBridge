@@ -1,5 +1,6 @@
 import { CheckCircle2, Sparkles, UserRound, Camera } from "lucide-react";
 import { useEffect, useState } from "react";
+import PageBackground from "./PageBackground.jsx";
 import { getCurrentUser } from "../api/auth";
 import { updateProfile } from "../api/profile";
 
@@ -194,7 +195,8 @@ export default function ProfileDashboard({ navigate }) {
 
   if (!user) {
     return (
-      <section className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(45,97,255,0.16),_transparent_40%),linear-gradient(135deg,_#f8fbff_0%,_#eef4ff_100%)] px-4 py-20 sm:px-6 lg:px-8 transition-colors duration-300 dark:bg-gradient-to-br dark:from-ink-950 dark:to-ink-900">
+      <section className="relative min-h-screen px-4 py-20 sm:px-6 lg:px-8 transition-colors duration-300">
+        <PageBackground />
         <div className="mx-auto max-w-2xl rounded-3xl border border-white/40 bg-white/70 p-8 shadow-lift backdrop-blur-2xl dark:border-white/10 dark:bg-ink-900/70 dark:text-ink-50">
           <p className="text-sm font-semibold text-brand-700 dark:text-brand-400">
             No active session
@@ -219,7 +221,8 @@ export default function ProfileDashboard({ navigate }) {
   }
 
   return (
-    <section className="min-h-screen bg-[radial-gradient(circle_at_top_right,_rgba(45,97,255,0.16),_transparent_40%),linear-gradient(135deg,_#f8fbff_0%,_#eef4ff_100%)] px-4 py-20 sm:px-6 lg:px-8 transition-colors duration-300 dark:bg-gradient-to-br dark:from-ink-950 dark:to-ink-900">
+    <section className="relative min-h-screen px-4 py-20 sm:px-6 lg:px-8 transition-colors duration-300">
+      <PageBackground />
       <div className="mx-auto flex max-w-7xl flex-col gap-8 lg:flex-row">
         <div className="w-full max-w-xl rounded-3xl border border-white/40 bg-white/70 p-8 shadow-lift backdrop-blur-2xl dark:border-white/10 dark:bg-ink-900/70 dark:text-ink-50">
           <span className="eyebrow dark:text-brand-400">

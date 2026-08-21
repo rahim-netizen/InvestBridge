@@ -1,4 +1,5 @@
 import { useState } from "react";
+import PageBackground from "./PageBackground.jsx";
 import {
   AlertCircle,
   BarChart3,
@@ -111,7 +112,8 @@ export default function AdminPage({ navigate }) {
   ).length;
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top_left,_rgba(45,97,255,0.16),_transparent_36%),radial-gradient(circle_at_85%_10%,_rgba(16,185,129,0.12),_transparent_28%),linear-gradient(135deg,_#f8fbff_0%,_#eef4ff_100%)] px-4 py-10 sm:px-6 lg:px-8 dark:bg-gradient-to-br dark:from-ink-950 dark:via-ink-950 dark:to-ink-900">
+    <div className="relative min-h-screen overflow-hidden px-4 py-10 sm:px-6 lg:px-8">
+      <PageBackground />
       <div className="pointer-events-none absolute inset-0 -z-10 opacity-60">
         <div className="absolute left-[-5rem] top-24 h-80 w-80 rounded-full bg-brand-200/30 blur-3xl" />
         <div className="absolute right-[-5rem] bottom-12 h-96 w-96 rounded-full bg-gold-200/20 blur-3xl" />

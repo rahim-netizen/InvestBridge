@@ -15,6 +15,7 @@ import {
   Image as ImageIcon,
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
+import PageBackground from "./PageBackground.jsx";
 import { deleteOpportunity, getMyOpportunities, updateOpportunity } from "../api/opportunities";
 import {
   getConnectedOpportunities,
@@ -262,7 +263,8 @@ export default function UserDashboard({ navigate }) {
 
   if (!user) {
     return (
-      <section className="relative min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top_left,_rgba(45,97,255,0.16),_transparent_36%),radial-gradient(circle_at_80%_12%,_rgba(16,185,129,0.12),_transparent_28%),linear-gradient(135deg,_#f8fbff_0%,_#eef4ff_100%)] px-4 py-20 transition-colors duration-300 sm:px-6 lg:px-8 dark:bg-gradient-to-br dark:from-ink-950 dark:via-ink-950 dark:to-ink-900">
+      <section className="relative min-h-screen overflow-hidden px-4 py-20 transition-colors duration-300 sm:px-6 lg:px-8">
+        <PageBackground />
         <div className="pointer-events-none absolute inset-0 -z-10 opacity-60">
           <div className="absolute left-[-5rem] top-24 h-72 w-72 rounded-full bg-brand-200/35 blur-3xl" />
           <div className="absolute right-[-4rem] bottom-10 h-80 w-80 rounded-full bg-gold-200/20 blur-3xl" />
@@ -293,7 +295,8 @@ export default function UserDashboard({ navigate }) {
   const totalProjects = allOpportunities.length;
 
   return (
-    <section className="relative min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top_left,_rgba(45,97,255,0.16),_transparent_36%),radial-gradient(circle_at_80%_12%,_rgba(16,185,129,0.12),_transparent_28%),linear-gradient(135deg,_#f8fbff_0%,_#eef4ff_100%)] px-4 py-20 transition-colors duration-300 sm:px-6 lg:px-8 dark:bg-gradient-to-br dark:from-ink-950 dark:via-ink-950 dark:to-ink-900">
+    <section className="relative min-h-screen overflow-hidden px-4 py-20 transition-colors duration-300 sm:px-6 lg:px-8">
+      <PageBackground />
       <div className="pointer-events-none absolute inset-0 -z-10 opacity-60">
         <div className="absolute left-[-5rem] top-24 h-72 w-72 rounded-full bg-brand-200/35 blur-3xl" />
         <div className="absolute right-[-4rem] bottom-10 h-80 w-80 rounded-full bg-gold-200/20 blur-3xl" />
@@ -302,14 +305,14 @@ export default function UserDashboard({ navigate }) {
       <div className="mx-auto max-w-7xl">
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <span className="eyebrow dark:text-brand-400">
+            <span className="eyebrow">
               <BarChart3 className="h-3.5 w-3.5" />
               My dashboard
             </span>
-            <h1 className="mt-4 font-display text-3xl font-extrabold tracking-tight text-ink-900 sm:text-4xl">
+            <h1 className="mt-4 font-display text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
               Projects you posted
             </h1>
-            <p className="mt-3 max-w-xl text-lg leading-relaxed text-ink-600 dark:text-ink-300">
+            <p className="mt-3 max-w-xl text-lg leading-relaxed text-white/80">
               Here are the opportunities you have published on InvestBridge.
               Track progress, share updates, and keep every round moving
               forward.
@@ -483,14 +486,14 @@ export default function UserDashboard({ navigate }) {
 
         <div className="mt-14">
           <div className="mb-6">
-            <span className="eyebrow dark:text-brand-400">
+            <span className="eyebrow">
               <Bookmark className="h-3.5 w-3.5" />
               Saved from discovery
             </span>
-            <h2 className="mt-4 font-display text-3xl font-extrabold tracking-tight text-ink-900 sm:text-4xl">
+            <h2 className="mt-4 font-display text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
               Opportunities you connected with
             </h2>
-            <p className="mt-3 max-w-xl text-lg leading-relaxed text-ink-600 dark:text-ink-300">
+            <p className="mt-3 max-w-xl text-lg leading-relaxed text-white/80">
               Posts you saved from the discovery feed. You can remove them from
               your dashboard at any time without affecting the original post.
             </p>
