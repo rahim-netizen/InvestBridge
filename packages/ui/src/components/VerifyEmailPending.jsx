@@ -1,4 +1,5 @@
 import { ArrowRight, Clock, MailCheck, RefreshCw, Sparkles } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { apiResendVerification } from "../api/auth";
 
@@ -56,10 +57,20 @@ export default function VerifyEmailPending({ navigate }) {
       <div className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-t from-slate-950/45 via-slate-950/10 to-transparent" />
       
       <div className="mx-auto flex max-w-4xl flex-col items-center justify-center text-center">
-        <div className="glass-panel-strong w-full max-w-xl rounded-[2.5rem] p-8 sm:p-10 holo-card">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border border-brand-200/50 bg-brand-50 text-brand-600 shadow-soft backdrop-blur-sm dark:border-brand-800/40 dark:bg-brand-950/50 dark:text-brand-400">
+        <motion.div
+          className="glass-panel-strong w-full max-w-xl rounded-[2.5rem] p-8 sm:p-10 holo-card"
+          initial={{ opacity: 0, y: 28, scale: 0.97 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
+        >
+          <motion.div
+            className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border border-brand-200/50 bg-brand-50 text-brand-600 shadow-soft backdrop-blur-sm dark:border-brand-800/40 dark:bg-brand-950/50 dark:text-brand-400"
+            initial={{ scale: 0, rotate: -20 }}
+            animate={{ scale: 1, rotate: 0 }}
+            transition={{ delay: 0.2, duration: 0.4, ease: "backOut" }}
+          >
             <MailCheck className="h-8 w-8" />
-          </div>
+          </motion.div>
 
           <span className="eyebrow mt-6 inline-flex items-center gap-1.5 text-xs font-semibold text-brand-700 dark:text-brand-300">
             <Sparkles className="h-3.5 w-3.5" />
@@ -80,39 +91,57 @@ export default function VerifyEmailPending({ navigate }) {
             <span>The link will expire in 5 minutes. No session cookie will be issued until verified.</span>
           </div>
 
-          {error && (
-            <p className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700 dark:border-rose-900/50 dark:bg-rose-950/40 dark:text-rose-300">
-              {error}
-            </p>
-          )}
+          <AnimatePresence>
+            {error && (
+              <motion.p
+                initial={{ opacity: 0, y: -8, height: 0 }}
+                animate={{ opacity: 1, y: 0, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.25 }}
+                className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700 dark:border-rose-900/50 dark:bg-rose-950/40 dark:text-rose-300"
+              >
+                {error}
+              </motion.p>
+            )}
 
-          {status && (
-            <p className="mt-4 rounded-2xl border border-brand-100 bg-brand-50 px-4 py-3 text-sm font-medium text-brand-700 dark:border-brand-900/50 dark:bg-brand-950/40 dark:text-brand-300">
-              {status}
-            </p>
-          )}
+            {status && (
+              <motion.p
+                initial={{ opacity: 0, y: -8, height: 0 }}
+                animate={{ opacity: 1, y: 0, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.25 }}
+                className="mt-4 rounded-2xl border border-brand-100 bg-brand-50 px-4 py-3 text-sm font-medium text-brand-700 dark:border-brand-900/50 dark:bg-brand-950/40 dark:text-brand-300"
+              >
+                {status}
+              </motion.p>
+            )}
+          </AnimatePresence>
 
           <div className="mt-8 flex flex-col gap-3">
-            <button
+            <motion.button
               type="button"
               onClick={handleResend}
               disabled={loading}
               className="btn-primary w-full flex items-center justify-center gap-2"
+              whileHover={{ y: -2 }}
+              whileTap={{ scale: 0.97 }}
             >
               <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
               {loading ? "Sending new link..." : "Resend Verification Link"}
-            </button>
+            </motion.button>
 
-            <button
+            <motion.button
               type="button"
               onClick={() => navigate("/login")}
-              className="flex w-full items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white/60 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-white/80 dark:border-slate-800 dark:bg-slate-900/60 dark:text-slate-200"
+              className="group flex w-full items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white/60 px-4 py-3 text-sm font-semibold text-slate-700 transition-colors hover:bg-white/80 dark:border-slate-800 dark:bg-slate-900/60 dark:text-slate-200"
+              whileHover={{ y: -2 }}
+              whileTap={{ scale: 0.97 }}
             >
               Already verified? Sign in
-              <ArrowRight className="h-4 w-4" />
-            </button>
+              <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+            </motion.button>
           </div>
-        </div>
+        </motion.div>
       </div>
     </section>
   );

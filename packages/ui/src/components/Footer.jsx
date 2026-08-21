@@ -1,4 +1,6 @@
 import { Landmark, MessagesSquare, Send, Code } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { fadeUp, stagger } from '../lib/motion.jsx';
 
 const columns = [
   {
@@ -23,8 +25,14 @@ export default function Footer() {
   return (
     <footer className="border-t border-white/40 bg-white/60 backdrop-blur-2xl dark:border-white/10 dark:bg-ink-950/60">
       <div className="container-page py-14">
-        <div className="grid gap-10 lg:grid-cols-[1.4fr_repeat(4,1fr)]">
-          <div>
+        <motion.div
+          className="grid gap-10 lg:grid-cols-[1.4fr_repeat(4,1fr)]"
+          variants={stagger}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.2 }}
+        >
+          <motion.div variants={fadeUp}>
             <a href="#home" className="flex items-center gap-2.5">
               <span className="grid h-9 w-9 place-items-center rounded-xl bg-brand-600 text-white">
                 <Landmark className="h-5 w-5" />
@@ -39,20 +47,22 @@ export default function Footer() {
             </p>
             <div className="mt-5 flex gap-3">
               {[MessagesSquare, Send, Code].map((Icon, i) => (
-                <a
+                <motion.a
                   key={i}
                   href="#"
                   className="social-link grid h-9 w-9 place-items-center rounded-lg border border-ink-200 text-ink-500 transition-colors hover:border-brand-300 hover:text-brand-700"
                   aria-label="social link"
+                  whileHover={{ y: -2, scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                 >
                   <Icon className="h-4 w-4" />
-                </a>
+                </motion.a>
               ))}
             </div>
-          </div>
+          </motion.div>
 
           {columns.map((col) => (
-            <div key={col.title}>
+            <motion.div key={col.title} variants={fadeUp}>
               <p className="font-display text-sm font-bold text-ink-900">{col.title}</p>
               <ul className="mt-4 space-y-2.5">
                 {col.links.map((l) => (
@@ -63,9 +73,9 @@ export default function Footer() {
                   </li>
                 ))}
               </ul>
-            </div>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
 
         <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-white/40 pt-6 dark:border-white/10 sm:flex-row">
           <p className="text-xs text-ink-500">

@@ -14,12 +14,23 @@ import {
   Clock,
   Image as ImageIcon,
 } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
 import { useCallback, useEffect, useState } from "react";
+import PageBackground from "./PageBackground.jsx";
 import { deleteOpportunity, getMyOpportunities, updateOpportunity } from "../api/opportunities";
 import {
   getConnectedOpportunities,
   disconnectOpportunity,
 } from "../api/connected";
+import {
+  fadeUp,
+  fadeUpBlur,
+  modalOverlay,
+  modalPanel,
+  stagger,
+  useTilt,
+} from "../lib/motion.jsx";
+import { FilterChip, IconSearchToggle } from "./FilterControls.jsx";
 
 const getStoredUser = () => {
   if (typeof window === "undefined") {
@@ -36,6 +47,64 @@ const getStoredUser = () => {
 
 const DEFAULT_DEAL_IMAGE =
   "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='200' viewBox='0 0 400 200'><rect width='400' height='200' fill='%23e5e7eb'/><text x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%239ca3af' font-family='sans-serif' font-size='16'>No image</text></svg>";
+
+function DashboardCard({ opp, actions }) {
+  const tilt = useTilt(5);
+
+  return (
+    <motion.article
+      ref={tilt.ref}
+      onMouseMove={tilt.onMouseMove}
+      onMouseLeave={tilt.onMouseLeave}
+      style={tilt.style}
+      className="glass-panel-strong holo-card group overflow-hidden hover:shadow-lift"
+      variants={fadeUp}
+      whileHover={{ y: -4, transition: { duration: 0.25 } }}
+    >
+      <div className="relative h-40 overflow-hidden bg-ink-100 dark:bg-ink-800">
+        <img
+          src={opp.image || DEFAULT_DEAL_IMAGE}
+          alt={opp.title}
+          loading="lazy"
+          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-ink-950/40 to-transparent" />
+        <div className="absolute left-4 top-4">
+          <span className="rounded-full bg-white/90 px-2.5 py-1 text-xs font-semibold text-ink-800 backdrop-blur">
+            {opp.sector}
+          </span>
+        </div>
+        <div className="absolute bottom-4 left-4 flex items-center gap-2 text-white">
+          <span className="grid h-9 w-9 place-items-center rounded-lg bg-white/20 font-display text-sm font-bold backdrop-blur">
+            {opp.company?.slice(0, 2).toUpperCase() || "OP"}
+          </span>
+          <span className="font-display text-lg font-bold">{opp.company}</span>
+        </div>
+      </div>
+
+      <div className="p-5">
+        <h3 className="font-display text-lg font-bold text-ink-900 dark:text-ink-50">
+          {opp.title}
+        </h3>
+        <p className="mt-2 text-sm leading-relaxed text-ink-600 dark:text-ink-400">
+          {opp.blurb || "No description provided."}
+        </p>
+        <div className="mt-3 flex items-center gap-4 text-xs text-ink-500 dark:text-ink-400">
+          <span className="flex items-center gap-1">
+            <MapPin className="h-3.5 w-3.5" />
+            {opp.location || "TBD"}
+          </span>
+          <span className="flex items-center gap-1">
+            <Clock className="h-3.5 w-3.5" />
+            {opp.timeline || "TBD"}
+          </span>
+        </div>
+
+        <div className="mt-4 flex items-center justify-between">{actions}</div>
+      </div>
+    </motion.article>
+  );
+}
 
 export default function UserDashboard({ navigate }) {
   const [user, setUser] = useState(() => getStoredUser());
@@ -253,8 +322,6 @@ export default function UserDashboard({ navigate }) {
     }
   };
 
-  const inputWrapperClassName =
-    "surface-rim flex items-center gap-3 rounded-2xl px-4 py-3";
   const inputClassName =
     "w-full rounded-2xl border border-white/20 bg-white/35 px-4 py-3 text-sm text-ink-900 outline-none placeholder:text-ink-400 backdrop-blur-sm dark:border-white/10 dark:bg-ink-950/35 dark:text-ink-50 dark:placeholder:text-ink-500";
   const fieldLabelClassName =
@@ -262,7 +329,8 @@ export default function UserDashboard({ navigate }) {
 
   if (!user) {
     return (
-      <section className="relative min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top_left,_rgba(45,97,255,0.16),_transparent_36%),radial-gradient(circle_at_80%_12%,_rgba(16,185,129,0.12),_transparent_28%),linear-gradient(135deg,_#f8fbff_0%,_#eef4ff_100%)] px-4 py-20 transition-colors duration-300 sm:px-6 lg:px-8 dark:bg-gradient-to-br dark:from-ink-950 dark:via-ink-950 dark:to-ink-900">
+      <section className="relative min-h-screen overflow-hidden px-4 py-20 transition-colors duration-300 sm:px-6 lg:px-8">
+        <PageBackground />
         <div className="pointer-events-none absolute inset-0 -z-10 opacity-60">
           <div className="absolute left-[-5rem] top-24 h-72 w-72 rounded-full bg-brand-200/35 blur-3xl" />
           <div className="absolute right-[-4rem] bottom-10 h-80 w-80 rounded-full bg-gold-200/20 blur-3xl" />
@@ -293,47 +361,64 @@ export default function UserDashboard({ navigate }) {
   const totalProjects = allOpportunities.length;
 
   return (
-    <section className="relative min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top_left,_rgba(45,97,255,0.16),_transparent_36%),radial-gradient(circle_at_80%_12%,_rgba(16,185,129,0.12),_transparent_28%),linear-gradient(135deg,_#f8fbff_0%,_#eef4ff_100%)] px-4 py-20 transition-colors duration-300 sm:px-6 lg:px-8 dark:bg-gradient-to-br dark:from-ink-950 dark:via-ink-950 dark:to-ink-900">
+    <section className="relative min-h-screen overflow-hidden px-4 py-20 transition-colors duration-300 sm:px-6 lg:px-8">
+      <PageBackground />
       <div className="pointer-events-none absolute inset-0 -z-10 opacity-60">
         <div className="absolute left-[-5rem] top-24 h-72 w-72 rounded-full bg-brand-200/35 blur-3xl" />
         <div className="absolute right-[-4rem] bottom-10 h-80 w-80 rounded-full bg-gold-200/20 blur-3xl" />
       </div>
 
       <div className="mx-auto max-w-7xl">
-        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <motion.div
+          className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+          initial="hidden"
+          animate="visible"
+          variants={fadeUpBlur}
+        >
           <div>
-            <span className="eyebrow dark:text-brand-400">
+            <span className="eyebrow">
               <BarChart3 className="h-3.5 w-3.5" />
               My dashboard
             </span>
-            <h1 className="mt-4 font-display text-3xl font-extrabold tracking-tight text-ink-900 sm:text-4xl">
+            <h1 className="mt-4 font-display text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
               Projects you posted
             </h1>
-            <p className="mt-3 max-w-xl text-lg leading-relaxed text-ink-600 dark:text-ink-300">
+            <p className="mt-3 max-w-xl text-lg leading-relaxed text-white/80">
               Here are the opportunities you have published on InvestBridge.
               Track progress, share updates, and keep every round moving
               forward.
             </p>
           </div>
-          <div className="flex items-center gap-3">
-            <button
+          <div className="flex items-center gap-2">
+            {totalProjects > 0 && (
+              <IconSearchToggle
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search by title..."
+              />
+            )}
+            <motion.button
               type="button"
               onClick={() => navigate("/opportunities")}
               className="btn-ghost shrink-0"
+              whileHover={{ y: -2 }}
+              whileTap={{ scale: 0.97 }}
             >
               <Plus className="h-4 w-4" />
               Post new project
-            </button>
-            <button
+            </motion.button>
+            <motion.button
               type="button"
               onClick={() => navigate("/")}
               className="theme-toggle grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-white/30 bg-white/35 text-ink-700"
               aria-label="Back home"
+              whileHover={{ y: -2 }}
+              whileTap={{ scale: 0.95 }}
             >
               <ArrowLeft className="h-5 w-5" />
-            </button>
+            </motion.button>
           </div>
-        </div>
+        </motion.div>
 
         {totalProjects === 0 ? (
           <div className="glass-panel-strong holo-card rounded-[2rem] p-8 text-center">
@@ -352,16 +437,21 @@ export default function UserDashboard({ navigate }) {
           </div>
         ) : (
           <>
-            <div className="mb-6 grid gap-4 sm:grid-cols-3">
-              <div className="rounded-3xl border border-white/30 bg-white/70 p-5 shadow-soft backdrop-blur-xl dark:border-white/10 dark:bg-ink-950/55">
+            <motion.div
+              className="mb-6 grid gap-4 sm:grid-cols-3"
+              variants={stagger}
+              initial="hidden"
+              animate="visible"
+            >
+              <motion.div className="rounded-3xl border border-white/30 bg-white/70 p-5 shadow-soft backdrop-blur-xl dark:border-white/10 dark:bg-ink-950/55" variants={fadeUp}>
                 <p className="text-xs font-semibold uppercase tracking-wider text-brand-700 dark:text-brand-300">
                   Projects posted
                 </p>
                 <p className="mt-2 font-display text-2xl font-bold text-ink-900 dark:text-ink-50">
                   {totalProjects}
                 </p>
-              </div>
-              <div className="rounded-3xl border border-white/30 bg-white/70 p-5 shadow-soft backdrop-blur-xl dark:border-white/10 dark:bg-ink-950/55">
+              </motion.div>
+              <motion.div className="rounded-3xl border border-white/30 bg-white/70 p-5 shadow-soft backdrop-blur-xl dark:border-white/10 dark:bg-ink-950/55" variants={fadeUp}>
                 <p className="text-xs font-semibold uppercase tracking-wider text-brand-700 dark:text-brand-300">
                   Total funding goal
                 </p>
@@ -371,8 +461,8 @@ export default function UserDashboard({ navigate }) {
                     return sum + val;
                   }, 0).toLocaleString(undefined, { style: "currency", currency: "USD", maximumFractionDigits: 0 })}
                 </p>
-              </div>
-              <div className="rounded-3xl border border-white/30 bg-white/70 p-5 shadow-soft backdrop-blur-xl dark:border-white/10 dark:bg-ink-950/55">
+              </motion.div>
+              <motion.div className="rounded-3xl border border-white/30 bg-white/70 p-5 shadow-soft backdrop-blur-xl dark:border-white/10 dark:bg-ink-950/55" variants={fadeUp}>
                 <p className="text-xs font-semibold uppercase tracking-wider text-brand-700 dark:text-brand-300">
                   Latest post
                 </p>
@@ -382,21 +472,31 @@ export default function UserDashboard({ navigate }) {
                 <p className="text-xs text-ink-500 dark:text-ink-400">
                   {allOpportunities[0]?.createdAt ? new Date(allOpportunities[0].createdAt).toLocaleDateString() : "N/A"}
                 </p>
-              </div>
-            </div>
+              </motion.div>
+            </motion.div>
 
-            <div className="mb-6 flex items-center gap-3">
-              <div className="relative flex-1">
-                <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400" />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search by title..."
-                  className={`${inputWrapperClassName} pl-11`}
-                />
-              </div>
-            </div>
+            {searchQuery.trim() !== "" && (
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+                className="mb-6 flex flex-wrap items-center gap-3"
+              >
+                <span className="text-sm font-medium text-white/70">
+                  <span className="font-display font-bold text-white">
+                    {filteredProjects.length}
+                  </span>{" "}
+                  project{filteredProjects.length !== 1 ? "s" : ""} found
+                </span>
+                <AnimatePresence>
+                  <FilterChip
+                    key="search"
+                    label={`"${searchQuery}"`}
+                    onRemove={() => setSearchQuery("")}
+                  />
+                </AnimatePresence>
+              </motion.div>
+            )}
 
             {filteredProjects.length === 0 ? (
               <div className="glass-panel-strong holo-card rounded-[2rem] p-8 text-center">
@@ -406,54 +506,18 @@ export default function UserDashboard({ navigate }) {
                 </p>
               </div>
             ) : (
-              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              <motion.div
+                className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3"
+                variants={stagger}
+                initial="hidden"
+                animate="visible"
+              >
                 {filteredProjects.map((opp) => (
-                  <article
+                  <DashboardCard
                     key={opp.id}
-                    className="glass-panel-strong holo-card group overflow-hidden hover:shadow-lift"
-                  >
-                    <div className="relative h-40 overflow-hidden bg-ink-100 dark:bg-ink-800">
-                      <img
-                        src={opp.image || DEFAULT_DEAL_IMAGE}
-                        alt={opp.title}
-                        loading="lazy"
-                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-ink-950/40 to-transparent" />
-                      <div className="absolute left-4 top-4">
-                        <span className="rounded-full bg-white/90 px-2.5 py-1 text-xs font-semibold text-ink-800 backdrop-blur">
-                          {opp.sector}
-                        </span>
-                      </div>
-                      <div className="absolute bottom-4 left-4 flex items-center gap-2 text-white">
-                        <span className="grid h-9 w-9 place-items-center rounded-lg bg-white/20 font-display text-sm font-bold backdrop-blur">
-                          {opp.company?.slice(0, 2).toUpperCase() || "OP"}
-                        </span>
-                        <span className="font-display text-lg font-bold">
-                          {opp.company}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="p-5">
-                      <h3 className="font-display text-lg font-bold text-ink-900 dark:text-ink-50">
-                        {opp.title}
-                      </h3>
-                      <p className="mt-2 text-sm leading-relaxed text-ink-600 dark:text-ink-400">
-                        {opp.blurb || "No description provided."}
-                      </p>
-                      <div className="mt-3 flex items-center gap-4 text-xs text-ink-500 dark:text-ink-400">
-                        <span className="flex items-center gap-1">
-                          <MapPin className="h-3.5 w-3.5" />
-                          {opp.location || "TBD"}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Clock className="h-3.5 w-3.5" />
-                          {opp.timeline || "TBD"}
-                        </span>
-                      </div>
-
-                      <div className="mt-4 flex items-center justify-between">
+                    opp={opp}
+                    actions={
+                      <>
                         <div className="flex items-center gap-3">
                           <button
                             type="button"
@@ -472,25 +536,25 @@ export default function UserDashboard({ navigate }) {
                           <Trash2 className="h-3.5 w-3.5" />
                           Remove
                         </button>
-                      </div>
-                    </div>
-                  </article>
+                      </>
+                    }
+                  />
                 ))}
-              </div>
+              </motion.div>
             )}
           </>
         )}
 
         <div className="mt-14">
           <div className="mb-6">
-            <span className="eyebrow dark:text-brand-400">
+            <span className="eyebrow">
               <Bookmark className="h-3.5 w-3.5" />
               Saved from discovery
             </span>
-            <h2 className="mt-4 font-display text-3xl font-extrabold tracking-tight text-ink-900 sm:text-4xl">
+            <h2 className="mt-4 font-display text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
               Opportunities you connected with
             </h2>
-            <p className="mt-3 max-w-xl text-lg leading-relaxed text-ink-600 dark:text-ink-300">
+            <p className="mt-3 max-w-xl text-lg leading-relaxed text-white/80">
               Posts you saved from the discovery feed. You can remove them from
               your dashboard at any time without affecting the original post.
             </p>
@@ -512,54 +576,19 @@ export default function UserDashboard({ navigate }) {
               </button>
             </div>
           ) : (
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <motion.div
+              className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3"
+              variants={stagger}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, amount: 0.1 }}
+            >
               {connectedOpportunities.map((opp) => (
-                <article
+                <DashboardCard
                   key={opp.connectionId}
-                  className="glass-panel-strong holo-card group overflow-hidden hover:shadow-lift"
-                >
-                  <div className="relative h-40 overflow-hidden bg-ink-100 dark:bg-ink-800">
-                    <img
-                      src={opp.image || DEFAULT_DEAL_IMAGE}
-                      alt={opp.title}
-                      loading="lazy"
-                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-ink-950/40 to-transparent" />
-                    <div className="absolute left-4 top-4">
-                      <span className="rounded-full bg-white/90 px-2.5 py-1 text-xs font-semibold text-ink-800 backdrop-blur">
-                        {opp.sector}
-                      </span>
-                    </div>
-                    <div className="absolute bottom-4 left-4 flex items-center gap-2 text-white">
-                      <span className="grid h-9 w-9 place-items-center rounded-lg bg-white/20 font-display text-sm font-bold backdrop-blur">
-                        {opp.company?.slice(0, 2).toUpperCase() || "OP"}
-                      </span>
-                      <span className="font-display text-lg font-bold">
-                        {opp.company}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="p-5">
-                    <h3 className="font-display text-lg font-bold text-ink-900 dark:text-ink-50">
-                      {opp.title}
-                    </h3>
-                    <p className="mt-2 text-sm leading-relaxed text-ink-600 dark:text-ink-400">
-                      {opp.blurb || "No description provided."}
-                    </p>
-                    <div className="mt-3 flex items-center gap-4 text-xs text-ink-500 dark:text-ink-400">
-                      <span className="flex items-center gap-1">
-                        <MapPin className="h-3.5 w-3.5" />
-                        {opp.location || "TBD"}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Clock className="h-3.5 w-3.5" />
-                        {opp.timeline || "TBD"}
-                      </span>
-                    </div>
-
-                    <div className="mt-4 flex items-center justify-between">
+                  opp={opp}
+                  actions={
+                    <>
                       <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-700 dark:text-brand-400">
                         <Bookmark className="h-3.5 w-3.5" />
                         Saved
@@ -572,17 +601,29 @@ export default function UserDashboard({ navigate }) {
                         <Trash2 className="h-3.5 w-3.5" />
                         Remove
                       </button>
-                    </div>
-                  </div>
-                </article>
+                    </>
+                  }
+                />
               ))}
-            </div>
+            </motion.div>
           )}
         </div>
 
+        <AnimatePresence>
         {pendingDelete && (
-          <div className="fixed inset-0 z-50 grid place-items-center bg-black/30 px-4">
-            <div className="glass-panel-strong holo-card w-full max-w-md rounded-[2rem] p-6">
+          <motion.div
+            className="fixed inset-0 z-50 grid place-items-center bg-black/30 px-4"
+            variants={modalOverlay}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+            onClick={cancelDelete}
+          >
+            <motion.div
+              className="glass-panel-strong holo-card w-full max-w-md rounded-[2rem] p-6"
+              variants={modalPanel}
+              onClick={(e) => e.stopPropagation()}
+            >
               <div className="flex items-start justify-between gap-4">
                 <div className="flex items-center gap-3">
                   <div className="grid h-11 w-11 place-items-center rounded-2xl border border-white/20 bg-rose-600/90 text-white shadow-soft">
@@ -632,13 +673,26 @@ export default function UserDashboard({ navigate }) {
                     : "Remove project"}
                 </button>
               </div>
-            </div>
-          </div>
-         )}
+            </motion.div>
+          </motion.div>
+        )}
+        </AnimatePresence>
 
+        <AnimatePresence>
          {editTarget && (
-           <div className="fixed inset-0 z-50 grid place-items-center bg-black/30 px-4">
-             <div className="glass-panel-strong holo-card w-full max-w-lg rounded-[2rem] p-8">
+           <motion.div
+             className="fixed inset-0 z-50 grid place-items-center bg-black/30 px-4"
+             variants={modalOverlay}
+             initial="hidden"
+             animate="visible"
+             exit="exit"
+             onClick={closeEdit}
+           >
+             <motion.div
+               className="glass-panel-strong holo-card w-full max-w-lg rounded-[2rem] p-8"
+               variants={modalPanel}
+               onClick={(e) => e.stopPropagation()}
+             >
                <div className="flex items-start justify-between gap-4">
                  <div>
                    <h2 className="font-display text-xl font-bold text-ink-900 dark:text-ink-50">
@@ -804,9 +858,10 @@ export default function UserDashboard({ navigate }) {
                    </button>
                  </div>
                </form>
-             </div>
-           </div>
+             </motion.div>
+           </motion.div>
          )}
+        </AnimatePresence>
        </div>
      </section>
   );

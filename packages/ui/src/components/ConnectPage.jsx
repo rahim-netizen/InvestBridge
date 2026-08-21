@@ -12,7 +12,10 @@ import {
   Filter,
   Search,
 } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState } from "react";
+import PageBackground from "./PageBackground.jsx";
+import { fadeUp, fadeUpBlur, stagger } from "../lib/motion.jsx";
 
 const getStoredUser = () => {
   if (typeof window === "undefined") {
@@ -183,14 +186,20 @@ export default function ConnectPage({ navigate }) {
     "w-full rounded-2xl border border-white/20 bg-white/35 px-4 py-3 text-sm text-ink-900 outline-none placeholder:text-ink-400 backdrop-blur-sm dark:border-white/10 dark:bg-ink-950/35 dark:text-ink-50 dark:placeholder:text-ink-500";
 
   return (
-    <section className="relative min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top_left,_rgba(45,97,255,0.16),_transparent_36%),radial-gradient(circle_at_80%_12%,_rgba(16,185,129,0.12),_transparent_28%),linear-gradient(135deg,_#f8fbff_0%,_#eef4ff_100%)] px-4 py-20 transition-colors duration-300 sm:px-6 lg:px-8 dark:bg-gradient-to-br dark:from-ink-950 dark:via-ink-950 dark:to-ink-900">
+    <section className="relative min-h-screen overflow-hidden px-4 py-20 transition-colors duration-300 sm:px-6 lg:px-8">
+      <PageBackground />
       <div className="pointer-events-none absolute inset-0 -z-10 opacity-60">
         <div className="absolute left-[-5rem] top-24 h-72 w-72 rounded-full bg-brand-200/35 blur-3xl" />
         <div className="absolute right-[-4rem] bottom-10 h-80 w-80 rounded-full bg-gold-200/20 blur-3xl" />
       </div>
 
       <div className="mx-auto max-w-6xl">
-        <div className="mb-8 flex items-center gap-4">
+        <motion.div
+          className="mb-8 flex items-center gap-4"
+          initial="hidden"
+          animate="visible"
+          variants={fadeUpBlur}
+        >
           {view === "chat" && (
             <button
               type="button"
@@ -201,20 +210,28 @@ export default function ConnectPage({ navigate }) {
             </button>
           )}
           <div>
-            <span className="eyebrow dark:text-brand-400">
+            <span className="eyebrow">
               <MessageCircle className="h-3.5 w-3.5" />
               {view === "chat" ? activeThread?.title : "Connect and grow"}
             </span>
-            <h1 className="mt-2 font-display text-3xl font-bold text-ink-900 dark:text-ink-50">
+            <h1 className="mt-2 font-display text-3xl font-bold text-white">
               {view === "chat"
                 ? "Conversation"
                 : "Keep the conversation moving in one place."}
             </h1>
           </div>
-        </div>
+        </motion.div>
 
+        <AnimatePresence mode="wait">
         {view === "list" ? (
-          <div className="grid gap-6 lg:grid-cols-[1fr_0.92fr]">
+          <motion.div
+            key="list"
+            className="grid gap-6 lg:grid-cols-[1fr_0.92fr]"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.25, ease: "easeOut" }}
+          >
             <div className="glass-panel-strong holo-card rounded-[2rem] p-6">
               <div className="flex items-center gap-3 mb-4">
                 <Search className="h-4 w-4 text-ink-400" />
@@ -227,18 +244,25 @@ export default function ConnectPage({ navigate }) {
                 />
               </div>
 
-              <div className="space-y-3">
+              <motion.div
+                className="space-y-3"
+                variants={stagger}
+                initial="hidden"
+                animate="visible"
+              >
                 {filteredThreads.length === 0 ? (
                   <p className="py-8 text-center text-sm text-ink-500 dark:text-ink-400">
                     No conversations found. Start a new thread from an opportunity.
                   </p>
                 ) : (
                   filteredThreads.map((thread) => (
-                    <button
+                    <motion.button
                       key={thread.id}
                       type="button"
                       onClick={() => openThread(thread)}
                       className="w-full text-left rounded-2xl border border-white/20 bg-white/50 p-4 transition hover:bg-white/80 dark:border-white/10 dark:bg-ink-950/45 dark:hover:bg-ink-950/60"
+                      variants={fadeUp}
+                      whileHover={{ y: -2, transition: { duration: 0.2 } }}
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
@@ -259,10 +283,10 @@ export default function ConnectPage({ navigate }) {
                         <Clock className="h-3 w-3" />
                         {thread.updatedAt}
                       </div>
-                    </button>
+                    </motion.button>
                   ))
                 )}
-              </div>
+              </motion.div>
             </div>
 
             <div className="glass-panel-strong holo-card rounded-[2rem] p-6">
@@ -356,9 +380,16 @@ export default function ConnectPage({ navigate }) {
                 </ul>
               </div>
             </div>
-          </div>
+          </motion.div>
         ) : (
-          <div className="grid gap-6 lg:grid-cols-[1fr_0.92fr]">
+          <motion.div
+            key="chat"
+            className="grid gap-6 lg:grid-cols-[1fr_0.92fr]"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.25, ease: "easeOut" }}
+          >
             <div className="glass-panel-strong holo-card rounded-[2rem] p-6 flex flex-col" style={{ maxHeight: "70vh" }}>
               <div className="flex items-center justify-between mb-4">
                 <div>
@@ -375,24 +406,35 @@ export default function ConnectPage({ navigate }) {
                 </span>
               </div>
 
-              <div className="flex-1 overflow-y-auto space-y-3 mb-4 pr-2">
-                {activeThread?.messages.map((msg) => (
-                  <div
-                    key={msg.id}
-                    className={`max-w-[85%] rounded-3xl px-4 py-3 text-sm leading-relaxed shadow-soft ${
-                      msg.self
-                        ? "ml-auto bg-brand-600 text-white"
-                        : "bg-white/70 text-ink-700 border border-white/20 backdrop-blur-md dark:border-white/10 dark:bg-ink-950/55 dark:text-ink-200"
-                    }`}
-                  >
-                    <p className="font-semibold text-xs mb-1 opacity-70">
-                      {msg.sender}
-                    </p>
-                    <p>{msg.text}</p>
-                    <p className="mt-1 text-xs opacity-50">{msg.time}</p>
-                  </div>
-                ))}
-              </div>
+              <motion.div
+                className="flex-1 overflow-y-auto space-y-3 mb-4 pr-2"
+                variants={stagger}
+                initial="hidden"
+                animate="visible"
+              >
+                <AnimatePresence initial={false}>
+                  {activeThread?.messages.map((msg) => (
+                    <motion.div
+                      key={msg.id}
+                      layout
+                      initial={{ opacity: 0, y: 12, scale: 0.97 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      transition={{ duration: 0.25, ease: "easeOut" }}
+                      className={`max-w-[85%] rounded-3xl px-4 py-3 text-sm leading-relaxed shadow-soft ${
+                        msg.self
+                          ? "ml-auto bg-brand-600 text-white"
+                          : "bg-white/70 text-ink-700 border border-white/20 backdrop-blur-md dark:border-white/10 dark:bg-ink-950/55 dark:text-ink-200"
+                      }`}
+                    >
+                      <p className="font-semibold text-xs mb-1 opacity-70">
+                        {msg.sender}
+                      </p>
+                      <p>{msg.text}</p>
+                      <p className="mt-1 text-xs opacity-50">{msg.time}</p>
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+              </motion.div>
 
               <div className="flex items-center gap-2">
                 <div className={inputWrapperClassName}>
@@ -457,8 +499,9 @@ export default function ConnectPage({ navigate }) {
                 <p className="mt-1">Less than 24 hours for all threads.</p>
               </div>
             </div>
-          </div>
+          </motion.div>
         )}
+        </AnimatePresence>
       </div>
     </section>
   );

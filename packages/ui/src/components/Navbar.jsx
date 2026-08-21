@@ -1,3 +1,4 @@
+import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import {
@@ -166,8 +167,14 @@ export default function Navbar({ navigate, theme, toggleTheme }) {
                   profileInitial
                 )}
               </button>
+              <AnimatePresence>
               {profileMenuOpen && (
-                <div className="absolute right-0 mt-3 w-72 rounded-3xl border border-brand-500/20 bg-ink-950/95 p-4 shadow-[0_24px_60px_rgba(2,6,23,0.55)] backdrop-blur-2xl">
+                <motion.div
+                  initial={{ opacity: 0, y: -8, scale: 0.97 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -8, scale: 0.97 }}
+                  transition={{ duration: 0.18, ease: "easeOut" }}
+                  className="absolute right-0 mt-3 w-72 rounded-3xl border border-brand-500/20 bg-ink-950/95 p-4 shadow-[0_24px_60px_rgba(2,6,23,0.55)] backdrop-blur-2xl">
                   <div className="flex items-center gap-3 border-b border-white/10 pb-3">
                     <div className="grid h-11 w-11 place-items-center rounded-full border border-brand-500/30 bg-brand-500/10 text-brand-400 backdrop-blur-sm">
                       <UserCircle2 className="h-6 w-6" />
@@ -235,8 +242,9 @@ export default function Navbar({ navigate, theme, toggleTheme }) {
                       <LogOut className="h-4 w-4" />
                       Logout
                     </button>
-                </div>
+                </motion.div>
               )}
+              </AnimatePresence>
             </div>
           ) : (
             <>
@@ -271,12 +279,17 @@ export default function Navbar({ navigate, theme, toggleTheme }) {
         </button>
       </nav>
 
+      <AnimatePresence>
       {open && (
-        <div
+        <motion.div
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: "auto" }}
+          exit={{ opacity: 0, height: 0 }}
+          transition={{ duration: 0.25, ease: "easeInOut" }}
           className={
             showProfileMenu
-              ? "border-t border-white/10 bg-ink-950/90 backdrop-blur-2xl md:hidden"
-              : "border-t border-white/30 bg-white/75 backdrop-blur-2xl dark:border-white/10 dark:bg-ink-950/70 md:hidden"
+              ? "overflow-hidden border-t border-white/10 bg-ink-950/90 backdrop-blur-2xl md:hidden"
+              : "overflow-hidden border-t border-white/30 bg-white/75 backdrop-blur-2xl dark:border-white/10 dark:bg-ink-950/70 md:hidden"
           }
         >
           <div className="container-page flex flex-col gap-1 py-4">
@@ -383,8 +396,9 @@ export default function Navbar({ navigate, theme, toggleTheme }) {
               )}
             </div>
           </div>
-        </div>
+        </motion.div>
       )}
+      </AnimatePresence>
     </header>
   );
 }

@@ -10,6 +10,7 @@ import ProfileDashboard from "./components/ProfileDashboard.jsx";
 import UserDashboard from "./components/UserDashboard.jsx";
 import OpportunitiesPage from "./components/OpportunitiesPage.jsx";
 import DealsPage from "./components/DealsPage.jsx";
+import PaymentPage from "./components/PaymentPage.jsx";
 import ConnectPage from "./components/ConnectPage.jsx";
 import ChatbotWidget from "./components/ChatbotWidget.jsx";
 import { getCurrentUser } from "./api/auth";
@@ -109,6 +110,14 @@ export default function App() {
           element={
             <PageLayout navigate={navigate} theme={theme} toggleTheme={toggleTheme}>
               <DealsPage navigate={navigate} />
+            </PageLayout>
+          }
+        />
+        <Route
+          path="/payment/:id"
+          element={
+            <PageLayout navigate={navigate} theme={theme} toggleTheme={toggleTheme}>
+              <PaymentPage navigate={navigate} />
             </PageLayout>
           }
         />
