@@ -13,6 +13,7 @@ import DealsPage from "./components/DealsPage.jsx";
 import PaymentPage from "./components/PaymentPage.jsx";
 import ConnectPage from "./components/ConnectPage.jsx";
 import ChatbotWidget from "./components/ChatbotWidget.jsx";
+import InfoPage, { infoPages } from "./components/InfoPage.jsx";
 import { getCurrentUser } from "./api/auth";
 
 export default function App() {
@@ -137,6 +138,17 @@ export default function App() {
             </PageLayout>
           }
         />
+        {Object.entries(infoPages).map(([path, content]) => (
+          <Route
+            key={path}
+            path={path}
+            element={
+              <PageLayout navigate={navigate} theme={theme} toggleTheme={toggleTheme}>
+                <InfoPage navigate={navigate} content={content} />
+              </PageLayout>
+            }
+          />
+        ))}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       <ChatbotWidget />
