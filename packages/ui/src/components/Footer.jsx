@@ -1,27 +1,50 @@
-import { Landmark, MessagesSquare, Send, Code } from 'lucide-react';
-import { motion } from 'framer-motion';
-import { fadeUp, stagger } from '../lib/motion.jsx';
+import { Landmark, MessagesSquare, Send, Code } from "lucide-react";
+import { motion } from "framer-motion";
+import { fadeUp, stagger } from "../lib/motion.jsx";
 
 const columns = [
   {
-    title: 'Platform',
-    links: ['Explore deals', 'Post a startup', 'For investors', 'For founders', 'Pricing'],
+    title: "Platform",
+    links: [
+      ["Explore deals", "/deals"],
+      ["Post a startup", "/opportunities"],
+      ["For investors", "/for-investors"],
+      ["For founders", "/for-founders"],
+      ["Pricing", "/pricing"],
+    ],
   },
   {
-    title: 'Company',
-    links: ['About us', 'Careers', 'Press', 'Partners', 'Contact'],
+    title: "Company",
+    links: [
+      ["About us", "/about"],
+      ["Careers", "/careers"],
+      ["Press", "/press"],
+      ["Partners", "/partners"],
+      ["Contact", "/contact"],
+    ],
   },
   {
-    title: 'Resources',
-    links: ['Help center', 'Founder guide', 'Investor guide', 'Blog', 'API docs'],
+    title: "Resources",
+    links: [
+      ["Help center", "/help"],
+      ["Founder guide", "/founder-guide"],
+      ["Investor guide", "/investor-guide"],
+      ["Blog", "/blog"],
+      ["API docs", "/api-docs"],
+    ],
   },
   {
-    title: 'Legal',
-    links: ['Terms', 'Privacy', 'Risk disclosure', 'Cookie policy'],
+    title: "Legal",
+    links: [
+      ["Terms", "/terms"],
+      ["Privacy", "/privacy"],
+      ["Risk disclosure", "/risk-disclosure"],
+      ["Cookie policy", "/cookie-policy"],
+    ],
   },
 ];
 
-export default function Footer() {
+export default function Footer({ navigate }) {
   return (
     <footer className="border-t border-white/40 bg-white/60 backdrop-blur-2xl dark:border-white/10 dark:bg-ink-950/60">
       <div className="container-page py-14">
@@ -33,14 +56,14 @@ export default function Footer() {
           viewport={{ once: true, amount: 0.2 }}
         >
           <motion.div variants={fadeUp}>
-            <a href="#home" className="flex items-center gap-2.5">
+            <button type="button" onClick={() => navigate("/")} className="flex items-center gap-2.5">
               <span className="grid h-9 w-9 place-items-center rounded-xl bg-brand-600 text-white">
                 <Landmark className="h-5 w-5" />
               </span>
               <span className="font-display text-lg font-extrabold tracking-tight text-ink-900">
                 Invest<span className="text-brand-600">Bridge</span>
               </span>
-            </a>
+            </button>
             <p className="mt-4 max-w-xs text-sm leading-relaxed text-ink-500">
               The bridge between ambitious founders and serious investors. Discover, fund, and grow
               the next generation of startups.
@@ -49,9 +72,11 @@ export default function Footer() {
               {[MessagesSquare, Send, Code].map((Icon, i) => (
                 <motion.a
                   key={i}
-                  href="#"
+                  href={["https://www.linkedin.com", "https://t.me", "https://github.com"][i]}
+                  target="_blank"
+                  rel="noreferrer"
                   className="social-link grid h-9 w-9 place-items-center rounded-lg border border-ink-200 text-ink-500 transition-colors hover:border-brand-300 hover:text-brand-700"
-                  aria-label="social link"
+                  aria-label={["LinkedIn", "Telegram", "GitHub"][i]}
                   whileHover={{ y: -2, scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                 >
@@ -65,11 +90,15 @@ export default function Footer() {
             <motion.div key={col.title} variants={fadeUp}>
               <p className="font-display text-sm font-bold text-ink-900">{col.title}</p>
               <ul className="mt-4 space-y-2.5">
-                {col.links.map((l) => (
-                  <li key={l}>
-                    <a href="#" className="footer-link text-sm text-ink-500 transition-colors hover:text-brand-700">
-                      {l}
-                    </a>
+                {col.links.map(([label, path]) => (
+                  <li key={label}>
+                    <button
+                      type="button"
+                      onClick={() => navigate(path)}
+                      className="footer-link text-left text-sm text-ink-500 transition-colors hover:text-brand-700"
+                    >
+                      {label}
+                    </button>
                   </li>
                 ))}
               </ul>

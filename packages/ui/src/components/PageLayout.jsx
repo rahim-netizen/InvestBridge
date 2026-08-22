@@ -43,7 +43,7 @@ export default function PageLayout({ children, navigate, theme, toggleTheme }) {
           </motion.div>
         </AnimatePresence>
       </main>
-      <Footer />
+      <Footer navigate={navigate} />
     </>
   );
 }
