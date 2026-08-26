@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
     'description',
     'timeline',
     'image',
+    'status',
     ])]
 class Opportunity extends Model
 {
