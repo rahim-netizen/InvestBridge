@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Navigate, Route, Routes, useNavigate } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import PageLayout from "./components/PageLayout.jsx";
 import Homepage from "./components/Homepage.jsx";
 import AdminPage from "./components/AdminPage";
@@ -16,9 +16,28 @@ import ChatbotWidget from "./components/ChatbotWidget.jsx";
 import InfoPage, { infoPages } from "./components/InfoPage.jsx";
 import { getCurrentUser } from "./api/auth";
 
+function getStoredUser() {
+  if (typeof window === "undefined") return null;
+  try {
+    return JSON.parse(localStorage.getItem("investbridgeSessionUser") || "null");
+  } catch {
+    return null;
+  }
+}
+
+function AdminRoute({ children }) {
+  const user = getStoredUser();
+  if (user?.role !== "admin") {
+    return <Navigate to="/" replace />;
+  }
+  return children;
+}
+
 export default function App() {
   const [theme, setTheme] = useState("light");
   const navigate = useNavigate();
+  const location = useLocation();
+  const isAdmin = getStoredUser()?.role === "admin";
 
   useEffect(() => {
     // Automatically verify active cookie session with Laravel server
@@ -46,6 +65,12 @@ export default function App() {
   const toggleTheme = () => {
     setTheme((current) => (current === "dark" ? "light" : "dark"));
   };
+
+  // Admins are confined to the admin dashboard — every other route (including
+  // the marketing homepage and investor/founder features) bounces back there.
+  if (isAdmin && location.pathname !== "/admin") {
+    return <Navigate to="/admin" replace />;
+  }
 
   return (
     <>
@@ -133,9 +158,9 @@ export default function App() {
         <Route
           path="/admin"
           element={
-            <PageLayout navigate={navigate} theme={theme} toggleTheme={toggleTheme}>
-              <AdminPage navigate={navigate} />
-            </PageLayout>
+            <AdminRoute>
+              <AdminPage navigate={navigate} theme={theme} toggleTheme={toggleTheme} />
+            </AdminRoute>
           }
         />
         {Object.entries(infoPages).map(([path, content]) => (
@@ -151,7 +176,7 @@ export default function App() {
         ))}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-      <ChatbotWidget />
+      {!isAdmin && <ChatbotWidget />}
     </>
   );
 }

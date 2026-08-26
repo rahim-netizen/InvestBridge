@@ -11,7 +11,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
-#[Fillable(['name', 'email', 'password', 'email_verified_at'])]
+#[Fillable(['name', 'email', 'password', 'email_verified_at', 'role'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable implements MustVerifyEmail
 {
@@ -29,5 +29,10 @@ class User extends Authenticatable implements MustVerifyEmail
     public function profile()
     {
         return $this->hasOne(\App\Models\Profile::class);
+    }
+
+    public function isAdmin(): bool
+    {
+        return $this->role === 'admin';
     }
 }

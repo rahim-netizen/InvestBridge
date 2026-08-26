@@ -75,9 +75,10 @@ export default function LoginPage({ navigate }) {
     setLoading(true);
 
     try {
-      await apiLogin(form.email, form.password);
+      const data = await apiLogin(form.email, form.password);
       setSuccess(true);
-      setTimeout(() => navigate("/profile"), 1400);
+      const destination = data.user?.role === "admin" ? "/admin" : "/profile";
+      setTimeout(() => navigate(destination), 1400);
     } catch (err) {
       setError(err.message || "Login failed. Please check your credentials.");
     } finally {
