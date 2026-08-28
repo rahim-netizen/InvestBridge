@@ -25,7 +25,7 @@ class VerifyEmailController extends Controller
             return redirect($frontendUrl . '/verify-email-pending?error=not_found');
         }
 
-        // Validate 5-minute signed URL (host-independent / relative signature)
+        // Validate 5-minute signed URL
         $isValidSignature = $request->hasValidRelativeSignature() || $request->hasValidSignature();
 
         if (!$isValidSignature) {
@@ -33,14 +33,6 @@ class VerifyEmailController extends Controller
                 return response()->json(['message' => 'Invalid or expired verification link.'], 403);
             }
             return redirect($frontendUrl . '/verify-email-pending?error=expired&email=' . urlencode($user->email));
-        }
-
-        // The hash must match the user's email for this verification link.
-        if (!hash_equals((string) $hash, sha1($user->getEmailForVerification()))) {
-            if ($request->wantsJson()) {
-                return response()->json(['message' => 'Invalid verification link.'], 403);
-            }
-            return redirect($frontendUrl . '/verify-email-pending?error=invalid&email=' . urlencode($user->email));
         }
 
         if (!$user->hasVerifiedEmail()) {

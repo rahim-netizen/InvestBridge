@@ -19,11 +19,10 @@ class EmailVerificationTest extends TestCase
 
         Event::fake();
 
-        $verificationUrl = rtrim(config('app.url'), '/') . URL::temporarySignedRoute(
+        $verificationUrl = URL::temporarySignedRoute(
             'verification.verify',
             now()->addMinutes(60),
-            ['id' => $user->id, 'hash' => sha1($user->email)],
-            false
+            ['id' => $user->id, 'hash' => sha1($user->email)]
         );
 
         $response = $this->actingAs($user)->get($verificationUrl);
@@ -37,11 +36,10 @@ class EmailVerificationTest extends TestCase
     {
         $user = User::factory()->unverified()->create();
 
-        $verificationUrl = rtrim(config('app.url'), '/') . URL::temporarySignedRoute(
+        $verificationUrl = URL::temporarySignedRoute(
             'verification.verify',
             now()->addMinutes(60),
-            ['id' => $user->id, 'hash' => sha1('wrong-email')],
-            false
+            ['id' => $user->id, 'hash' => sha1('wrong-email')]
         );
 
         $this->actingAs($user)->get($verificationUrl);

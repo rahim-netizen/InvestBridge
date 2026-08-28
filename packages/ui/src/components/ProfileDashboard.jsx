@@ -34,36 +34,6 @@ const buildInitialForm = () => {
   };
 };
 
-function resizeImage(file, maxDim = 1024, quality = 0.8) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onerror = () => reject(reader.error);
-    reader.onload = () => {
-      const img = new Image();
-      img.onerror = () => reject(new Error("Could not read image"));
-      img.onload = () => {
-        let { width, height } = img;
-        if (width > maxDim || height > maxDim) {
-          const scale = maxDim / Math.max(width, height);
-          width = Math.round(width * scale);
-          height = Math.round(height * scale);
-        }
-        const canvas = document.createElement("canvas");
-        canvas.width = width;
-        canvas.height = height;
-        canvas.getContext("2d").drawImage(img, 0, 0, width, height);
-        resolve(canvas.toDataURL("image/jpeg", quality));
-      };
-      img.src = reader.result;
-    };
-    reader.readAsDataURL(file);
-  });
-}
-
-function toPhotoArray(value) {
-  return Array.isArray(value) ? value : [];
-}
-
 function mapBackendProfileToForm(backendProfile) {
   if (!backendProfile) return buildInitialForm();
   return {
@@ -74,8 +44,8 @@ function mapBackendProfileToForm(backendProfile) {
     website: backendProfile.website || "",
     mission: backendProfile.mission || "",
     notes: backendProfile.notes || "",
-    companyPersonnelPhotos: toPhotoArray(backendProfile.company_personnel_photos),
-    nidPhotos: toPhotoArray(backendProfile.nid_photos),
+    companyPersonnelPhotos: backendProfile.company_personnel_photos || [],
+    nidPhotos: backendProfile.nid_photos || [],
     profileImage: backendProfile.profile_image || null,
   };
 }
@@ -110,11 +80,6 @@ export default function ProfileDashboard({ onOpenDeals, onOpenConnect, onOpenPay
 
     async function checkSession() {
       const storedUser = getStoredUser();
-
-      // Trust the client-side session that the rest of the app relies on. A
-      // verified user is only ever stored here after a successful login, so its
-      // presence means we are authenticated. We only bounce to sign in when
-      // there is no session at all (neither a stored user nor a server session).
       if (storedUser) {
         setUser(storedUser);
         if (storedUser.profile) {
@@ -139,7 +104,7 @@ export default function ProfileDashboard({ onOpenDeals, onOpenConnect, onOpenPay
           setHasCompanyInfo(true);
         }
         setForm(profile);
-      } else if (!storedUser) {
+      } else {
         setUser(null);
         setForm(buildInitialForm());
         navigate("/login");
@@ -168,16 +133,28 @@ export default function ProfileDashboard({ onOpenDeals, onOpenConnect, onOpenPay
 
   const handlePhotoChange = async (event, field) => {
     const files = Array.from(event.target.files || []);
-    const results = await Promise.all(files.map((file) => resizeImage(file)));
+    const readers = files.map(
+      (file) =>
+        new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.readAsDataURL(file);
+        }),
+    );
+
+    const results = await Promise.all(readers);
     setForm((current) => ({ ...current, [field]: results }));
   };
 
-  const handleProfileImageChange = async (event) => {
+  const handleProfileImageChange = (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    const dataUrl = await resizeImage(file);
-    setForm((current) => ({ ...current, profileImage: dataUrl }));
+    const reader = new FileReader();
+    reader.onload = () => {
+      setForm((current) => ({ ...current, profileImage: reader.result }));
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleSubmit = async (event) => {
@@ -477,8 +454,7 @@ export default function ProfileDashboard({ onOpenDeals, onOpenConnect, onOpenPay
                   onChange={(e) => handlePhotoChange(e, "companyPersonnelPhotos")}
                   className="block w-full text-sm text-ink-500 file:mr-4 file:rounded-full file:border-0 file:bg-brand-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-brand-700 hover:file:bg-brand-100 dark:file:bg-brand-900/40 dark:file:text-brand-300"
                 />
-                {Array.isArray(form.companyPersonnelPhotos) &&
-                  form.companyPersonnelPhotos.length > 0 && (
+                {(form.companyPersonnelPhotos || []).length > 0 && (
                   <div className="mt-3 flex gap-3">
                     {form.companyPersonnelPhotos.map((src, idx) => (
                       <img
@@ -530,9 +506,9 @@ export default function ProfileDashboard({ onOpenDeals, onOpenConnect, onOpenPay
                 onChange={(e) => handlePhotoChange(e, "nidPhotos")}
                 className="block w-full text-sm text-ink-500 file:mr-4 file:rounded-full file:border-0 file:bg-brand-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-brand-700 hover:file:bg-brand-100 dark:file:bg-brand-900/40 dark:file:text-brand-300"
               />
-                {Array.isArray(form.nidPhotos) && form.nidPhotos.length > 0 && (
-                  <div className="mt-3 flex gap-3">
-                    {form.nidPhotos.map((src, idx) => (
+              {(form.nidPhotos || []).length > 0 && (
+                <div className="mt-3 flex gap-3">
+                  {form.nidPhotos.map((src, idx) => (
                     <img
                       key={idx}
                       src={src}

@@ -12,8 +12,6 @@ import {
   UserRound,
   X,
   Clock,
-  CreditCard,
-  MessageCircle,
   Image as ImageIcon,
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -23,8 +21,6 @@ import { deleteOpportunity, getMyOpportunities, updateOpportunity } from "../api
 import {
   getConnectedOpportunities,
   disconnectOpportunity,
-  getConnectionsForOpportunity,
-  acceptConnection,
 } from "../api/connected";
 import {
   fadeUp,
@@ -52,40 +48,6 @@ const getStoredUser = () => {
 
 const DEFAULT_DEAL_IMAGE =
   "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='200' viewBox='0 0 400 200'><rect width='400' height='200' fill='%23e5e7eb'/><text x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%239ca3af' font-family='sans-serif' font-size='16'>No image</text></svg>";
-
-const STATUS_OPTIONS = ["Active", "Pending", "Completed"];
-
-function resizeImage(file, maxDim = 1024, quality = 0.8) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onerror = () => reject(reader.error);
-    reader.onload = () => {
-      const img = new Image();
-      img.onerror = () => reject(new Error("Could not read image"));
-      img.onload = () => {
-        let { width, height } = img;
-        if (width > maxDim || height > maxDim) {
-          const scale = maxDim / Math.max(width, height);
-          width = Math.round(width * scale);
-          height = Math.round(height * scale);
-        }
-        const canvas = document.createElement("canvas");
-        canvas.width = width;
-        canvas.height = height;
-        canvas.getContext("2d").drawImage(img, 0, 0, width, height);
-        resolve(canvas.toDataURL("image/jpeg", quality));
-      };
-      img.src = reader.result;
-    };
-    reader.readAsDataURL(file);
-  });
-}
-
-const STATUS_STYLES = {
-  Active: "bg-emerald-100 text-emerald-700",
-  Pending: "bg-amber-100 text-amber-700",
-  Completed: "bg-brand-100 text-brand-700",
-};
 
 function DashboardCard({ opp, actions }) {
   const tilt = useTilt(5);
@@ -164,186 +126,6 @@ function DashboardCard({ opp, actions }) {
   );
 }
 
-function StatusModal({ opp, isOwner, onClose, navigate, onAccepted }) {
-  const [connections, setConnections] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [currentStatus, setCurrentStatus] = useState(opp.status || "Active");
-
-  useEffect(() => {
-    if (!isOwner) return;
-    let active = true;
-    setLoading(true);
-    getConnectionsForOpportunity(opp.id)
-      .then((data) => {
-        if (active) setConnections(data.connections || []);
-      })
-      .catch(() => {
-        if (active) setConnections([]);
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-    return () => {
-      active = false;
-    };
-  }, [isOwner, opp.id]);
-
-  const handleAccept = async (connectionId) => {
-    try {
-      await acceptConnection(opp.id, connectionId);
-      setCurrentStatus("Active");
-      onAccepted?.(opp.id);
-      setConnections((prev) => {
-        const accepted = prev.find((x) => x.id === connectionId);
-        return accepted ? [{ ...accepted, accepted: true }] : prev;
-      });
-    } catch {
-      // ignore
-    }
-  };
-
-  return (
-    <motion.div
-      className="fixed inset-0 z-50 grid place-items-center bg-black/40 px-4"
-      variants={modalOverlay}
-      initial="hidden"
-      animate="visible"
-      exit="exit"
-      onClick={onClose}
-    >
-      <motion.div
-        className="glass-panel-strong holo-card w-full max-w-lg rounded-[2rem] p-6"
-        variants={modalPanel}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h2 className="font-display text-xl font-bold text-ink-900 dark:text-ink-50">
-              Project status
-            </h2>
-            <p className="mt-1 text-sm text-ink-500 dark:text-ink-400">
-              {opp.title}
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="text-ink-400 hover:text-ink-700 dark:text-ink-500 dark:hover:text-ink-300"
-            aria-label="Close"
-          >
-            <X className="h-5 w-5" />
-          </button>
-        </div>
-
-        <div className="mt-4">
-          <span
-            className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${STATUS_STYLES[STATUS_OPTIONS.includes(opp.status) ? opp.status : "Active"]}`}
-          >
-            Status: {opp.status || "Active"}
-          </span>
-        </div>
-
-        <div className="mt-6">
-          {isOwner ? (
-            <>
-              <h3 className="text-sm font-semibold text-ink-700 dark:text-ink-300">
-                Investors who connected with this project
-              </h3>
-              {loading ? (
-                <p className="mt-3 text-sm text-ink-500">Loading…</p>
-              ) : connections.length === 0 ? (
-                <p className="mt-3 text-sm text-ink-500">
-                  No investors have connected with this project yet.
-                </p>
-              ) : (
-                <ul className="mt-3 space-y-2">
-                  {connections.map((c) => (
-                    <li
-                      key={c.id}
-                      className="flex items-center justify-between gap-3 rounded-xl border border-white/20 bg-white/40 px-4 py-3 dark:border-white/10 dark:bg-ink-950/40"
-                    >
-                      <div>
-                        <p className="font-semibold text-ink-900 dark:text-ink-50">
-                          {c.name || "Unknown"}
-                        </p>
-                        <p className="text-xs text-ink-500">{c.email}</p>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <span className="text-xs text-ink-400">
-                          {c.connected_at
-                            ? new Date(c.connected_at).toLocaleDateString()
-                            : ""}
-                        </span>
-                        {c.accepted ? (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700">
-                            Accepted
-                          </span>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={() => handleAccept(c.id)}
-                            className="btn-primary"
-                          >
-                            Accept
-                          </button>
-                        )}
-                        <button
-                          type="button"
-                          onClick={() => navigate("/connect")}
-                          className="btn-ghost"
-                        >
-                          <MessageCircle className="h-4 w-4" />
-                          Chat
-                        </button>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </>
-          ) : (
-            <div className="space-y-4">
-              <div className="rounded-xl border border-white/20 bg-white/40 px-4 py-3 dark:border-white/10 dark:bg-ink-950/40">
-                <p className="text-xs font-semibold uppercase tracking-wider text-ink-400">
-                  Interested user
-                </p>
-                <p className="mt-1 font-semibold text-ink-900 dark:text-ink-50">
-                  {opp.postedByName || "Unknown"}
-                </p>
-                <p className="text-xs text-ink-500">{opp.postedBy || ""}</p>
-              </div>
-              <div className="flex flex-col gap-3 sm:flex-row">
-                <button
-                  type="button"
-                  onClick={() => {
-                    onClose();
-                    navigate("/connect");
-                  }}
-                  className="btn-primary flex-1"
-                >
-                  <MessageCircle className="h-4 w-4" />
-                  Chat
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    onClose();
-                    navigate("/payment/" + opp.id);
-                  }}
-                  className="btn-ghost flex-1"
-                >
-                  <CreditCard className="h-4 w-4" />
-                  Payment
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-      </motion.div>
-    </motion.div>
-  );
-}
-
 export default function UserDashboard({ navigate }) {
   const [user, setUser] = useState(() => getStoredUser());
   const [allOpportunities, setAllOpportunities] = useState([]);
@@ -364,7 +146,6 @@ export default function UserDashboard({ navigate }) {
   const [editStatus, setEditStatus] = useState("");
   const [editLoading, setEditLoading] = useState(false);
   const [, setProgressVersion] = useState(0);
-  const [statusModal, setStatusModal] = useState(null);
 
   const sectors = ["HealthTech", "CleanEnergy", "E-commerce", "AgriTech", "FinTech", "EdTech", "Others"];
 
@@ -389,7 +170,6 @@ export default function UserDashboard({ navigate }) {
           postedBy: opp.user?.email || null,
           postedByName: opp.user?.name || opp.user?.email || "Anonymous",
           createdAt: opp.created_at,
-          status: opp.status || "Active",
         }));
         setAllOpportunities(mapped);
       }
@@ -425,7 +205,6 @@ export default function UserDashboard({ navigate }) {
                 postedBy: opp.user?.email || null,
                 postedByName: opp.user?.name || opp.user?.email || "Anonymous",
                 createdAt: opp.created_at,
-                status: opp.status || "Active",
               };
             });
           setConnectedOpportunities(mapped);
@@ -487,7 +266,6 @@ export default function UserDashboard({ navigate }) {
     }
   };
 
-
   const openEdit = (opp) => {
     setEditTarget(opp);
     setEditForm({
@@ -508,28 +286,17 @@ export default function UserDashboard({ navigate }) {
     setEditForm((current) => ({ ...current, [name]: value }));
   };
 
-  const handleEditImageChange = async (event) => {
+  const handleEditImageChange = (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
-    try {
-      const dataUrl = await resizeImage(file);
-      setEditForm((current) => ({ ...current, image: dataUrl }));
-    } catch {
-      // keep previous value on resize failure
-    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      setEditForm((current) => ({ ...current, image: reader.result }));
+    };
+    reader.readAsDataURL(file);
   };
 
   const closeEdit = () => setEditTarget(null);
-
-  const openStatusModal = (opp, isOwner) => setStatusModal({ opp, isOwner });
-
-  const handleAccepted = (opportunityId) => {
-    setAllOpportunities((prev) =>
-      prev.map((o) =>
-        o.id === opportunityId ? { ...o, status: "Active" } : o,
-      ),
-    );
-  };
 
   const handleEditSubmit = async (event) => {
     event.preventDefault();
@@ -787,23 +554,14 @@ export default function UserDashboard({ navigate }) {
                             Edit
                           </button>
                         </div>
-                        <div className="flex items-center gap-3">
-                          <button
-                            type="button"
-                            onClick={() => openStatusModal(opp, true)}
-                            className={`rounded-full px-2.5 py-1 text-xs font-semibold ${STATUS_STYLES[STATUS_OPTIONS.includes(opp.status) ? opp.status : "Active"]}`}
-                          >
-            Status: {opp.status || "Active"}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => confirmDelete(opp.id, "own")}
-                            className="text-xs font-semibold text-rose-500 transition-colors hover:text-rose-700"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                            Remove
-                          </button>
-                        </div>
+                        <button
+                          type="button"
+                          onClick={() => confirmDelete(opp.id, "own")}
+                          className="text-xs font-semibold text-rose-500 transition-colors hover:text-rose-700"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                          Remove
+                        </button>
                       </>
                     }
                   />
@@ -861,23 +619,14 @@ export default function UserDashboard({ navigate }) {
                         <Bookmark className="h-3.5 w-3.5" />
                         Saved
                       </span>
-                      <div className="flex items-center gap-3">
-                        <button
-                          type="button"
-                          onClick={() => openStatusModal(opp, false)}
-                          className={`rounded-full px-2.5 py-1 text-xs font-semibold ${STATUS_STYLES[STATUS_OPTIONS.includes(opp.status) ? opp.status : "Active"]}`}
-                        >
-                          Status: {opp.status || "Active"}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => confirmDelete(opp.connectionId, "connected")}
-                          className="text-xs font-semibold text-rose-500 transition-colors hover:text-rose-700"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                          Remove
-                        </button>
-                      </div>
+                      <button
+                        type="button"
+                        onClick={() => confirmDelete(opp.connectionId, "connected")}
+                        className="text-xs font-semibold text-rose-500 transition-colors hover:text-rose-700"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                        Remove
+                      </button>
                     </>
                   }
                 />
@@ -1137,21 +886,9 @@ export default function UserDashboard({ navigate }) {
                </form>
              </motion.div>
            </motion.div>
-          )}
+         )}
         </AnimatePresence>
-
-        <AnimatePresence>
-          {statusModal && (
-            <StatusModal
-              opp={statusModal.opp}
-              isOwner={statusModal.isOwner}
-              onClose={() => setStatusModal(null)}
-              navigate={navigate}
-              onAccepted={handleAccepted}
-            />
-          )}
-        </AnimatePresence>
-        </div>
-      </section>
-   );
+       </div>
+     </section>
+  );
 }

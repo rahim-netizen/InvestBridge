@@ -18,13 +18,12 @@ import {
   Rocket,
   Plus,
   X,
-  UserRound,
   Image as ImageIcon,
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import PageBackground from "./PageBackground.jsx";
-import { createOpportunity, deleteOpportunity, getMyOpportunities } from "../api/opportunities";
+import { createOpportunity, deleteOpportunity } from "../api/opportunities";
 import { fadeUp, fadeUpBlur, stagger, useTilt } from "../lib/motion.jsx";
 import {
   FilterChip,
@@ -34,45 +33,6 @@ import {
 } from "./FilterControls.jsx";
 
 const sectors = ["All", "HealthTech", "CleanEnergy", "E-commerce", "AgriTech", "FinTech", "EdTech","Others"];
-
-const getStoredUser = () => {
-  if (typeof window === "undefined") {
-    return null;
-  }
-  try {
-    return JSON.parse(
-      localStorage.getItem("investbridgeSessionUser") || "null",
-    );
-  } catch {
-    return null;
-  }
-};
-
-function resizeImage(file, maxDim = 1024, quality = 0.8) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onerror = () => reject(reader.error);
-    reader.onload = () => {
-      const img = new Image();
-      img.onerror = () => reject(new Error("Could not read image"));
-      img.onload = () => {
-        let { width, height } = img;
-        if (width > maxDim || height > maxDim) {
-          const scale = maxDim / Math.max(width, height);
-          width = Math.round(width * scale);
-          height = Math.round(height * scale);
-        }
-        const canvas = document.createElement("canvas");
-        canvas.width = width;
-        canvas.height = height;
-        canvas.getContext("2d").drawImage(img, 0, 0, width, height);
-        resolve(canvas.toDataURL("image/jpeg", quality));
-      };
-      img.src = reader.result;
-    };
-    reader.readAsDataURL(file);
-  });
-}
 
 function OpportunityCard({ opp, navigate, onDelete }) {
   const tilt = useTilt(4);
@@ -189,7 +149,6 @@ function OpportunityCard({ opp, navigate, onDelete }) {
 }
 
 export default function OpportunitiesPage({ navigate }) {
-   const [user, setUser] = useState(() => getStoredUser());
    const [opportunities, setOpportunities] = useState([]);
    const [showForm, setShowForm] = useState(false);
    const [form, setForm] = useState({
@@ -204,44 +163,8 @@ export default function OpportunitiesPage({ navigate }) {
   });
   const [formStatus, setFormStatus] = useState("");
   const [sectorFilter, setSectorFilter] = useState("All");
-   const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
    const [isLoading, setIsLoading] = useState(false);
-
-   useEffect(() => {
-    setUser(getStoredUser());
-  }, []);
-
-   useEffect(() => {
-    if (!getStoredUser()) return;
-    let active = true;
-    (async () => {
-      try {
-        const data = await getMyOpportunities();
-        if (!active) return;
-        const list = Array.isArray(data.opportunities) ? data.opportunities : [];
-        setOpportunities(
-          list.map((opp) => ({
-            id: opp.id,
-            title: opp.title,
-            company: opp.company,
-            sector: opp.sector,
-            location: opp.location || "TBD",
-            fundingGoal: opp.funding_goal || "$0",
-            raised: "$0",
-            pct: 0,
-            description: opp.description || "",
-            timeline: opp.timeline || "TBD",
-            image: opp.image || null,
-          })),
-        );
-      } catch {
-        // keep empty state on error
-      }
-    })();
-    return () => {
-      active = false;
-    };
-  }, []);
 
    const filteredOpportunities = opportunities.filter((o) => {
     const matchesSearch =
@@ -257,15 +180,14 @@ export default function OpportunitiesPage({ navigate }) {
     setForm((current) => ({ ...current, [name]: value }));
   };
 
-  const handleImageChange = async (event) => {
+  const handleImageChange = (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
-    try {
-      const dataUrl = await resizeImage(file);
-      setForm((current) => ({ ...current, image: dataUrl }));
-    } catch {
-      // keep previous value on resize failure
-    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      setForm((current) => ({ ...current, image: reader.result }));
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleSubmit = async (event) => {
@@ -350,37 +272,6 @@ export default function OpportunitiesPage({ navigate }) {
   const fieldLabelClassName =
     "mb-2 block text-sm font-medium text-ink-700 dark:text-ink-300";
 
-  if (!user) {
-    return (
-      <section className="relative min-h-screen overflow-hidden px-4 py-20 transition-colors duration-300 sm:px-6 lg:px-8">
-        <PageBackground />
-        <div className="pointer-events-none absolute inset-0 -z-10 opacity-60">
-          <div className="absolute left-[-5rem] top-24 h-72 w-72 rounded-full bg-brand-200/35 blur-3xl" />
-          <div className="absolute right-[-4rem] bottom-10 h-80 w-80 rounded-full bg-gold-200/20 blur-3xl" />
-        </div>
-        <div className="mx-auto max-w-2xl">
-          <div className="glass-panel-strong mx-auto max-w-2xl rounded-[2rem] p-8 holo-card dark:text-ink-50">
-            <UserRound className="mx-auto h-10 w-10 text-brand-600" />
-            <h1 className="mt-4 font-display text-3xl font-bold text-ink-900 dark:text-ink-50">
-              Sign in to view your opportunities
-            </h1>
-            <p className="mt-3 text-ink-600 dark:text-ink-300">
-              Your opportunities page shows every project you have posted on
-              InvestBridge. Sign in or create an account to continue.
-            </p>
-            <button
-              type="button"
-              onClick={() => navigate("/login")}
-              className="btn-primary mt-6"
-            >
-              Go to sign in
-            </button>
-          </div>
-        </div>
-      </section>
-    );
-  }
-
   return (
     <section className="relative min-h-screen overflow-hidden px-4 py-20 transition-colors duration-300 sm:px-6 lg:px-8">
       <PageBackground />
@@ -399,15 +290,14 @@ export default function OpportunitiesPage({ navigate }) {
           <div>
             <span className="eyebrow">
               <PenLine className="h-3.5 w-3.5" />
-              My opportunities
+              Everyone can post opportunities
             </span>
             <h1 className="mt-4 font-display text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
-              Opportunities you posted
+              Turn a deal idea into a live opportunity.
             </h1>
             <p className="mt-3 max-w-xl text-lg leading-relaxed text-white/80">
-              These are the opportunities you have published on InvestBridge.
-              Create a new listing, track its progress, and keep every round
-              moving forward.
+              Create a listing, explain the opportunity, and publish it in a
+              guided flow designed for founders, sponsors, and partners.
             </p>
           </div>
           <div className="flex shrink-0 items-center gap-2">
@@ -648,7 +538,7 @@ export default function OpportunitiesPage({ navigate }) {
             <div className="col-span-full glass-panel-strong holo-card rounded-[2rem] p-8 text-center">
               <PenLine className="h-12 w-12 mx-auto text-ink-300 dark:text-ink-600" />
               <p className="mt-4 text-ink-500 dark:text-ink-400">
-                You haven&apos;t posted any opportunities yet. Be the first to post one!
+                No opportunities found. Be the first to post one!
               </p>
             </div>
           ) : (

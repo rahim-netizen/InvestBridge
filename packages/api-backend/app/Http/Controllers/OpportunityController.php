@@ -38,12 +38,13 @@ class OpportunityController extends Controller
             'description' => ['nullable', 'string', 'max:2000'],
             'timeline' => ['nullable', 'string', 'max:255'],
             'image' => ['nullable', 'string'],
-            'status' => ['nullable', 'string', 'in:Active,Pending,Completed'],
         ]);
 
         if (!empty($validated['image']) && str_starts_with((string) $validated['image'], 'data:')) {
             $uploaded = (new CloudinaryService())->uploadImage($validated['image'], 'investbridge/opportunities');
-            $validated['image'] = $uploaded;
+            if ($uploaded) {
+                $validated['image'] = $uploaded;
+            }
         }
 
         $opportunity = Opportunity::create([
@@ -88,12 +89,13 @@ class OpportunityController extends Controller
             'description' => ['nullable', 'string', 'max:2000'],
             'timeline' => ['nullable', 'string', 'max:255'],
             'image' => ['nullable', 'string'],
-            'status' => ['nullable', 'string', 'in:Active,Pending,Completed'],
         ]);
 
         if (!empty($validated['image']) && str_starts_with((string) $validated['image'], 'data:')) {
             $uploaded = (new CloudinaryService())->uploadImage($validated['image'], 'investbridge/opportunities');
-            $validated['image'] = $uploaded;
+            if ($uploaded) {
+                $validated['image'] = $uploaded;
+            }
         }
 
         $opportunity->update($validated);
