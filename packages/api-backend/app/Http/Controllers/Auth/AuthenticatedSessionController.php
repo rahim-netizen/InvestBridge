@@ -18,63 +18,42 @@ class AuthenticatedSessionController extends Controller
     {
         $request->authenticate();
 
+        /** @var \App\Models\User $user */
         $user = Auth::user();
-        $sessionCookie = config('session.cookie', 'investbridge_session');
 
-        // Enforce email verification check before issuing cookie session
+        // Enforce email verification check before issuing token
         if ($user instanceof User && !$user->hasVerifiedEmail()) {
             Auth::guard('web')->logout();
 
-            if ($request->hasSession()) {
-                $request->session()->invalidate();
-                $request->session()->regenerateToken();
-            }
-
-            // STRICT ENFORCEMENT: Unverified login attempt MUST NOT issue or retain any cookie
             return response()->json([
                 'message' => 'Your email address is not verified. Please check your inbox and verify your email within 5 minutes before signing in.',
                 'requires_verification' => true,
-            ], 403)
-            ->withoutCookie($sessionCookie)
-            ->withoutCookie('laravel_session')
-            ->withoutCookie('XSRF-TOKEN')
-            ->withCookie(cookie()->forget($sessionCookie))
-            ->withCookie(cookie()->forget('laravel_session'))
-            ->withCookie(cookie()->forget('XSRF-TOKEN'));
+            ], 403);
         }
 
-        if ($request->hasSession()) {
-            $request->session()->regenerate();
-        }
+        // Generate Sanctum Bearer Token
+        $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
             'message' => 'Login successful',
+            'access_token' => $token,
+            'token_type' => 'Bearer',
             'user' => $user,
         ]);
     }
 
     /**
-     * Destroy an authenticated session.
+     * Destroy an authenticated session / revoke current token.
      */
     public function destroy(Request $request): JsonResponse
     {
-        Auth::guard('web')->logout();
-
-        if ($request->hasSession()) {
-            $request->session()->invalidate();
-            $request->session()->regenerateToken();
+        if ($request->user()) {
+            $request->user()->currentAccessToken()?->delete();
         }
-
-        $sessionCookieName = config('session.cookie', 'investbridge_session');
 
         return response()->json([
             'message' => 'Logout successful',
-        ])
-        ->withoutCookie($sessionCookieName)
-        ->withoutCookie('laravel_session')
-        ->withoutCookie('XSRF-TOKEN')
-        ->withCookie(cookie()->forget($sessionCookieName))
-        ->withCookie(cookie()->forget('laravel_session'))
-        ->withCookie(cookie()->forget('XSRF-TOKEN'));
+        ]);
     }
 }
+

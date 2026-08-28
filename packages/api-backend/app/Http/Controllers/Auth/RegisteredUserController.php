@@ -26,8 +26,18 @@ class RegisteredUserController extends Controller
 
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
+            'email' => [
+                'required',
+                'string',
+                'lowercase',
+                'email',
+                'max:255',
+                'regex:/^[a-zA-Z0-9._%+-]+@gmail\.com$/i',
+                'unique:'.User::class,
+            ],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
+        ], [
+            'email.regex' => 'Only @gmail.com email addresses are allowed.',
         ]);
 
         $user = User::create([
@@ -54,7 +64,7 @@ class RegisteredUserController extends Controller
         try {
             Mail::to($user->email)->send(
                 new WelcomeEmail(
-                    "Thank you for signing up for InvestBridge! Please click the link below within 5 minutes to verify your email address. Once verified, your authentication session cookie will be issued automatically.",
+                    "Thank you for signing up for InvestBridge! Please click the link below within 5 minutes to verify your email address to complete your account setup.",
                     "Verify Your InvestBridge Account",
                     $verifyUrl
                 )
@@ -63,20 +73,11 @@ class RegisteredUserController extends Controller
             logger()->warning('Verification mail failed to send: ' . $e->getMessage());
         }
 
-        $sessionCookie = config('session.cookie', 'investbridge_session');
-
-        // STRICT ENFORCEMENT: NO COOKIE IS ISSUED ON SIGN UP UNTIL VERIFICATION IS COMPLETED
         return response()->json([
-            'message' => 'Registration successful! A verification link valid for 5 minutes has been sent to your email. Please verify to receive your session cookie.',
+            'message' => 'Registration successful! A verification link valid for 5 minutes has been sent to your email. Please verify to activate your account.',
             'user' => $user,
             'requires_verification' => true,
             'verification_url' => $verifyUrl,
-        ], 201)
-        ->withoutCookie($sessionCookie)
-        ->withoutCookie('laravel_session')
-        ->withoutCookie('XSRF-TOKEN')
-        ->withCookie(cookie()->forget($sessionCookie))
-        ->withCookie(cookie()->forget('laravel_session'))
-        ->withCookie(cookie()->forget('XSRF-TOKEN'));
+        ], 201);
     }
 }

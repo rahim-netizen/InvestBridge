@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Auth;
 class VerifyEmailController extends Controller
 {
     /**
-     * Mark the user's email address as verified, issue session cookie, and log user in.
+     * Mark the user's email address as verified, issue token, and log user in.
      */
     public function __invoke(Request $request, $id, $hash)
     {
@@ -40,23 +40,22 @@ class VerifyEmailController extends Controller
             event(new Verified($user));
         }
 
-        // NOW VERIFICATION IS COMPLETE: Issue session cookie and log user in!
-        Auth::login($user);
-
-        if ($request->hasSession()) {
-            $request->session()->regenerate();
-        }
+        // Issue Sanctum Token for the verified user
+        $token = $user->createToken('auth_token')->plainTextToken;
 
         if ($request->wantsJson()) {
             return response()->json([
-                'message' => 'Email verified successfully! Session cookie issued.',
+                'message' => 'Email verified successfully!',
+                'access_token' => $token,
+                'token_type' => 'Bearer',
                 'user' => $user,
             ]);
         }
 
-        // Redirect directly to Profile Creation page with user credentials passed
+        // Redirect directly to Profile Creation page with Bearer token passed
         return redirect(
             $frontendUrl . '/profile?verified=1' .
+            '&token=' . urlencode($token) .
             '&id=' . $user->id .
             '&email=' . urlencode($user->email) .
             '&name=' . urlencode($user->name)

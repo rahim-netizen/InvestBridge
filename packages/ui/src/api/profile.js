@@ -17,7 +17,6 @@ export async function getProfile() {
   const response = await fetch(`${API_BASE_URL}/api/profile`, {
     method: "GET",
     headers: getHeaders(),
-    credentials: "include",
   });
 
   const data = await parseJsonResponse(response);
@@ -33,7 +32,6 @@ export async function updateProfile(profileData) {
   const response = await fetch(`${API_BASE_URL}/api/profile`, {
     method: "PUT",
     headers: getHeaders(),
-    credentials: "include",
     body: JSON.stringify(profileData),
   });
 

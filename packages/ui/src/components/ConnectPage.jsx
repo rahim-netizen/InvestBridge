@@ -16,6 +16,8 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import PageBackground from "./PageBackground.jsx";
 import { fadeUp, fadeUpBlur, stagger } from "../lib/motion.jsx";
+import { getChatMessages, sendChatMessage } from "../api/support";
+import { searchUsers } from "../api/users";
 
 const getStoredUser = () => {
   if (typeof window === "undefined") {
@@ -119,11 +121,49 @@ const initialThreads = [
 
 export default function ConnectPage({ navigate }) {
   const [user] = useState(() => getStoredUser());
-  const [threads, setThreads] = useState(() => getStoredThreads());
+  const [threads, setThreads] = useState([]);
+  const [users, setUsers] = useState([]);
   const [activeThread, setActiveThread] = useState(null);
   const [messageInput, setMessageInput] = useState("");
+  const [sendError, setSendError] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchError, setSearchError] = useState("");
   const [view, setView] = useState("list");
+
+  useEffect(() => {
+    searchUsers(searchQuery)
+      .then((foundUsers) => {
+        setUsers(foundUsers);
+        setSearchError("");
+      })
+      .catch((error) => {
+        setUsers([]);
+        setSearchError(error.message);
+      });
+  }, [searchQuery]);
+
+  useEffect(() => {
+    if (!activeThread) return undefined;
+
+    let active = true;
+    const loadMessages = async () => {
+      try {
+        const data = await getChatMessages(String(activeThread.id));
+        if (active && data.messages.length > 0) {
+          setActiveThread((thread) => ({ ...thread, messages: data.messages }));
+        }
+      } catch {
+        // Keep starter messages visible if the API is unavailable.
+      }
+    };
+
+    loadMessages();
+    const timer = window.setInterval(loadMessages, 3000);
+    return () => {
+      active = false;
+      window.clearInterval(timer);
+    };
+  }, [activeThread?.id]);
 
   useEffect(() => {
     const stored = getStoredThreads();
@@ -140,27 +180,37 @@ export default function ConnectPage({ navigate }) {
       ),
   );
 
-  const handleSendMessage = () => {
+  const makeChatHash = (otherUserId) =>
+    [Number(user?.id), Number(otherUserId)].sort((first, second) => first - second).join("-");
+
+  const openUserChat = (otherUser) => {
+    const chatHash = makeChatHash(otherUser.id);
+    const thread = {
+      id: chatHash,
+      title: otherUser.name || otherUser.email,
+      participants: [otherUser.name || otherUser.email],
+      updatedAt: "Ready to chat",
+      unread: 0,
+      messages: [],
+    };
+    setActiveThread(thread);
+    setView("chat");
+  };
+
+  const handleSendMessage = async () => {
     const trimmed = messageInput.trim();
     if (!trimmed || !activeThread) return;
 
-    const newMessage = {
-      id: Date.now(),
-      sender: user?.name || user?.email || "You",
-      text: trimmed,
-      time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      self: true,
-    };
+    setSendError("");
 
-    const updatedThreads = threads.map((t) =>
-      t.id === activeThread.id
-        ? { ...t, messages: [...t.messages, newMessage], updatedAt: "Just now" }
-        : t,
-    );
-
-    setThreads(updatedThreads);
-    saveThreads(updatedThreads);
-    setMessageInput("");
+    try {
+      await sendChatMessage(String(activeThread.id), trimmed);
+      const data = await getChatMessages(String(activeThread.id));
+      setActiveThread((thread) => ({ ...thread, messages: data.messages }));
+      setMessageInput("");
+    } catch (error) {
+      setSendError(error.message || "Message could not be sent.");
+    }
   };
 
   const handleKeyPress = (event) => {
@@ -239,7 +289,7 @@ export default function ConnectPage({ navigate }) {
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search conversations..."
+                  placeholder="Search users by name or email..."
                   className="w-full border-none bg-transparent text-sm text-ink-900 outline-none placeholder:text-ink-400 dark:text-ink-50"
                 />
               </div>
@@ -250,16 +300,18 @@ export default function ConnectPage({ navigate }) {
                 initial="hidden"
                 animate="visible"
               >
-                {filteredThreads.length === 0 ? (
+                {searchError ? (
+                  <p className="py-8 text-center text-sm text-red-600">{searchError}</p>
+                ) : users.length === 0 ? (
                   <p className="py-8 text-center text-sm text-ink-500 dark:text-ink-400">
-                    No conversations found. Start a new thread from an opportunity.
+                    No users found.
                   </p>
                 ) : (
-                  filteredThreads.map((thread) => (
+                  users.map((otherUser) => (
                     <motion.button
-                      key={thread.id}
+                      key={otherUser.id}
                       type="button"
-                      onClick={() => openThread(thread)}
+                      onClick={() => openUserChat(otherUser)}
                       className="w-full text-left rounded-2xl border border-white/20 bg-white/50 p-4 transition hover:bg-white/80 dark:border-white/10 dark:bg-ink-950/45 dark:hover:bg-ink-950/60"
                       variants={fadeUp}
                       whileHover={{ y: -2, transition: { duration: 0.2 } }}
@@ -267,21 +319,16 @@ export default function ConnectPage({ navigate }) {
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
                           <p className="text-sm font-semibold text-ink-900 dark:text-ink-50">
-                            {thread.title}
+                            {otherUser.name || otherUser.email}
                           </p>
                           <p className="mt-1 text-xs text-ink-500 dark:text-ink-400">
-                            {thread.participants.join(", ")}
+                            {otherUser.email}
                           </p>
                         </div>
-                        {thread.unread > 0 && (
-                          <span className="grid h-6 w-6 place-items-center rounded-full bg-brand-600 text-xs font-semibold text-white shrink-0">
-                            {thread.unread}
-                          </span>
-                        )}
                       </div>
                       <div className="mt-3 flex items-center gap-2 text-xs text-ink-400 dark:text-ink-500">
                         <Clock className="h-3 w-3" />
-                        {thread.updatedAt}
+                        Click to start chatting
                       </div>
                     </motion.button>
                   ))
@@ -457,6 +504,7 @@ export default function ConnectPage({ navigate }) {
                   <Send className="h-4 w-4" />
                 </button>
               </div>
+              {sendError && <p className="mt-2 text-xs text-red-600">{sendError}</p>}
             </div>
 
             <div className="glass-panel-strong holo-card rounded-[2rem] p-6">

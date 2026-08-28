@@ -18,22 +18,17 @@ class EmailVerificationNotificationController extends Controller
     public function store(Request $request): JsonResponse
     {
         $request->validate([
-            'email' => ['required', 'email'],
+            'email' => ['required', 'email', 'regex:/^[a-zA-Z0-9._%+-]+@gmail\.com$/i'],
+        ], [
+            'email.regex' => 'Only @gmail.com email addresses are allowed.',
         ]);
 
-        $sessionCookie = config('session.cookie', 'investbridge_session');
         $user = User::where('email', $request->email)->first();
 
         if (!$user) {
             return response()->json([
                 'message' => 'If an account exists with that email address, a new verification link has been sent.',
-            ])
-            ->withoutCookie($sessionCookie)
-            ->withoutCookie('laravel_session')
-            ->withoutCookie('XSRF-TOKEN')
-            ->withCookie(cookie()->forget($sessionCookie))
-            ->withCookie(cookie()->forget('laravel_session'))
-            ->withCookie(cookie()->forget('XSRF-TOKEN'));
+            ]);
         }
 
         if ($user->hasVerifiedEmail()) {
@@ -65,12 +60,6 @@ class EmailVerificationNotificationController extends Controller
         return response()->json([
             'message' => 'A new verification link valid for 5 minutes has been sent to your email address.',
             'verification_url' => $verifyUrl,
-        ])
-        ->withoutCookie($sessionCookie)
-        ->withoutCookie('laravel_session')
-        ->withoutCookie('XSRF-TOKEN')
-        ->withCookie(cookie()->forget($sessionCookie))
-        ->withCookie(cookie()->forget('laravel_session'))
-        ->withCookie(cookie()->forget('XSRF-TOKEN'));
+        ]);
     }
 }

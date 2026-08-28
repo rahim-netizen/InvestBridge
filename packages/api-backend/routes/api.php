@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Route;
 
 use App\Http\Controllers\Auth\EmailVerificationNotificationController;
 use App\Http\Controllers\Auth\VerifyEmailController;
+use App\Http\Controllers\SupportController;
 
 Route::post('/register', [RegisteredUserController::class, 'store']);
 Route::post('/login', [AuthenticatedSessionController::class, 'store']);
@@ -39,6 +40,11 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/connected-opportunities', [\App\Http\Controllers\ConnectedOpportunityController::class, 'index']);
         Route::post('/connected-opportunities', [\App\Http\Controllers\ConnectedOpportunityController::class, 'store']);
         Route::delete('/connected-opportunities/{id}', [\App\Http\Controllers\ConnectedOpportunityController::class, 'destroy']);
+        Route::get('/complaints', [SupportController::class, 'complaints']);
+        Route::post('/complaints', [SupportController::class, 'createComplaint']);
+        Route::get('/users/search', [SupportController::class, 'searchUsers']);
+        Route::get('/chat/{chatHash}', [SupportController::class, 'messages']);
+        Route::post('/chat/{chatHash}', [SupportController::class, 'sendMessage']);
     });
 
     Route::middleware(['admin'])->prefix('admin')->group(function () {

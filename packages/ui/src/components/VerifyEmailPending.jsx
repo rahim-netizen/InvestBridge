@@ -22,6 +22,11 @@ export default function VerifyEmailPending({ navigate }) {
 
   const handleResend = async () => {
     if (!email) return;
+    if (!email.trim().toLowerCase().endsWith("@gmail.com")) {
+      setError("Only @gmail.com email addresses are allowed.");
+      return;
+    }
+
     setError("");
     setStatus("");
     setLoading(true);
@@ -88,7 +93,7 @@ export default function VerifyEmailPending({ navigate }) {
 
           <div className="mt-6 flex items-center justify-center gap-2 rounded-2xl border border-amber-200 bg-amber-50/90 px-4 py-3 text-xs font-medium text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/50 dark:text-amber-300">
             <Clock className="h-4 w-4 shrink-0" />
-            <span>The link will expire in 5 minutes. No session cookie will be issued until verified.</span>
+            <span>The link will expire in 5 minutes. Please verify to access your account.</span>
           </div>
 
           <AnimatePresence>
