@@ -28,7 +28,17 @@ class LoginRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'email' => ['required', 'string', 'email', 'regex:/^[a-zA-Z0-9._%+-]+@gmail\.com$/i'],
+            'email' => [
+                'required',
+                'string',
+                'email',
+                function (string $attribute, mixed $value, \Closure $fail) {
+                    $email = strtolower((string) $value);
+                    if ($email !== 'admin@company.com' && !str_ends_with($email, '@gmail.com')) {
+                        $fail('Only @gmail.com email addresses are allowed, except for the admin account.');
+                    }
+                },
+            ],
             'password' => ['required', 'string'],
         ];
     }
@@ -41,7 +51,6 @@ class LoginRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'email.regex' => 'Only @gmail.com email addresses are allowed.',
         ];
     }
 

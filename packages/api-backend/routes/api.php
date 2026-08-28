@@ -50,6 +50,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::middleware(['admin'])->prefix('admin')->group(function () {
         Route::get('/stats', [\App\Http\Controllers\AdminController::class, 'stats']);
         Route::get('/users', [\App\Http\Controllers\AdminController::class, 'users']);
+        Route::get('/complaints', [\App\Http\Controllers\AdminController::class, 'complaints']);
+        Route::patch('/complaints/{id}', [\App\Http\Controllers\AdminController::class, 'updateComplaint']);
         Route::delete('/users/{id}', [\App\Http\Controllers\AdminController::class, 'destroyUser']);
         Route::get('/opportunities', [\App\Http\Controllers\AdminController::class, 'opportunities']);
         Route::patch('/opportunities/{id}/status', [\App\Http\Controllers\AdminController::class, 'updateOpportunityStatus']);

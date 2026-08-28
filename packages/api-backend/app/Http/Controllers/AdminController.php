@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 use App\Models\ConnectedOpportunity;
+use App\Models\Complaint;
 use App\Models\Opportunity;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -32,6 +33,30 @@ class AdminController extends Controller
             ->get(['id', 'name', 'email', 'role', 'created_at']);
 
         return response()->json(['users' => $users]);
+    }
+
+    public function complaints()
+    {
+        $complaints = Complaint::with('user:id,name,email')
+            ->latest()
+            ->get();
+
+        return response()->json(['complaints' => $complaints]);
+    }
+
+    public function updateComplaint(Request $request, $id)
+    {
+        $data = $request->validate([
+            'feedback' => ['required', 'string', 'max:5000'],
+        ]);
+
+        $complaint = Complaint::findOrFail($id);
+        $complaint->update([
+            'feedback' => $data['feedback'],
+            'status' => 'answered',
+        ]);
+
+        return response()->json(['complaint' => $complaint]);
     }
 
     public function destroyUser(Request $request, $id)

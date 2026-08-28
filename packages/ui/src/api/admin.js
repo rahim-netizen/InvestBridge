@@ -36,6 +36,17 @@ export function getAdminUsers() {
   return request("/users");
 }
 
+export function getAdminComplaints() {
+  return request("/complaints");
+}
+
+export function sendComplaintFeedback(id, feedback) {
+  return request(`/complaints/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify({ feedback }),
+  });
+}
+
 export function deleteAdminUser(id) {
   return request(`/users/${id}`, { method: "DELETE" });
 }

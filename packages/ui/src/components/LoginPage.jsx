@@ -74,8 +74,8 @@ export default function LoginPage({ navigate }) {
     setError("");
 
     const email = form.email.trim().toLowerCase();
-    if (!email.endsWith("@gmail.com")) {
-      setError("Only @gmail.com email addresses are allowed.");
+    if (email !== "admin@company.com" && !email.endsWith("@gmail.com")) {
+      setError("Only @gmail.com email addresses are allowed, except for the admin account.");
       return;
     }
 
