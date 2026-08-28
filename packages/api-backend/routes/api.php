@@ -13,7 +13,7 @@ Route::post('/register', [RegisteredUserController::class, 'store']);
 Route::post('/login', [AuthenticatedSessionController::class, 'store']);
 Route::post('/email/resend-verification', [EmailVerificationNotificationController::class, 'store']);
 Route::get('/verify-email/{id}/{hash}', VerifyEmailController::class)
-    ->middleware(['signed', 'throttle:6,1'])
+    ->middleware(['signed:relative', 'throttle:6,1'])
     ->name('api.verification.verify');
 
 Route::get('/opportunities/all', [\App\Http\Controllers\OpportunityController::class, 'all']);
@@ -41,6 +41,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/connected-opportunities', [\App\Http\Controllers\ConnectedOpportunityController::class, 'index']);
         Route::post('/connected-opportunities', [\App\Http\Controllers\ConnectedOpportunityController::class, 'store']);
         Route::delete('/connected-opportunities/{id}', [\App\Http\Controllers\ConnectedOpportunityController::class, 'destroy']);
+        Route::get('/opportunities/{id}/connections', [\App\Http\Controllers\ConnectedOpportunityController::class, 'connectionsByOpportunity']);
+        Route::post('/opportunities/{id}/accept', [\App\Http\Controllers\ConnectedOpportunityController::class, 'acceptConnection']);
         Route::get('/complaints', [SupportController::class, 'complaints']);
         Route::post('/complaints', [SupportController::class, 'createComplaint']);
         Route::get('/users/search', [SupportController::class, 'searchUsers']);

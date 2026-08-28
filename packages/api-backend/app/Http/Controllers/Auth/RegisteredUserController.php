@@ -53,11 +53,15 @@ class RegisteredUserController extends Controller
             'profile_complete' => false,
         ]);
 
-        // Generate 5-minute temporary signed verification URL
-        $verifyUrl = URL::temporarySignedRoute(
+        // Generate a 5-minute temporary signed verification URL. The signature
+        // is computed on the path/query only (relative) so it validates no
+        // matter which host the link is opened from, while the URL itself
+        // stays absolute (with APP_URL) so it is clickable in the email.
+        $verifyUrl = rtrim(config('app.url'), '/') . URL::temporarySignedRoute(
             'verification.verify',
             now()->addMinutes(5),
-            ['id' => $user->id, 'hash' => sha1($user->getEmailForVerification())]
+            ['id' => $user->id, 'hash' => sha1($user->getEmailForVerification())],
+            false
         );
 
         // Send verification email
