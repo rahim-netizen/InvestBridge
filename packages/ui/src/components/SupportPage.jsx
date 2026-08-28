@@ -51,6 +51,11 @@ export default function SupportPage() {
               <div key={complaint.id} className="rounded-2xl border border-white/20 bg-white/60 p-4">
                 <div className="flex items-center justify-between gap-3"><strong className="text-sm">{complaint.subject}</strong><span className="text-xs uppercase text-brand-700">{complaint.status}</span></div>
                 <p className="mt-2 text-sm text-ink-600">{complaint.message}</p>
+                {complaint.feedback && (
+                  <div className="mt-3 rounded-xl bg-emerald-50 p-3 text-sm text-emerald-800">
+                    <strong>Admin feedback:</strong> {complaint.feedback}
+                  </div>
+                )}
               </div>
             ))}
           </div>

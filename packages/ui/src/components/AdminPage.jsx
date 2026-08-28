@@ -19,6 +19,7 @@ import {
   Sun,
   Trash2,
   Users,
+  MessageSquareWarning,
   X,
 } from "lucide-react";
 import { fadeUp, stagger, useCountUp, useInView } from "../lib/motion.jsx";
@@ -27,6 +28,8 @@ import {
   deleteAdminOpportunity,
   deleteAdminUser,
   getAdminOpportunities,
+  getAdminComplaints,
+  sendComplaintFeedback,
   getAdminStats,
   getAdminUsers,
   setAdminOpportunityStatus,
@@ -156,6 +159,7 @@ function ConfirmDialog({ config, onCancel, onConfirm, busy }) {
 const navTabs = [
   { key: "users", label: "Users", icon: Users },
   { key: "projects", label: "Projects", icon: LayoutDashboard },
+  { key: "complaints", label: "Complaints", icon: MessageSquareWarning },
 ];
 
 function getStoredUser() {
@@ -177,8 +181,10 @@ export default function AdminPage({ navigate, theme, toggleTheme }) {
   });
   const [users, setUsers] = useState([]);
   const [projects, setProjects] = useState([]);
+  const [complaints, setComplaints] = useState([]);
+  const [feedback, setFeedback] = useState({});
 
-  const [activeTab, setActiveTab] = useState("users"); // "users", "projects"
+  const [activeTab, setActiveTab] = useState("users");
   const [userSearch, setUserSearch] = useState("");
   const [projectSearch, setProjectSearch] = useState("");
 
@@ -220,14 +226,16 @@ export default function AdminPage({ navigate, theme, toggleTheme }) {
     setLoading(true);
     setLoadError("");
     try {
-      const [statsRes, usersRes, opportunitiesRes] = await Promise.all([
+      const [statsRes, usersRes, opportunitiesRes, complaintsRes] = await Promise.all([
         getAdminStats(),
         getAdminUsers(),
         getAdminOpportunities(),
+        getAdminComplaints(),
       ]);
       setStats(statsRes.stats || stats);
       setUsers(usersRes.users || []);
       setProjects(opportunitiesRes.opportunities || []);
+      setComplaints(complaintsRes.complaints || []);
     } catch (err) {
       if (err.message && err.message.toLowerCase().includes("permission")) {
         navigate("/");
@@ -334,6 +342,22 @@ export default function AdminPage({ navigate, theme, toggleTheme }) {
       pushToast(err.message || "Failed to update project status.", "error");
     } finally {
       setPendingRowId(null);
+    }
+  };
+
+  const handleSendFeedback = async (complaint) => {
+    const text = (feedback[complaint.id] || "").trim();
+    if (!text) return;
+
+    try {
+      const response = await sendComplaintFeedback(complaint.id, text);
+      setComplaints((current) => current.map((item) => (
+        item.id === complaint.id ? response.complaint : item
+      )));
+      setFeedback((current) => ({ ...current, [complaint.id]: "" }));
+      pushToast("Feedback sent to the user.");
+    } catch (err) {
+      pushToast(err.message || "Failed to send feedback.", "error");
     }
   };
 
@@ -600,6 +624,17 @@ export default function AdminPage({ navigate, theme, toggleTheme }) {
               >
                 Projects ({projects.length})
               </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab("complaints")}
+                className={`rounded-xl px-4 py-2 text-sm font-semibold transition-all ${
+                  activeTab === "complaints"
+                    ? "bg-brand-600 text-white shadow-soft dark:shadow-glow"
+                    : "bg-ink-50 text-ink-600 hover:bg-ink-100 dark:hover:shadow-glow"
+                }`}
+              >
+                Complaints ({complaints.length})
+              </button>
             </div>
           </div>
 
@@ -804,6 +839,58 @@ export default function AdminPage({ navigate, theme, toggleTheme }) {
                         </tbody>
                       </table>
                     </div>
+                  </motion.div>
+                )}
+
+                {activeTab === "complaints" && (
+                  <motion.div
+                    key="complaints"
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    transition={{ duration: 0.2 }}
+                    className="overflow-x-auto"
+                  >
+                    <table className="w-full border-collapse text-left">
+                      <thead>
+                        <tr className="border-b border-ink-100 text-xs font-bold uppercase tracking-wider text-ink-400">
+                          <th className="px-4 py-3">User</th>
+                          <th className="px-4 py-3">Subject</th>
+                          <th className="px-4 py-3">Complaint</th>
+                          <th className="px-4 py-3">Status</th>
+                          <th className="px-4 py-3">Date</th>
+                          <th className="px-4 py-3">Feedback</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-ink-50 text-sm">
+                        {complaints.map((complaint) => (
+                          <tr key={complaint.id} className="hover:bg-ink-50/50">
+                            <td className="px-4 py-3.5">
+                              <p className="font-semibold text-ink-900">{complaint.user?.name || "Unknown"}</p>
+                              <p className="text-xs text-ink-500">{complaint.user?.email}</p>
+                            </td>
+                            <td className="px-4 py-3.5 font-semibold text-ink-900">{complaint.subject}</td>
+                            <td className="max-w-md px-4 py-3.5 text-ink-600">{complaint.message}</td>
+                            <td className="px-4 py-3.5"><span className="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-800">{complaint.status}</span></td>
+                            <td className="px-4 py-3.5 text-ink-500">{formatDate(complaint.created_at)}</td>
+                            <td className="min-w-64 px-4 py-3.5">
+                              {complaint.feedback && <p className="mb-2 text-xs text-emerald-700">{complaint.feedback}</p>}
+                              <textarea
+                                value={feedback[complaint.id] || ""}
+                                onChange={(event) => setFeedback((current) => ({ ...current, [complaint.id]: event.target.value }))}
+                                placeholder="Write feedback"
+                                rows="2"
+                                className="w-full rounded-lg border border-ink-200 bg-white px-2 py-1 text-xs outline-none"
+                              />
+                              <button type="button" onClick={() => handleSendFeedback(complaint)} className="mt-2 rounded-lg bg-brand-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-700">Send</button>
+                            </td>
+                          </tr>
+                        ))}
+                        {complaints.length === 0 && (
+                          <tr><td colSpan="6" className="py-8 text-center text-ink-400">No complaints found.</td></tr>
+                        )}
+                      </tbody>
+                    </table>
                   </motion.div>
                 )}
               </AnimatePresence>

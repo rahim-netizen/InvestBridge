@@ -22,7 +22,7 @@ class AuthenticatedSessionController extends Controller
         $user = Auth::user();
 
         // Enforce email verification check before issuing token
-        if ($user instanceof User && !$user->hasVerifiedEmail()) {
+        if ($user instanceof User && !$user->isAdmin() && !$user->hasVerifiedEmail()) {
             Auth::guard('web')->logout();
 
             return response()->json([
