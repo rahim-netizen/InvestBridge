@@ -71,6 +71,13 @@ export default function RegisterPage({ navigate }) {
   const handleSubmit = async (event) => {
     event.preventDefault();
     setError("");
+
+    const email = form.email.trim().toLowerCase();
+    if (!email.endsWith("@gmail.com")) {
+      setError("Only @gmail.com email addresses are allowed.");
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -126,113 +133,113 @@ export default function RegisterPage({ navigate }) {
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ duration: 0.6, ease: "easeOut" }}
       >
-      <div
-        className={`ib-auth-container${eyesClosed ? " hide-password" : ""}${success ? " success" : ""}`}
-        style={{ transform: `rotateY(${tilt.x}deg) rotateX(${tilt.y}deg)` }}
-      >
-        <div className="ib-success-overlay">
-          <div className="ib-success-checkmark">
-            <Check className="h-10 w-10" strokeWidth={3} />
-          </div>
-          <h2>Account Created!</h2>
-          <p>Redirecting to verify your email...</p>
-        </div>
-
-        <div className="ib-avatar-area">
-          <div className="ib-face">
-            <div className="ib-eye">
-              <div className="ib-pupil" ref={(el) => (pupilRefs.current[0] = el)} />
+        <div
+          className={`ib-auth-container${eyesClosed ? " hide-password" : ""}${success ? " success" : ""}`}
+          style={{ transform: `rotateY(${tilt.x}deg) rotateX(${tilt.y}deg)` }}
+        >
+          <div className="ib-success-overlay">
+            <div className="ib-success-checkmark">
+              <Check className="h-10 w-10" strokeWidth={3} />
             </div>
-            <div className="ib-eye">
-              <div className="ib-pupil" ref={(el) => (pupilRefs.current[1] = el)} />
+            <h2>Account Created!</h2>
+            <p>Redirecting to verify your email...</p>
+          </div>
+
+          <div className="ib-avatar-area">
+            <div className="ib-face">
+              <div className="ib-eye">
+                <div className="ib-pupil" ref={(el) => (pupilRefs.current[0] = el)} />
+              </div>
+              <div className="ib-eye">
+                <div className="ib-pupil" ref={(el) => (pupilRefs.current[1] = el)} />
+              </div>
             </div>
           </div>
-        </div>
 
-        <h2>Create Account</h2>
+          <h2>Create Account</h2>
 
-        <form onSubmit={handleSubmit}>
-          <div className="ib-input-group">
-            <User className="ib-input-icon h-4 w-4" />
-            <input
-              type="text"
-              name="name"
-              placeholder=" "
-              autoComplete="off"
-              value={form.name}
-              onChange={handleChange}
-              required
-            />
-            <label htmlFor="name">Full Name</label>
-          </div>
+          <form onSubmit={handleSubmit}>
+            <div className="ib-input-group">
+              <User className="ib-input-icon h-4 w-4" />
+              <input
+                type="text"
+                name="name"
+                placeholder=" "
+                autoComplete="off"
+                value={form.name}
+                onChange={handleChange}
+                required
+              />
+              <label htmlFor="name">Full Name</label>
+            </div>
 
-          <div className="ib-input-group">
-            <Mail className="ib-input-icon h-4 w-4" />
-            <input
-              type="email"
-              name="email"
-              placeholder=" "
-              autoComplete="off"
-              value={form.email}
-              onChange={handleChange}
-              required
-            />
-            <label htmlFor="email">Email Address</label>
-          </div>
+            <div className="ib-input-group">
+              <Mail className="ib-input-icon h-4 w-4" />
+              <input
+                type="email"
+                name="email"
+                placeholder=" "
+                autoComplete="off"
+                value={form.email}
+                onChange={handleChange}
+                required
+              />
+              <label htmlFor="email">Email Address</label>
+            </div>
 
-          <div className="ib-input-group">
-            <Lock className="ib-input-icon h-4 w-4" />
-            <input
-              type={showPassword ? "text" : "password"}
-              name="password"
-              placeholder=" "
-              value={form.password}
-              onChange={handleChange}
-              onFocus={() => setPasswordFocused(true)}
-              onBlur={() => setPasswordFocused(false)}
-              minLength={8}
-              required
-            />
-            <label htmlFor="password">Password</label>
+            <div className="ib-input-group">
+              <Lock className="ib-input-icon h-4 w-4" />
+              <input
+                type={showPassword ? "text" : "password"}
+                name="password"
+                placeholder=" "
+                value={form.password}
+                onChange={handleChange}
+                onFocus={() => setPasswordFocused(true)}
+                onBlur={() => setPasswordFocused(false)}
+                minLength={8}
+                required
+              />
+              <label htmlFor="password">Password</label>
+              <button
+                type="button"
+                className="ib-toggle-password"
+                onClick={() => setShowPassword((current) => !current)}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
+
+            <p className="ib-hint">Use at least 8 characters.</p>
+
             <button
-              type="button"
-              className="ib-toggle-password"
-              onClick={() => setShowPassword((current) => !current)}
-              aria-label={showPassword ? "Hide password" : "Show password"}
+              ref={submitBtnRef}
+              type="submit"
+              className="ib-submit-btn"
+              disabled={loading}
+              onClick={handleRipple}
             >
-              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              {loading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Creating account...
+                </>
+              ) : (
+                "Create Account"
+              )}
+            </button>
+          </form>
+
+          {error && <p className="ib-error-msg">{error}</p>}
+
+          <div className="ib-footer-links">
+            Already have an account?{" "}
+            <button type="button" onClick={() => navigate("/login")}>
+              Sign in
             </button>
           </div>
-
-          <p className="ib-hint">Use at least 8 characters.</p>
-
-          <button
-            ref={submitBtnRef}
-            type="submit"
-            className="ib-submit-btn"
-            disabled={loading}
-            onClick={handleRipple}
-          >
-            {loading ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Creating account...
-              </>
-            ) : (
-              "Create Account"
-            )}
-          </button>
-        </form>
-
-        {error && <p className="ib-error-msg">{error}</p>}
-
-        <div className="ib-footer-links">
-          Already have an account?{" "}
-          <button type="button" onClick={() => navigate("/login")}>
-            Sign in
-          </button>
         </div>
-      </div>
       </motion.div>
     </section>
   );

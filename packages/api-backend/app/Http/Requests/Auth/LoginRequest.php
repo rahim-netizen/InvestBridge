@@ -28,8 +28,29 @@ class LoginRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'email' => ['required', 'string', 'email'],
+            'email' => [
+                'required',
+                'string',
+                'email',
+                function (string $attribute, mixed $value, \Closure $fail) {
+                    $email = strtolower((string) $value);
+                    if ($email !== 'admin@gmail.com' && !str_ends_with($email, '@gmail.com')) {
+                        $fail('Only @gmail.com email addresses are allowed, except for the admin account.');
+                    }
+                },
+            ],
             'password' => ['required', 'string'],
+        ];
+    }
+
+    /**
+     * Get the error messages for the defined validation rules.
+     *
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
         ];
     }
 

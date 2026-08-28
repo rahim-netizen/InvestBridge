@@ -17,7 +17,6 @@ export async function getConnectedOpportunities() {
   const response = await fetch(`${API_BASE_URL}/api/connected-opportunities`, {
     method: "GET",
     headers: getHeaders(),
-    credentials: "include",
   });
 
   const data = await parseJsonResponse(response);
@@ -33,7 +32,6 @@ export async function connectOpportunity(opportunityId) {
   const response = await fetch(`${API_BASE_URL}/api/connected-opportunities`, {
     method: "POST",
     headers: getHeaders(),
-    credentials: "include",
     body: JSON.stringify({ opportunity_id: opportunityId }),
   });
 
@@ -55,8 +53,7 @@ export async function disconnectOpportunity(connectionId) {
     {
       method: "DELETE",
       headers: getHeaders(),
-      credentials: "include",
-    },
+      },
   );
 
   const data = await parseJsonResponse(response);

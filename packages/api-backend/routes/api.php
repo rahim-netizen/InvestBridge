@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Route;
 
 use App\Http\Controllers\Auth\EmailVerificationNotificationController;
 use App\Http\Controllers\Auth\VerifyEmailController;
+use App\Http\Controllers\SupportController;
 
 Route::post('/register', [RegisteredUserController::class, 'store']);
 Route::post('/login', [AuthenticatedSessionController::class, 'store']);
@@ -40,11 +41,18 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/connected-opportunities', [\App\Http\Controllers\ConnectedOpportunityController::class, 'index']);
         Route::post('/connected-opportunities', [\App\Http\Controllers\ConnectedOpportunityController::class, 'store']);
         Route::delete('/connected-opportunities/{id}', [\App\Http\Controllers\ConnectedOpportunityController::class, 'destroy']);
+        Route::get('/complaints', [SupportController::class, 'complaints']);
+        Route::post('/complaints', [SupportController::class, 'createComplaint']);
+        Route::get('/users/search', [SupportController::class, 'searchUsers']);
+        Route::get('/chat/{chatHash}', [SupportController::class, 'messages']);
+        Route::post('/chat/{chatHash}', [SupportController::class, 'sendMessage']);
     });
 
     Route::middleware(['admin'])->prefix('admin')->group(function () {
         Route::get('/stats', [\App\Http\Controllers\AdminController::class, 'stats']);
         Route::get('/users', [\App\Http\Controllers\AdminController::class, 'users']);
+        Route::get('/complaints', [\App\Http\Controllers\AdminController::class, 'complaints']);
+        Route::patch('/complaints/{id}', [\App\Http\Controllers\AdminController::class, 'updateComplaint']);
         Route::delete('/users/{id}', [\App\Http\Controllers\AdminController::class, 'destroyUser']);
         Route::get('/opportunities', [\App\Http\Controllers\AdminController::class, 'opportunities']);
         Route::patch('/opportunities/{id}/status', [\App\Http\Controllers\AdminController::class, 'updateOpportunityStatus']);

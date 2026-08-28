@@ -17,7 +17,6 @@ export async function getMyOpportunities() {
   const response = await fetch(`${API_BASE_URL}/api/opportunities`, {
     method: "GET",
     headers: getHeaders(),
-    credentials: "include",
   });
 
   const data = await parseJsonResponse(response);
@@ -33,7 +32,6 @@ export async function createOpportunity(opportunityData) {
   const response = await fetch(`${API_BASE_URL}/api/opportunities`, {
     method: "POST",
     headers: getHeaders(),
-    credentials: "include",
     body: JSON.stringify(opportunityData),
   });
 
@@ -53,7 +51,6 @@ export async function updateOpportunity(id, opportunityData) {
   const response = await fetch(`${API_BASE_URL}/api/opportunities/${id}`, {
     method: "PUT",
     headers: getHeaders(),
-    credentials: "include",
     body: JSON.stringify(opportunityData),
   });
 
@@ -73,7 +70,6 @@ export async function deleteOpportunity(id) {
   const response = await fetch(`${API_BASE_URL}/api/opportunities/${id}`, {
     method: "DELETE",
     headers: getHeaders(),
-    credentials: "include",
   });
 
   const data = await parseJsonResponse(response);
@@ -89,7 +85,6 @@ export async function getAllOpportunities() {
   const response = await fetch(`${API_BASE_URL}/api/opportunities/all`, {
     method: "GET",
     headers: getHeaders(),
-    credentials: "include",
   });
 
   const data = await parseJsonResponse(response);

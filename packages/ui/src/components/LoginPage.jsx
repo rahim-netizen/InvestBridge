@@ -72,6 +72,13 @@ export default function LoginPage({ navigate }) {
   const handleSubmit = async (event) => {
     event.preventDefault();
     setError("");
+
+    const email = form.email.trim().toLowerCase();
+    if (email !== "admin@gmail.com" && !email.endsWith("@gmail.com")) {
+      setError("Only @gmail.com email addresses are allowed, except for the admin account.");
+      return;
+    }
+
     setLoading(true);
 
     try {

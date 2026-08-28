@@ -15,8 +15,9 @@ import {
   Compass,
   Handshake,
   Users2,
+  LifeBuoy,
 } from "lucide-react";
-import { apiLogout } from "../api/auth";
+import { apiLogout, onAuthChange } from "../api/auth";
 
 const links = [
   { label: "How it works", href: "#how-it-works" },
@@ -30,6 +31,7 @@ const appLinks = [
   { label: "Opportunities", path: "/opportunities", icon: Compass },
   { label: "Deals", path: "/deals", icon: Handshake },
   { label: "Connect", path: "/connect", icon: Users2 },
+  { label: "Support", path: "/support", icon: LifeBuoy },
 ];
 
 const getStoredUser = () => {
@@ -63,6 +65,16 @@ export default function Navbar({ navigate, theme, toggleTheme }) {
   useEffect(() => {
     setCurrentUser(getStoredUser());
     setProfileMenuOpen(false);
+
+    const unsubscribe = onAuthChange((event) => {
+      if (event.type === "LOGIN") {
+        setCurrentUser(event.user || getStoredUser());
+      } else if (event.type === "LOGOUT") {
+        setCurrentUser(null);
+      }
+    });
+
+    return () => unsubscribe();
   }, [location.pathname]);
 
   const showProfileMenu = Boolean(currentUser);

@@ -13,8 +13,9 @@ import DealsPage from "./components/DealsPage.jsx";
 import PaymentPage from "./components/PaymentPage.jsx";
 import ConnectPage from "./components/ConnectPage.jsx";
 import ChatbotWidget from "./components/ChatbotWidget.jsx";
+import SupportPage from "./components/SupportPage.jsx";
 import InfoPage, { infoPages } from "./components/InfoPage.jsx";
-import { getCurrentUser } from "./api/auth";
+import { getCurrentUser, onAuthChange } from "./api/auth";
 
 function getStoredUser() {
   if (typeof window === "undefined") return null;
@@ -35,14 +36,53 @@ function AdminRoute({ children }) {
 
 export default function App() {
   const [theme, setTheme] = useState("light");
+  const [currentUser, setCurrentUser] = useState(() => getStoredUser());
   const navigate = useNavigate();
   const location = useLocation();
-  const isAdmin = getStoredUser()?.role === "admin";
+  const isAdmin = currentUser?.role === "admin";
 
   useEffect(() => {
-    // Automatically verify active cookie session with Laravel server
-    getCurrentUser();
-  }, []);
+    // Automatically verify active token session with Laravel server
+    getCurrentUser().then((user) => {
+      if (user) setCurrentUser(user);
+    });
+
+    // Real-time cross-tab synchronization
+    const unsubscribe = onAuthChange((event) => {
+      const user = getStoredUser();
+      setCurrentUser(user);
+
+      if (event.type === "LOGIN") {
+        const currentPath = window.location.pathname;
+        if (
+          currentPath === "/login" ||
+          currentPath === "/register" ||
+          currentPath === "/verify-email-pending"
+        ) {
+          const destination = user?.role === "admin" ? "/admin" : "/profile";
+          navigate(destination);
+        }
+      } else if (event.type === "LOGOUT") {
+        const currentPath = window.location.pathname;
+        const protectedPaths = [
+          "/admin",
+          "/profile",
+          "/dashboard",
+          "/deals",
+          "/connect",
+          "/support",
+        ];
+        if (
+          protectedPaths.some((p) => currentPath.startsWith(p)) ||
+          currentPath.startsWith("/payment")
+        ) {
+          navigate("/login");
+        }
+      }
+    });
+
+    return () => unsubscribe();
+  }, [navigate]);
 
   useEffect(() => {
     const storedTheme = localStorage.getItem("theme");
@@ -152,6 +192,14 @@ export default function App() {
           element={
             <PageLayout navigate={navigate} theme={theme} toggleTheme={toggleTheme}>
               <ConnectPage navigate={navigate} />
+            </PageLayout>
+          }
+        />
+        <Route
+          path="/support"
+          element={
+            <PageLayout navigate={navigate} theme={theme} toggleTheme={toggleTheme}>
+              <SupportPage />
             </PageLayout>
           }
         />
