@@ -100,3 +100,19 @@ export async function getAllOpportunities() {
 
   return data;
 }
+
+export async function getPlatformStats() {
+  const response = await fetch(`${API_BASE_URL}/api/stats`, {
+    method: "GET",
+    headers: getHeaders(),
+    credentials: "include",
+  });
+
+  const data = await parseJsonResponse(response);
+
+  if (!response.ok) {
+    throw new Error(data.message || "Failed to load platform stats.");
+  }
+
+  return data;
+}

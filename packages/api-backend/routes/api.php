@@ -16,6 +16,7 @@ Route::get('/verify-email/{id}/{hash}', VerifyEmailController::class)
     ->name('api.verification.verify');
 
 Route::get('/opportunities/all', [\App\Http\Controllers\OpportunityController::class, 'all']);
+Route::get('/stats', [\App\Http\Controllers\StatsController::class, 'index']);
 
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/user', function (Request $request) {
