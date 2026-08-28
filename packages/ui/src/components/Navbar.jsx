@@ -16,7 +16,7 @@ import {
   Handshake,
   Users2,
 } from "lucide-react";
-import { apiLogout } from "../api/auth";
+import { apiLogout, onAuthChange } from "../api/auth";
 
 const links = [
   { label: "How it works", href: "#how-it-works" },
@@ -63,6 +63,16 @@ export default function Navbar({ navigate, theme, toggleTheme }) {
   useEffect(() => {
     setCurrentUser(getStoredUser());
     setProfileMenuOpen(false);
+
+    const unsubscribe = onAuthChange((event) => {
+      if (event.type === "LOGIN") {
+        setCurrentUser(event.user || getStoredUser());
+      } else if (event.type === "LOGOUT") {
+        setCurrentUser(null);
+      }
+    });
+
+    return () => unsubscribe();
   }, [location.pathname]);
 
   const showProfileMenu = Boolean(currentUser);

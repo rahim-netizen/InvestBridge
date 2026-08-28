@@ -16,7 +16,6 @@ async function parseJsonResponse(response) {
 async function request(path, options = {}) {
   const response = await fetch(`${API_BASE_URL}/api/admin${path}`, {
     headers: getHeaders(),
-    credentials: "include",
     ...options,
   });
 

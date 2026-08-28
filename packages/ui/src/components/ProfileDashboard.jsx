@@ -2,7 +2,7 @@ import { CheckCircle2, Sparkles, UserRound, Camera } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import PageBackground from "./PageBackground.jsx";
-import { getCurrentUser } from "../api/auth";
+import { getCurrentUser, setAuthToken, onAuthChange } from "../api/auth";
 import { updateProfile } from "../api/profile";
 
 const getStoredUser = () => {
@@ -50,18 +50,29 @@ function mapBackendProfileToForm(backendProfile) {
   };
 }
 
-export default function ProfileDashboard({ navigate }) {
+export default function ProfileDashboard({ onOpenDeals, onOpenConnect, onOpenPayment, navigate }) {
   const [user, setUser] = useState(() => getStoredUser());
-  const [form, setForm] = useState(() => buildInitialForm());
+  const [form, setForm] = useState(() => {
+    const stored = getStoredUser();
+    if (stored?.profile) return mapBackendProfileToForm(stored.profile);
+    const initial = buildInitialForm();
+    if (stored?.name) initial.fullName = stored.name;
+    return initial;
+  });
   const [status, setStatus] = useState("");
   const [hasCompanyInfo, setHasCompanyInfo] = useState(false);
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const isVerified = urlParams.get("verified") === "1";
+    const token = urlParams.get("token");
     const email = urlParams.get("email");
     const name = urlParams.get("name");
     const id = urlParams.get("id");
+
+    if (token) {
+      setAuthToken(token);
+    }
 
     if (isVerified || email) {
       setStatus("Email verified successfully! Welcome to your profile creation page.");
@@ -77,7 +88,8 @@ export default function ProfileDashboard({ navigate }) {
             setHasCompanyInfo(true);
           }
           setForm(profile);
-          return;
+        } else if (storedUser.name) {
+          setForm((prev) => ({ ...prev, fullName: storedUser.name }));
         }
       }
 
@@ -85,17 +97,33 @@ export default function ProfileDashboard({ navigate }) {
       if (fetched) {
         setUser(fetched);
         const profile = fetched.profile ? mapBackendProfileToForm(fetched.profile) : buildInitialForm();
+        if (!fetched.profile && fetched.name) {
+          profile.fullName = fetched.name;
+        }
         if (profile.companyName || profile.industry || profile.position || profile.website || profile.mission) {
           setHasCompanyInfo(true);
         }
         setForm(profile);
       } else {
         setUser(null);
+        setForm(buildInitialForm());
         navigate("/login");
       }
     }
 
     checkSession();
+
+    const unsubscribe = onAuthChange((event) => {
+      if (event.type === "LOGOUT") {
+        setUser(null);
+        setForm(buildInitialForm());
+        navigate("/login");
+      } else if (event.type === "LOGIN") {
+        checkSession();
+      }
+    });
+
+    return () => unsubscribe();
   }, [navigate]);
 
   const handleChange = (event) => {
@@ -169,8 +197,8 @@ export default function ProfileDashboard({ navigate }) {
       const nextUsers =
         existingIndex >= 0
           ? storedUsers.map((entry, index) =>
-              index === existingIndex ? savedUser : entry,
-            )
+            index === existingIndex ? savedUser : entry,
+          )
           : [...storedUsers, savedUser];
 
       localStorage.setItem("investbridgeSessionUser", JSON.stringify(savedUser));
