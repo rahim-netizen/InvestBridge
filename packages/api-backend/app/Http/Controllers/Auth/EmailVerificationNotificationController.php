@@ -38,11 +38,15 @@ class EmailVerificationNotificationController extends Controller
             ]);
         }
 
-        // Generate a new 5-minute temporary signed verification URL
-        $verifyUrl = URL::temporarySignedRoute(
+        // Generate a new 5-minute temporary signed verification URL. The
+        // signature is computed on the path/query only (relative) so it
+        // validates regardless of the host the link is opened from, while the
+        // URL stays absolute (with APP_URL) so it is clickable in the email.
+        $verifyUrl = rtrim(config('app.url'), '/') . URL::temporarySignedRoute(
             'verification.verify',
             now()->addMinutes(5),
-            ['id' => $user->id, 'hash' => sha1($user->getEmailForVerification())]
+            ['id' => $user->id, 'hash' => sha1($user->getEmailForVerification())],
+            false
         );
 
         try {
