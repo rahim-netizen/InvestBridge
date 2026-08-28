@@ -8,15 +8,19 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('complaints', function (Blueprint $table) {
-            $table->text('feedback')->nullable()->after('message');
-        });
+        if (! Schema::hasColumn('complaints', 'feedback')) {
+            Schema::table('complaints', function (Blueprint $table) {
+                $table->text('feedback')->nullable()->after('message');
+            });
+        }
     }
 
     public function down(): void
     {
-        Schema::table('complaints', function (Blueprint $table) {
-            $table->dropColumn('feedback');
-        });
+        if (Schema::hasColumn('complaints', 'feedback')) {
+            Schema::table('complaints', function (Blueprint $table) {
+                $table->dropColumn('feedback');
+            });
+        }
     }
 };

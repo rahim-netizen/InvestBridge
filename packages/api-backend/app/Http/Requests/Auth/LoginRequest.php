@@ -34,7 +34,7 @@ class LoginRequest extends FormRequest
                 'email',
                 function (string $attribute, mixed $value, \Closure $fail) {
                     $email = strtolower((string) $value);
-                    if ($email !== 'admin@company.com' && !str_ends_with($email, '@gmail.com')) {
+                    if ($email !== 'admin@gmail.com' && !str_ends_with($email, '@gmail.com')) {
                         $fail('Only @gmail.com email addresses are allowed, except for the admin account.');
                     }
                 },

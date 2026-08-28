@@ -19,7 +19,7 @@ import {
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 import PageBackground from "./PageBackground.jsx";
-import { getAllOpportunities } from "../api/opportunities";
+import { getAllOpportunities, getPlatformStats } from "../api/opportunities";
 import {
   fadeUp,
   fadeUpBlur,
@@ -30,12 +30,45 @@ import {
   Parallax,
 } from "../lib/motion.jsx";
 
-const stats = [
+// Shown until the real numbers arrive from the backend (and kept as a
+// fallback if that request fails), so the section never renders empty.
+const defaultStats = [
   { value: "$240M+", label: "Total capital deployed" },
   { value: "3,400+", label: "Startups funded" },
   { value: "1,800+", label: "Active investors" },
   { value: "92%", label: "Round success rate" },
 ];
+
+function formatCompactCurrency(amount) {
+  const value = Number(amount) || 0;
+  if (value >= 1_000_000_000) {
+    return `$${(value / 1_000_000_000).toFixed(1).replace(/\.0$/, "")}B+`;
+  }
+  if (value >= 1_000_000) {
+    return `$${(value / 1_000_000).toFixed(1).replace(/\.0$/, "")}M+`;
+  }
+  if (value >= 1_000) {
+    return `$${(value / 1_000).toFixed(0)}K+`;
+  }
+  return `$${Math.round(value).toLocaleString("en-US")}`;
+}
+
+function formatCount(count) {
+  const value = Number(count) || 0;
+  return value > 0 ? `${value.toLocaleString("en-US")}+` : "0";
+}
+
+function buildStats(raw) {
+  return [
+    {
+      value: formatCompactCurrency(raw.totalCapitalDeployed),
+      label: "Total capital deployed",
+    },
+    { value: formatCount(raw.startupsFunded), label: "Startups funded" },
+    { value: formatCount(raw.activeInvestors), label: "Active investors" },
+    { value: `${Number(raw.successRate) || 0}%`, label: "Round success rate" },
+  ];
+}
 
 const steps = [
   {
@@ -235,6 +268,27 @@ function StatItem({ s, isInView }) {
 function Stats() {
   const containerRef = useRef(null);
   const isInView = useInView(containerRef, { once: true, amount: 0.5 });
+  const [stats, setStats] = useState(defaultStats);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadStats() {
+      try {
+        const data = await getPlatformStats();
+        if (!cancelled && data.stats) {
+          setStats(buildStats(data.stats));
+        }
+      } catch {
+        // Keep the fallback stats already in state.
+      }
+    }
+
+    loadStats();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <section className="border-y border-white/10 py-12">
