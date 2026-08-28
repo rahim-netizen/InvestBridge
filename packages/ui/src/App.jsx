@@ -13,6 +13,7 @@ import DealsPage from "./components/DealsPage.jsx";
 import PaymentPage from "./components/PaymentPage.jsx";
 import ConnectPage from "./components/ConnectPage.jsx";
 import ChatbotWidget from "./components/ChatbotWidget.jsx";
+import SupportPage from "./components/SupportPage.jsx";
 import InfoPage, { infoPages } from "./components/InfoPage.jsx";
 import { getCurrentUser, onAuthChange } from "./api/auth";
 
@@ -69,6 +70,7 @@ export default function App() {
           "/dashboard",
           "/deals",
           "/connect",
+          "/support",
         ];
         if (
           protectedPaths.some((p) => currentPath.startsWith(p)) ||
@@ -190,6 +192,14 @@ export default function App() {
           element={
             <PageLayout navigate={navigate} theme={theme} toggleTheme={toggleTheme}>
               <ConnectPage navigate={navigate} />
+            </PageLayout>
+          }
+        />
+        <Route
+          path="/support"
+          element={
+            <PageLayout navigate={navigate} theme={theme} toggleTheme={toggleTheme}>
+              <SupportPage />
             </PageLayout>
           }
         />

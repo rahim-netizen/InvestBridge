@@ -15,6 +15,7 @@ import {
   Compass,
   Handshake,
   Users2,
+  LifeBuoy,
 } from "lucide-react";
 import { apiLogout, onAuthChange } from "../api/auth";
 
@@ -30,6 +31,7 @@ const appLinks = [
   { label: "Opportunities", path: "/opportunities", icon: Compass },
   { label: "Deals", path: "/deals", icon: Handshake },
   { label: "Connect", path: "/connect", icon: Users2 },
+  { label: "Support", path: "/support", icon: LifeBuoy },
 ];
 
 const getStoredUser = () => {
