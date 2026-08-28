@@ -31,6 +31,7 @@ import {
   useTilt,
 } from "../lib/motion.jsx";
 import { FilterChip, IconSearchToggle } from "./FilterControls.jsx";
+import { getProjectProgress } from "../lib/projectProgress";
 
 const getStoredUser = () => {
   if (typeof window === "undefined") {
@@ -50,6 +51,7 @@ const DEFAULT_DEAL_IMAGE =
 
 function DashboardCard({ opp, actions }) {
   const tilt = useTilt(5);
+  const progress = getProjectProgress(opp);
 
   return (
     <motion.article
@@ -100,6 +102,24 @@ function DashboardCard({ opp, actions }) {
           </span>
         </div>
 
+        <div className="mt-5 rounded-2xl border border-brand-100 bg-brand-50/60 p-3 dark:border-brand-900/50 dark:bg-brand-950/25">
+          <div className="flex items-center justify-between text-xs">
+            <span className="font-semibold text-ink-700 dark:text-ink-300">Funding progress</span>
+            <span className="font-display font-bold text-brand-700 dark:text-brand-300">{progress}%</span>
+          </div>
+          <div className="mt-2 h-2 overflow-hidden rounded-full bg-white/80 dark:bg-ink-800">
+            <motion.div
+              className="h-full rounded-full bg-brand-500"
+              initial={{ width: 0 }}
+              animate={{ width: `${progress}%` }}
+              transition={{ duration: 0.8, ease: "easeOut" }}
+            />
+          </div>
+          <p className="mt-2 text-[11px] text-ink-500 dark:text-ink-400">
+            {progress >= 100 ? "All milestones have been released." : "Milestones are released as you hit each checkpoint."}
+          </p>
+        </div>
+
         <div className="mt-4 flex items-center justify-between">{actions}</div>
       </div>
     </motion.article>
@@ -125,6 +145,7 @@ export default function UserDashboard({ navigate }) {
   });
   const [editStatus, setEditStatus] = useState("");
   const [editLoading, setEditLoading] = useState(false);
+  const [, setProgressVersion] = useState(0);
 
   const sectors = ["HealthTech", "CleanEnergy", "E-commerce", "AgriTech", "FinTech", "EdTech", "Others"];
 
@@ -199,10 +220,15 @@ export default function UserDashboard({ navigate }) {
   useEffect(() => {
     const handler = () => {
       loadOpportunities();
+      setProgressVersion((version) => version + 1);
     };
     window.addEventListener("opportunity-changed", handler);
+    window.addEventListener("project-progress-changed", handler);
+    window.addEventListener("storage", handler);
     return () => {
       window.removeEventListener("opportunity-changed", handler);
+      window.removeEventListener("project-progress-changed", handler);
+      window.removeEventListener("storage", handler);
     };
   }, [loadOpportunities]);
 
