@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import PageBackground from "./PageBackground.jsx";
 import {
   AlertTriangle,
+  Banknote,
   CheckCircle2,
   Landmark,
   Link2,
@@ -24,6 +25,12 @@ import {
 } from "lucide-react";
 import { fadeUp, stagger, useCountUp, useInView } from "../lib/motion.jsx";
 import { apiLogout } from "../api/auth";
+import {
+  getMilestoneAmount,
+  getNextMilestone,
+  getProjectPaymentState,
+  saveProjectProgress,
+} from "../lib/projectProgress";
 import {
   deleteAdminOpportunity,
   deleteAdminUser,
@@ -192,6 +199,7 @@ export default function AdminPage({ navigate, theme, toggleTheme }) {
   const [confirmConfig, setConfirmConfig] = useState(null);
   const [busyAction, setBusyAction] = useState(false);
   const [pendingRowId, setPendingRowId] = useState(null);
+  const [projectProgress, setProjectProgress] = useState({});
 
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
@@ -764,6 +772,7 @@ export default function AdminPage({ navigate, theme, toggleTheme }) {
                             <th className="py-3 px-4">Project Name</th>
                             <th className="py-3 px-4">Founder</th>
                             <th className="py-3 px-4">Funding Goal</th>
+                            <th className="py-3 px-4">Progress</th>
                             <th className="py-3 px-4">Status</th>
                             <th className="py-3 px-4 text-right">Actions</th>
                           </tr>
@@ -787,6 +796,33 @@ export default function AdminPage({ navigate, theme, toggleTheme }) {
                                 </td>
                                 <td className="py-3.5 px-4 font-medium text-ink-900">
                                   {project.funding_goal || "—"}
+                                </td>
+                                <td className="min-w-44 py-3.5 px-4">
+                                  {(() => {
+                                    const state = projectProgress[project.id] || getProjectPaymentState(project);
+                                    const nextMilestone = getNextMilestone(state.progress);
+                                    return (
+                                      <div className="space-y-2">
+                                        <div className="flex items-center justify-between text-xs">
+                                          <span className="font-semibold text-ink-700 dark:text-ink-300">{state.progress}% complete</span>
+                                          <span className="text-ink-400">{state.paidMilestones.length}/4 paid</span>
+                                        </div>
+                                        <div className="h-2 overflow-hidden rounded-full bg-ink-100 dark:bg-ink-800">
+                                          <div className="h-full rounded-full bg-brand-500 transition-all duration-500" style={{ width: `${state.progress}%` }} />
+                                        </div>
+                                        <button
+                                          type="button"
+                                          onClick={() => handlePayMilestone(project)}
+                                          disabled={!nextMilestone || pendingRowId === project.id}
+                                          className="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-700 transition-colors hover:text-brand-800 disabled:cursor-not-allowed disabled:text-ink-400 dark:text-brand-400"
+                                          title={nextMilestone ? `Pay ${nextMilestone}% milestone (${getMilestoneAmount(project, nextMilestone).toLocaleString(undefined, { style: "currency", currency: "USD", maximumFractionDigits: 0 })})` : "All milestones paid"}
+                                        >
+                                          <Banknote className="h-3.5 w-3.5" />
+                                          {nextMilestone ? `Pay ${nextMilestone}% milestone` : "Fully funded"}
+                                        </button>
+                                      </div>
+                                    );
+                                  })()}
                                 </td>
                                 <td className="py-3.5 px-4">
                                   <span
@@ -831,7 +867,7 @@ export default function AdminPage({ navigate, theme, toggleTheme }) {
                           </AnimatePresence>
                           {filteredProjects.length === 0 && (
                             <tr>
-                              <td colSpan="5" className="py-8 text-center text-ink-400">
+                                  <td colSpan="6" className="py-8 text-center text-ink-400">
                                 No projects found.
                               </td>
                             </tr>
