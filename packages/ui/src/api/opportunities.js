@@ -96,6 +96,68 @@ export async function getAllOpportunities() {
   return data;
 }
 
+export async function createCheckpoints(opportunityId, checkpoints) {
+  const response = await fetch(
+    `${API_BASE_URL}/api/opportunities/${opportunityId}/checkpoints`,
+    {
+      method: "POST",
+      headers: getHeaders(),
+      body: JSON.stringify({ checkpoints }),
+    },
+  );
+
+  const data = await parseJsonResponse(response);
+
+  if (!response.ok) {
+    const errorMessage =
+      data.message ||
+      (data.errors ? Object.values(data.errors).flat().join(" ") : "Failed to save checkpoints.");
+    throw new Error(errorMessage);
+  }
+
+  return data;
+}
+
+export async function initiateInvestment(opportunityId, checkpoints) {
+  const response = await fetch(
+    `${API_BASE_URL}/api/opportunities/${opportunityId}/pay`,
+    {
+      method: "POST",
+      headers: getHeaders(),
+      body: JSON.stringify({ checkpoints }),
+    },
+  );
+
+  const data = await parseJsonResponse(response);
+
+  if (!response.ok) {
+    const errorMessage =
+      data.message ||
+      (data.errors ? Object.values(data.errors).flat().join(" ") : "Failed to start payment.");
+    throw new Error(errorMessage);
+  }
+
+  return data;
+}
+
+export async function getCheckpoints(opportunityId) {
+  const response = await fetch(
+    `${API_BASE_URL}/api/opportunities/${opportunityId}/checkpoints`,
+    {
+      method: "GET",
+      headers: getHeaders(),
+    },
+  );
+
+  const data = await parseJsonResponse(response);
+
+  if (!response.ok) {
+    throw new Error(data.message || "Failed to load checkpoints.");
+  }
+
+  return data;
+}
+
 export async function getPlatformStats() {
   const response = await fetch(`${API_BASE_URL}/api/stats`, {
     method: "GET",
