@@ -19,7 +19,7 @@ import {
 import { AnimatePresence, motion } from "framer-motion";
 import { useCallback, useEffect, useState } from "react";
 import PageBackground from "./PageBackground.jsx";
-import { deleteOpportunity, getMyOpportunities, updateOpportunity } from "../api/opportunities";
+import { deleteOpportunity, getCheckpoints, getMyOpportunities, updateOpportunity } from "../api/opportunities";
 import {
   getConnectedOpportunities,
   disconnectOpportunity,
@@ -35,7 +35,6 @@ import {
   useTilt,
 } from "../lib/motion.jsx";
 import { FilterChip, IconSearchToggle } from "./FilterControls.jsx";
-import { getProjectProgress } from "../lib/projectProgress";
 
 const getStoredUser = () => {
   if (typeof window === "undefined") {
@@ -53,7 +52,7 @@ const getStoredUser = () => {
 const DEFAULT_DEAL_IMAGE =
   "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='200' viewBox='0 0 400 200'><rect width='400' height='200' fill='%23e5e7eb'/><text x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%239ca3af' font-family='sans-serif' font-size='16'>No image</text></svg>";
 
-const STATUS_OPTIONS = ["Active", "Pending", "Completed"];
+const STATUS_OPTIONS = ["Active", "Pending", "Completed", "Progress"];
 
 function resizeImage(file, maxDim = 1024, quality = 0.8) {
   return new Promise((resolve, reject) => {
@@ -85,11 +84,11 @@ const STATUS_STYLES = {
   Active: "bg-emerald-100 text-emerald-700",
   Pending: "bg-amber-100 text-amber-700",
   Completed: "bg-brand-100 text-brand-700",
+  Progress: "bg-sky-100 text-sky-700",
 };
 
 function DashboardCard({ opp, actions }) {
   const tilt = useTilt(5);
-  const progress = getProjectProgress(opp);
 
   return (
     <motion.article
@@ -142,20 +141,9 @@ function DashboardCard({ opp, actions }) {
 
         <div className="mt-5 rounded-2xl border border-brand-100 bg-brand-50/60 p-3 dark:border-brand-900/50 dark:bg-brand-950/25">
           <div className="flex items-center justify-between text-xs">
-            <span className="font-semibold text-ink-700 dark:text-ink-300">Funding progress</span>
-            <span className="font-display font-bold text-brand-700 dark:text-brand-300">{progress}%</span>
+            <span className="font-semibold text-ink-700 dark:text-ink-300">Funding goal</span>
+            <span className="font-display font-bold text-brand-700 dark:text-brand-300">{opp.goal}</span>
           </div>
-          <div className="mt-2 h-2 overflow-hidden rounded-full bg-white/80 dark:bg-ink-800">
-            <motion.div
-              className="h-full rounded-full bg-brand-500"
-              initial={{ width: 0 }}
-              animate={{ width: `${progress}%` }}
-              transition={{ duration: 0.8, ease: "easeOut" }}
-            />
-          </div>
-          <p className="mt-2 text-[11px] text-ink-500 dark:text-ink-400">
-            {progress >= 100 ? "All milestones have been released." : "Milestones are released as you hit each checkpoint."}
-          </p>
         </div>
 
         <div className="mt-4 flex items-center justify-between">{actions}</div>
@@ -168,6 +156,17 @@ function StatusModal({ opp, isOwner, onClose, navigate, onAccepted }) {
   const [connections, setConnections] = useState([]);
   const [loading, setLoading] = useState(false);
   const [currentStatus, setCurrentStatus] = useState(opp.status || "Active");
+  const [progressOpen, setProgressOpen] = useState(false);
+  const [progress, setProgress] = useState([]);
+  const [progressLoading, setProgressLoading] = useState(false);
+
+  const openProgress = () => {
+    setProgressLoading(true);
+    getCheckpoints(opp.id)
+      .then((data) => setProgress(data.checkpoints || []))
+      .catch(() => setProgress([]))
+      .finally(() => setProgressLoading(false));
+  };
 
   useEffect(() => {
     if (!isOwner) return;
@@ -203,8 +202,9 @@ function StatusModal({ opp, isOwner, onClose, navigate, onAccepted }) {
   };
 
   return (
-    <motion.div
-      className="fixed inset-0 z-50 grid place-items-center bg-black/40 px-4"
+    <>
+      <motion.div
+        className="fixed inset-0 z-50 grid place-items-center bg-black/40 px-4"
       variants={modalOverlay}
       initial="hidden"
       animate="visible"
@@ -300,6 +300,18 @@ function StatusModal({ opp, isOwner, onClose, navigate, onAccepted }) {
                   ))}
                 </ul>
               )}
+
+              <button
+                type="button"
+                onClick={() => {
+                  setProgressOpen(true);
+                  openProgress();
+                }}
+                className="btn-primary mt-4 w-full"
+              >
+                <BarChart3 className="h-4 w-4" />
+                Progress
+              </button>
             </>
           ) : (
             <div className="space-y-4">
@@ -328,7 +340,23 @@ function StatusModal({ opp, isOwner, onClose, navigate, onAccepted }) {
                   type="button"
                   onClick={() => {
                     onClose();
-                    navigate("/payment/" + opp.id);
+                    navigate("/payment/" + opp.id, {
+                      state: {
+                        deal: {
+                          id: opp.id,
+                          name: opp.title,
+                          company: opp.company,
+                          sector: opp.sector,
+                          location: opp.location || "TBD",
+                          goal: opp.goal || "$0",
+                          status: opp.status || "Active",
+                          blurb: opp.blurb || "",
+                          timeline: opp.timeline || "TBD",
+                          image: opp.image || null,
+                          postedBy: opp.postedBy || null,
+                        },
+                      },
+                    });
                   }}
                   className="btn-ghost flex-1"
                 >
@@ -341,6 +369,73 @@ function StatusModal({ opp, isOwner, onClose, navigate, onAccepted }) {
         </div>
       </motion.div>
     </motion.div>
+
+    {progressOpen && (
+      <div
+        className="fixed inset-0 z-[60] grid place-items-center bg-black/50 px-4"
+        onClick={() => setProgressOpen(false)}
+      >
+        <div
+          className="glass-panel-strong holo-card w-full max-w-md rounded-[2rem] p-6"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h2 className="font-display text-xl font-bold text-ink-900 dark:text-ink-50">
+                Investment progress
+              </h2>
+              <p className="mt-1 text-sm text-ink-500 dark:text-ink-400">
+                {opp.title}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setProgressOpen(false)}
+              className="text-ink-400 hover:text-ink-700 dark:text-ink-500 dark:hover:text-ink-300"
+              aria-label="Close"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+
+          <div className="mt-5">
+            {progressLoading ? (
+              <p className="text-sm text-ink-500">Loading…</p>
+            ) : progress.length === 0 ? (
+              <p className="text-sm text-ink-500">
+                No checkpoints have been added yet.
+              </p>
+            ) : (
+              <div className="overflow-hidden rounded-2xl border border-ink-100 dark:border-ink-800">
+                <table className="w-full text-left text-sm">
+                  <thead className="bg-ink-50 text-xs uppercase tracking-wider text-ink-500 dark:bg-ink-900/60 dark:text-ink-400">
+                    <tr>
+                      <th className="px-4 py-3">#</th>
+                      <th className="px-4 py-3">Title</th>
+                      <th className="px-4 py-3 text-right">Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-ink-100 dark:divide-ink-800">
+                    {progress.map((cp, index) => (
+                      <tr key={cp.id || index}>
+                        <td className="px-4 py-3 text-ink-400">{index + 1}</td>
+                        <td className="px-4 py-3 font-medium text-ink-900 dark:text-ink-50">
+                          {cp.title}
+                        </td>
+                        <td className="px-4 py-3 text-right font-semibold text-ink-900 dark:text-ink-50">
+                          ${(parseFloat(cp.amount) || 0).toLocaleString()}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    )}
+    </>
   );
 }
 
@@ -526,7 +621,7 @@ export default function UserDashboard({ navigate }) {
   const handleAccepted = (opportunityId) => {
     setAllOpportunities((prev) =>
       prev.map((o) =>
-        o.id === opportunityId ? { ...o, status: "Active" } : o,
+        o.id === opportunityId ? { ...o, status: "Progress" } : o,
       ),
     );
   };

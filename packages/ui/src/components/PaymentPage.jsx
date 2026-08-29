@@ -1,20 +1,20 @@
 import {
   ArrowLeft,
   Building2,
-  Calendar,
   CheckCircle2,
   CreditCard,
   Lock,
   MapPin,
+  Plus,
   ShieldCheck,
   Sparkles,
-  User,
+  Trash2,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { useLocation, useParams } from "react-router-dom";
 import PageBackground from "./PageBackground.jsx";
-import { getAllOpportunities } from "../api/opportunities";
+import { getAllOpportunities, initiateInvestment, getCheckpoints } from "../api/opportunities";
 import { fadeUpBlur } from "../lib/motion.jsx";
 
 const DEFAULT_DEAL_IMAGE =
@@ -40,22 +40,12 @@ const mapOpportunityToDeal = (opp) => ({
   sector: opp.sector,
   location: opp.location || "TBD",
   goal: opp.funding_goal || "$0",
+  status: opp.status || "Active",
   blurb: opp.description || "",
   timeline: opp.timeline || "TBD",
   image: opp.image || null,
   postedBy: opp.user?.email || null,
 });
-
-const formatCardNumber = (value) => {
-  const digits = value.replace(/\D/g, "").slice(0, 19);
-  return digits.replace(/(.{4})/g, "$1 ").trim();
-};
-
-const formatExpiry = (value) => {
-  const digits = value.replace(/\D/g, "").slice(0, 4);
-  if (digits.length <= 2) return digits;
-  return `${digits.slice(0, 2)}/${digits.slice(2)}`;
-};
 
 const inputWrapperClassName =
   "surface-rim flex items-center gap-3 rounded-2xl px-4 py-3";
@@ -72,16 +62,25 @@ export default function PaymentPage({ navigate }) {
   const [loading, setLoading] = useState(!location.state?.deal);
   const [notFound, setNotFound] = useState(false);
 
-  const [form, setForm] = useState({
-    amount: "",
-    cardName: "",
-    cardNumber: "",
-    expiry: "",
-    cvv: "",
-  });
+  const [checkpoints, setCheckpoints] = useState([
+    { title: "", description: "", amount: "" },
+  ]);
   const [errors, setErrors] = useState({});
   const [status, setStatus] = useState("idle"); // idle | processing | success
-  const [receipt, setReceipt] = useState(null);
+  const [paymentReturn, setPaymentReturn] = useState(null);
+  const [savedCheckpoints, setSavedCheckpoints] = useState([]);
+  const [showProgress, setShowProgress] = useState(false);
+
+  const totalAmount = checkpoints.reduce(
+    (sum, cp) => sum + (parseFloat(cp.amount) || 0),
+    0,
+  );
+
+  const canPay = (deal?.status || "").toLowerCase() === "progress";
+
+  const hasInvested = Boolean(user) && savedCheckpoints.some(
+    (cp) => String(cp.investor_id) === String(user.id),
+  );
 
   useEffect(() => {
     if (deal) return;
@@ -111,53 +110,92 @@ export default function PaymentPage({ navigate }) {
     };
   }, [deal, id]);
 
-  const handleChange = (event) => {
-    const { name, value } = event.target;
-    let nextValue = value;
-    if (name === "cardNumber") nextValue = formatCardNumber(value);
-    if (name === "expiry") nextValue = formatExpiry(value);
-    if (name === "cvv") nextValue = value.replace(/\D/g, "").slice(0, 4);
-    if (name === "amount") nextValue = value.replace(/[^0-9.]/g, "");
-    setForm((current) => ({ ...current, [name]: nextValue }));
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const returnStatus = params.get("status");
+    if (returnStatus) {
+      setPaymentReturn({
+        status: returnStatus,
+        tranId: params.get("tran_id"),
+      });
+    }
+  }, [location.search]);
+
+  useEffect(() => {
+    if (!deal) return;
+    getCheckpoints(deal.id)
+      .then((data) => setSavedCheckpoints(data.checkpoints || []))
+      .catch(() => setSavedCheckpoints([]));
+  }, [deal]);
+
+  const handleCheckpointChange = (index, field, rawValue) => {
+    const value =
+      field === "amount" ? rawValue.replace(/[^0-9.]/g, "") : rawValue;
+    setCheckpoints((current) =>
+      current.map((cp, i) =>
+        i === index ? { ...cp, [field]: value } : cp,
+      ),
+    );
+  };
+
+  const addCheckpoint = () => {
+    setCheckpoints((current) =>
+      current.length >= 5
+        ? current
+        : [...current, { title: "", description: "", amount: "" }],
+    );
+  };
+
+  const removeCheckpoint = (index) => {
+    setCheckpoints((current) =>
+      current.length > 1 ? current.filter((_, i) => i !== index) : current,
+    );
   };
 
   const validate = () => {
     const nextErrors = {};
-    const amountValue = parseFloat(form.amount);
-    if (!form.amount || Number.isNaN(amountValue) || amountValue <= 0) {
-      nextErrors.amount = "Enter an investment amount greater than $0.";
-    }
-    if (!form.cardName.trim()) {
-      nextErrors.cardName = "Cardholder name is required.";
-    }
-    const cardDigits = form.cardNumber.replace(/\D/g, "");
-    if (cardDigits.length < 13 || cardDigits.length > 19) {
-      nextErrors.cardNumber = "Enter a valid card number.";
-    }
-    if (!/^\d{2}\/\d{2}$/.test(form.expiry)) {
-      nextErrors.expiry = "Use MM/YY format.";
-    }
-    if (form.cvv.length < 3) {
-      nextErrors.cvv = "Enter a valid CVV.";
+    checkpoints.forEach((cp, i) => {
+      if (!cp.title.trim()) {
+        nextErrors[`title-${i}`] = "Checkpoint title is required.";
+      }
+      const amountValue = parseFloat(cp.amount);
+      if (!cp.amount || Number.isNaN(amountValue) || amountValue <= 0) {
+        nextErrors[`amount-${i}`] = "Enter an amount greater than $0.";
+      }
+    });
+    if (totalAmount <= 0) {
+      nextErrors.total = "Add at least one checkpoint with an amount.";
     }
     setErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
+    if (!canPay) {
+      setErrors((current) => ({
+        ...current,
+        total: "Investment is only allowed for opportunities that are in progress.",
+      }));
+      return;
+    }
     if (!validate()) return;
 
     setStatus("processing");
-    setTimeout(() => {
-      setReceipt({
-        id: `TXN-${Date.now().toString(36).toUpperCase()}`,
-        amount: parseFloat(form.amount),
-        last4: form.cardNumber.replace(/\D/g, "").slice(-4),
-        date: new Date().toLocaleString(),
-      });
-      setStatus("success");
-    }, 1200);
+    try {
+      const data = await initiateInvestment(deal.id, checkpoints);
+      if (data.gateway_url) {
+        window.location.href = data.gateway_url;
+        return;
+      }
+      throw new Error("Payment gateway did not respond.");
+    } catch (error) {
+      setErrors((current) => ({
+        ...current,
+        total: error.message || "Failed to start payment.",
+      }));
+      setStatus("idle");
+    }
   };
 
   if (!user) {
@@ -223,7 +261,79 @@ export default function PaymentPage({ navigate }) {
     );
   }
 
-  if (status === "success" && receipt) {
+  if (paymentReturn?.status === "success") {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink-950/50 px-4 backdrop-blur-sm">
+        <div className="w-full max-w-md rounded-[1.75rem] border border-white/40 bg-white/95 p-6 text-center shadow-lift backdrop-blur-2xl dark:border-white/10 dark:bg-ink-900/95">
+          <div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">
+            <CheckCircle2 className="h-7 w-7" />
+          </div>
+          <h2 className="mt-4 font-display text-xl font-bold text-ink-900 dark:text-ink-50">
+            Payment successful
+          </h2>
+          <p className="mt-2 text-sm text-ink-600 dark:text-ink-300">
+            You invested in{" "}
+            <span className="font-semibold text-ink-900 dark:text-ink-50">
+              {deal.name}
+            </span>{" "}
+            successfully.
+          </p>
+          {paymentReturn.tranId && (
+            <p className="mt-1 text-xs text-ink-400 dark:text-ink-500">
+              Transaction: {paymentReturn.tranId}
+            </p>
+          )}
+
+          {savedCheckpoints.length > 0 && (
+            <div className="mt-5 overflow-hidden rounded-2xl border border-ink-100 text-left dark:border-ink-800">
+              <table className="w-full text-left text-sm">
+                <thead className="bg-ink-50 text-xs uppercase tracking-wider text-ink-500 dark:bg-ink-900/60 dark:text-ink-400">
+                  <tr>
+                    <th className="px-3 py-2">#</th>
+                    <th className="px-3 py-2">Title</th>
+                    <th className="px-3 py-2 text-right">Amount</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-ink-100 dark:divide-ink-800">
+                  {savedCheckpoints.map((cp, index) => (
+                    <tr key={cp.id || index}>
+                      <td className="px-3 py-2 text-ink-400">{index + 1}</td>
+                      <td className="px-3 py-2 font-medium text-ink-900 dark:text-ink-50">
+                        {cp.title}
+                      </td>
+                      <td className="px-3 py-2 text-right font-semibold text-ink-900 dark:text-ink-50">
+                        ${(parseFloat(cp.amount) || 0).toLocaleString()}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          <div className="mt-6 flex flex-wrap justify-center gap-3">
+            <button
+              type="button"
+              onClick={() => navigate("/dashboard")}
+              className="btn-primary"
+            >
+              Go to dashboard
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate("/deals")}
+              className="btn-ghost"
+            >
+              Browse more deals
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (paymentReturn?.status === "fail" || paymentReturn?.status === "cancel") {
+    const cancelled = paymentReturn.status === "cancel";
     return (
       <section className="relative min-h-screen px-4 py-20 sm:px-6 lg:px-8 transition-colors duration-300">
         <PageBackground />
@@ -234,61 +344,24 @@ export default function PaymentPage({ navigate }) {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={{ duration: 0.5, ease: "easeOut" }}
           >
-            <motion.div
-              className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300"
-              initial={{ scale: 0, rotate: -30 }}
-              animate={{ scale: 1, rotate: 0 }}
-              transition={{ delay: 0.15, duration: 0.5, ease: "backOut" }}
-            >
-              <CheckCircle2 className="h-8 w-8" />
-            </motion.div>
+            <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-rose-100 text-rose-700 dark:bg-rose-500/10 dark:text-rose-300">
+              <Lock className="h-8 w-8" />
+            </div>
             <h1 className="mt-5 font-display text-2xl font-bold text-ink-900 dark:text-ink-50">
-              Investment confirmed
+              {cancelled ? "Payment cancelled" : "Payment failed"}
             </h1>
             <p className="mt-2 text-sm text-ink-600 dark:text-ink-300">
-              You committed{" "}
-              <span className="font-semibold text-ink-900 dark:text-ink-50">
-                ${receipt.amount.toLocaleString()}
-              </span>{" "}
-              to {deal.company}.
+              {cancelled
+                ? "You cancelled the payment. No checkpoints were saved."
+                : "The payment could not be completed. No checkpoints were saved."}
             </p>
-
-            <div className="mt-6 space-y-3 rounded-2xl border border-ink-100 bg-ink-50 p-5 text-left text-sm dark:border-ink-800 dark:bg-ink-900/60">
-              <div className="flex items-center justify-between">
-                <span className="text-ink-500 dark:text-ink-400">
-                  Transaction ID
-                </span>
-                <span className="font-semibold text-ink-900 dark:text-ink-50">
-                  {receipt.id}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-ink-500 dark:text-ink-400">
-                  Card ending in
-                </span>
-                <span className="font-semibold text-ink-900 dark:text-ink-50">
-                  •••• {receipt.last4}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-ink-500 dark:text-ink-400">Date</span>
-                <span className="font-semibold text-ink-900 dark:text-ink-50">
-                  {receipt.date}
-                </span>
-              </div>
-            </div>
-
-            <p className="mt-5 text-xs text-ink-400 dark:text-ink-500">
-              This is a demo confirmation — no real payment was processed.
-            </p>
-
             <div className="mt-6 flex flex-wrap justify-center gap-3">
               <button
                 type="button"
-                onClick={() => navigate("/dashboard")}
+                onClick={() => navigate(`/payment/${deal.id}`)}
                 className="btn-primary"
               >
-                Go to dashboard
+                Try again
               </button>
               <button
                 type="button"
@@ -331,12 +404,68 @@ export default function PaymentPage({ navigate }) {
             Invest in {deal.company}
           </h1>
           <p className="mt-3 max-w-xl text-lg leading-relaxed text-white/80">
-            Confirm your commitment amount and payment details to complete
-            this investment.
+            Add one or more checkpoints with a title, description, and amount
+            to complete this investment.
           </p>
         </motion.div>
 
         <div className="grid gap-6 lg:grid-cols-[1fr_0.85fr] lg:items-start">
+          {hasInvested ? (
+            <div className="glass-panel-strong holo-card rounded-[2rem] p-6 sm:p-8">
+              <div className="flex items-center gap-3">
+                <div className="grid h-11 w-11 place-items-center rounded-2xl bg-brand-600/90 text-white shadow-soft">
+                  <CheckCircle2 className="h-5 w-5" />
+                </div>
+                <div>
+                  <h2 className="font-display text-lg font-bold text-ink-900 dark:text-ink-50">
+                    Already invested
+                  </h2>
+                  <p className="text-xs text-ink-500 dark:text-ink-400">
+                    You have committed to this opportunity
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowProgress((value) => !value)}
+                className="btn-primary mt-6 w-full"
+              >
+                {showProgress ? "Hide progress" : "Progress"}
+              </button>
+
+              {showProgress && savedCheckpoints.length > 0 && (
+                <div className="mt-5 overflow-hidden rounded-2xl border border-ink-100 dark:border-ink-800">
+                  <table className="w-full text-left text-sm">
+                    <thead className="bg-ink-50 text-xs uppercase tracking-wider text-ink-500 dark:bg-ink-900/60 dark:text-ink-400">
+                      <tr>
+                        <th className="px-4 py-3">#</th>
+                        <th className="px-4 py-3">Title</th>
+                        <th className="px-4 py-3">Description</th>
+                        <th className="px-4 py-3 text-right">Amount</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-ink-100 dark:divide-ink-800">
+                      {savedCheckpoints.map((cp, index) => (
+                        <tr key={cp.id || index}>
+                          <td className="px-4 py-3 text-ink-400">{index + 1}</td>
+                          <td className="px-4 py-3 font-medium text-ink-900 dark:text-ink-50">
+                            {cp.title}
+                          </td>
+                          <td className="px-4 py-3 text-ink-600 dark:text-ink-300">
+                            {cp.description || "—"}
+                          </td>
+                          <td className="px-4 py-3 text-right font-semibold text-ink-900 dark:text-ink-50">
+                            ${(parseFloat(cp.amount) || 0).toLocaleString()}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          ) : (
           <motion.form
             onSubmit={handleSubmit}
             className="glass-panel-strong holo-card rounded-[2rem] p-6 sm:p-8"
@@ -350,144 +479,148 @@ export default function PaymentPage({ navigate }) {
               </div>
               <div>
                 <h2 className="font-display text-lg font-bold text-ink-900 dark:text-ink-50">
-                  Payment details
+                  Investment checkpoints
                 </h2>
                 <p className="text-xs text-ink-500 dark:text-ink-400">
-                  All fields are required
+                  Add a title, description, and amount per checkpoint
                 </p>
               </div>
             </div>
 
-            <div className="mt-6 space-y-4">
-              <label className="block">
-                <span className={fieldLabelClassName}>
-                  Investment amount (USD)
-                </span>
-                <div className={inputWrapperClassName}>
-                  <span className="text-sm font-semibold text-ink-500">
-                    $
-                  </span>
-                  <input
-                    type="text"
-                    inputMode="decimal"
-                    name="amount"
-                    value={form.amount}
-                    onChange={handleChange}
-                    placeholder="e.g., 5000"
-                    className="w-full border-none bg-transparent text-sm text-ink-900 outline-none placeholder:text-ink-400 dark:text-ink-50"
-                  />
-                </div>
-                {errors.amount && (
-                  <p className="mt-1.5 text-xs font-medium text-rose-600 dark:text-rose-400">
-                    {errors.amount}
-                  </p>
-                )}
-              </label>
-
-              <label className="block">
-                <span className={fieldLabelClassName}>Cardholder name</span>
-                <div className={inputWrapperClassName}>
-                  <User className="h-4 w-4 text-ink-400 shrink-0" />
-                  <input
-                    type="text"
-                    name="cardName"
-                    value={form.cardName}
-                    onChange={handleChange}
-                    placeholder="Name on card"
-                    className="w-full border-none bg-transparent text-sm text-ink-900 outline-none placeholder:text-ink-400 dark:text-ink-50"
-                  />
-                </div>
-                {errors.cardName && (
-                  <p className="mt-1.5 text-xs font-medium text-rose-600 dark:text-rose-400">
-                    {errors.cardName}
-                  </p>
-                )}
-              </label>
-
-              <label className="block">
-                <span className={fieldLabelClassName}>Card number</span>
-                <div className={inputWrapperClassName}>
-                  <CreditCard className="h-4 w-4 text-ink-400 shrink-0" />
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    name="cardNumber"
-                    value={form.cardNumber}
-                    onChange={handleChange}
-                    placeholder="1234 5678 9012 3456"
-                    className="w-full border-none bg-transparent text-sm text-ink-900 outline-none placeholder:text-ink-400 dark:text-ink-50"
-                  />
-                </div>
-                {errors.cardNumber && (
-                  <p className="mt-1.5 text-xs font-medium text-rose-600 dark:text-rose-400">
-                    {errors.cardNumber}
-                  </p>
-                )}
-              </label>
-
-              <div className="grid gap-4 grid-cols-2">
-                <label className="block">
-                  <span className={fieldLabelClassName}>Expiry</span>
-                  <div className={inputWrapperClassName}>
-                    <Calendar className="h-4 w-4 text-ink-400 shrink-0" />
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      name="expiry"
-                      value={form.expiry}
-                      onChange={handleChange}
-                      placeholder="MM/YY"
-                      className="w-full border-none bg-transparent text-sm text-ink-900 outline-none placeholder:text-ink-400 dark:text-ink-50"
-                    />
+            <div className="mt-6 space-y-5">
+              {checkpoints.map((cp, index) => (
+                <div
+                  key={index}
+                  className="rounded-2xl border border-ink-100 bg-ink-50/60 p-4 dark:border-ink-800 dark:bg-ink-900/40"
+                >
+                  <div className="mb-3 flex items-center justify-between">
+                    <span className="text-xs font-semibold uppercase tracking-wider text-ink-500 dark:text-ink-400">
+                      Checkpoint {index + 1}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => removeCheckpoint(index)}
+                      disabled={checkpoints.length === 1}
+                      className="inline-flex items-center gap-1 text-xs font-medium text-rose-600 transition-colors hover:text-rose-700 disabled:cursor-not-allowed disabled:opacity-40 dark:text-rose-400 dark:hover:text-rose-300"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                      Remove
+                    </button>
                   </div>
-                  {errors.expiry && (
-                    <p className="mt-1.5 text-xs font-medium text-rose-600 dark:text-rose-400">
-                      {errors.expiry}
-                    </p>
-                  )}
-                </label>
 
-                <label className="block">
-                  <span className={fieldLabelClassName}>CVV</span>
-                  <div className={inputWrapperClassName}>
-                    <Lock className="h-4 w-4 text-ink-400 shrink-0" />
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      name="cvv"
-                      value={form.cvv}
-                      onChange={handleChange}
-                      placeholder="123"
-                      className="w-full border-none bg-transparent text-sm text-ink-900 outline-none placeholder:text-ink-400 dark:text-ink-50"
-                    />
+                  <div className="space-y-3">
+                    <label className="block">
+                      <span className={fieldLabelClassName}>Title</span>
+                      <input
+                        type="text"
+                        value={cp.title}
+                        onChange={(event) =>
+                          handleCheckpointChange(
+                            index,
+                            "title",
+                            event.target.value,
+                          )
+                        }
+                        placeholder="e.g., Seed round milestone"
+                        className={inputClassName}
+                      />
+                      {errors[`title-${index}`] && (
+                        <p className="mt-1.5 text-xs font-medium text-rose-600 dark:text-rose-400">
+                          {errors[`title-${index}`]}
+                        </p>
+                      )}
+                    </label>
+
+                    <label className="block">
+                      <span className={fieldLabelClassName}>Description</span>
+                      <textarea
+                        rows={3}
+                        value={cp.description}
+                        onChange={(event) =>
+                          handleCheckpointChange(
+                            index,
+                            "description",
+                            event.target.value,
+                          )
+                        }
+                        placeholder="What this checkpoint represents"
+                        className={`${inputClassName} resize-none`}
+                      />
+                    </label>
+
+                    <label className="block">
+                      <span className={fieldLabelClassName}>Amount (USD)</span>
+                      <div className={inputWrapperClassName}>
+                        <span className="text-sm font-semibold text-ink-500">
+                          $
+                        </span>
+                        <input
+                          type="text"
+                          inputMode="decimal"
+                          value={cp.amount}
+                          onChange={(event) =>
+                            handleCheckpointChange(
+                              index,
+                              "amount",
+                              event.target.value,
+                            )
+                          }
+                          placeholder="e.g., 5000"
+                          className="w-full border-none bg-transparent text-sm text-ink-900 outline-none placeholder:text-ink-400 dark:text-ink-50"
+                        />
+                      </div>
+                      {errors[`amount-${index}`] && (
+                        <p className="mt-1.5 text-xs font-medium text-rose-600 dark:text-rose-400">
+                          {errors[`amount-${index}`]}
+                        </p>
+                      )}
+                    </label>
                   </div>
-                  {errors.cvv && (
-                    <p className="mt-1.5 text-xs font-medium text-rose-600 dark:text-rose-400">
-                      {errors.cvv}
-                    </p>
-                  )}
-                </label>
-              </div>
+                </div>
+              ))}
+
+              {errors.total && (
+                <p className="text-xs font-medium text-rose-600 dark:text-rose-400">
+                  {errors.total}
+                </p>
+              )}
+
+              <button
+                type="button"
+                onClick={addCheckpoint}
+                disabled={checkpoints.length >= 5}
+                className="flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-brand-300 bg-brand-50/50 py-3 text-sm font-semibold text-brand-700 transition-colors hover:bg-brand-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-brand-800 dark:bg-brand-950/30 dark:text-brand-300"
+              >
+                <Plus className="h-4 w-4" />
+                {checkpoints.length >= 5 ? "Maximum 5 checkpoints" : "Add checkpoint"}
+              </button>
             </div>
 
             <motion.button
               type="submit"
-              disabled={status === "processing"}
+              disabled={status === "processing" || !canPay}
               className="btn-primary mt-6 w-full disabled:cursor-not-allowed disabled:opacity-60"
-              whileHover={status === "processing" ? {} : { y: -2 }}
-              whileTap={status === "processing" ? {} : { scale: 0.98 }}
+              whileHover={status === "processing" || !canPay ? {} : { y: -2 }}
+              whileTap={status === "processing" || !canPay ? {} : { scale: 0.98 }}
             >
               <ShieldCheck className="h-4 w-4" />
               {status === "processing"
                 ? "Processing..."
-                : `Confirm investment${form.amount ? ` · $${form.amount}` : ""}`}
+                : `Confirm investment${totalAmount ? ` · $${totalAmount.toLocaleString()}` : ""}`}
             </motion.button>
+
+            {!canPay && (
+              <p className="mt-3 flex items-center justify-center gap-1.5 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-center text-xs font-medium text-amber-700 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-300">
+                Investment is only allowed for opportunities that are in progress.
+              </p>
+            )}
 
             <p className="mt-4 flex items-center justify-center gap-1.5 text-center text-xs text-ink-400 dark:text-ink-500">
               <Lock className="h-3.5 w-3.5" />
               Demo checkout — no real payment is processed.
             </p>
           </motion.form>
+          )}
 
           <motion.div
             className="glass-panel-strong holo-card rounded-[2rem] p-6 sm:p-8"

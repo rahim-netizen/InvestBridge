@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 
     #[Fillable([
     'user_id',
+    'investor_id',
     'title',
     'company',
     'sector',
@@ -29,5 +30,10 @@ class Opportunity extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function investor()
+    {
+        return $this->belongsTo(User::class, 'investor_id');
     }
 }

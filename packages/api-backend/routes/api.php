@@ -43,6 +43,10 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::delete('/connected-opportunities/{id}', [\App\Http\Controllers\ConnectedOpportunityController::class, 'destroy']);
         Route::get('/opportunities/{id}/connections', [\App\Http\Controllers\ConnectedOpportunityController::class, 'connectionsByOpportunity']);
         Route::post('/opportunities/{id}/accept', [\App\Http\Controllers\ConnectedOpportunityController::class, 'acceptConnection']);
+
+        Route::get('/opportunities/{id}/checkpoints', [\App\Http\Controllers\CheckpointController::class, 'index']);
+        Route::post('/opportunities/{id}/checkpoints', [\App\Http\Controllers\CheckpointController::class, 'store']);
+        Route::post('/opportunities/{id}/pay', [\App\Http\Controllers\PaymentController::class, 'initiate']);
         Route::get('/complaints', [SupportController::class, 'complaints']);
         Route::post('/complaints', [SupportController::class, 'createComplaint']);
         Route::get('/users/search', [SupportController::class, 'searchUsers']);
@@ -63,3 +67,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
 });
 
 Route::post('/chatbot/message', [\App\Http\Controllers\ChatbotController::class, 'message']);
+
+Route::match(['GET', 'POST'], '/payment/success', [\App\Http\Controllers\PaymentController::class, 'success'])->name('payment.success');
+Route::match(['GET', 'POST'], '/payment/fail', [\App\Http\Controllers\PaymentController::class, 'fail'])->name('payment.fail');
+Route::match(['GET', 'POST'], '/payment/cancel', [\App\Http\Controllers\PaymentController::class, 'cancel'])->name('payment.cancel');

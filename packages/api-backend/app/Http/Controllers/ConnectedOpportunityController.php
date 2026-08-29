@@ -79,13 +79,17 @@ class ConnectedOpportunityController extends Controller
             ->get();
 
         return response()->json([
-            'connections' => $connections->map(function ($connection) {
+            'connections' => $connections->map(function ($connection) use ($opportunity) {
                 return [
                     'id' => $connection->id,
                     'user_id' => $connection->user?->id,
                     'name' => $connection->user?->name,
                     'email' => $connection->user?->email,
                     'connected_at' => $connection->created_at,
+                    // Flag the investor who was accepted for this opportunity so
+                    // the UI shows "Accepted" (no Accept button) while still
+                    // showing the investor and the Chat button.
+                    'accepted' => $connection->user_id === $opportunity->investor_id,
                 ];
             }),
         ]);
@@ -111,11 +115,17 @@ class ConnectedOpportunityController extends Controller
             ->where('id', '!=', $accepted->id)
             ->delete();
 
-        $opportunity->update(['status' => 'Active']);
+        // Record the accepted investor on the opportunity and move it from
+        // "Active" to "Progress" so it is no longer an open discovery deal.
+        $opportunity->update([
+            'investor_id' => $accepted->user_id,
+            'status' => 'Progress',
+        ]);
 
         return response()->json([
             'message' => 'Connection accepted.',
             'accepted_id' => $accepted->id,
+            'investor_id' => $accepted->user_id,
             'status' => $opportunity->status,
         ]);
     }

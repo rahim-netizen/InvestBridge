@@ -6,7 +6,6 @@ import {
   Trash2,
   X,
   DollarSign,
-  CreditCard,
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useCallback, useEffect, useState } from "react";
@@ -154,18 +153,23 @@ export default function DealsPage({ navigate }) {
     try {
       const data = await getAllOpportunities();
       if (data.opportunities && data.opportunities.length > 0) {
-        const mapped = data.opportunities.map((opp) => ({
-          id: opp.id,
-          name: opp.title,
-          company: opp.company,
-          sector: opp.sector,
-          location: opp.location || "TBD",
-          goal: opp.funding_goal || "$0",
-          blurb: opp.description || "",
-          timeline: opp.timeline || "TBD",
-          image: opp.image || null,
-          postedBy: opp.user?.email || null,
-        }));
+        // Hide opportunities whose investor has already been accepted, since
+        // they are no longer open discovery deals.
+        const mapped = data.opportunities
+          .filter((opp) => !opp.investor_id)
+          .map((opp) => ({
+            id: opp.id,
+            name: opp.title,
+            company: opp.company,
+            sector: opp.sector,
+            location: opp.location || "TBD",
+            goal: opp.funding_goal || "$0",
+            blurb: opp.description || "",
+            timeline: opp.timeline || "TBD",
+            image: opp.image || null,
+            postedBy: opp.user?.email || null,
+            investorId: opp.investor_id ?? null,
+          }));
         setDeals(mapped);
       } else {
         setDeals([]);
@@ -532,36 +536,22 @@ export default function DealsPage({ navigate }) {
                     Your post
                   </button>
                 ) : (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        navigate(`/payment/${selectedDeal.id}`, {
-                          state: { deal: selectedDeal },
-                        })
-                      }
-                      className="btn-primary w-full"
-                    >
-                      <CreditCard className="h-4 w-4" />
-                      Invest now
-                    </button>
-                    <button
-                      type="button"
-                      disabled={connectingId === selectedDeal?.id}
-                      onClick={() =>
-                        connectedMap[selectedDeal.id]
-                          ? handleDisconnect(selectedDeal)
-                          : handleConnect(selectedDeal)
-                      }
-                      className="btn-ghost w-full"
-                    >
-                      {connectingId === selectedDeal?.id
-                        ? "Please wait..."
-                        : connectedMap[selectedDeal.id]
-                        ? "Remove from dashboard"
-                        : "Save to dashboard"}
-                    </button>
-                  </>
+                  <button
+                    type="button"
+                    disabled={connectingId === selectedDeal?.id}
+                    onClick={() =>
+                      connectedMap[selectedDeal.id]
+                        ? handleDisconnect(selectedDeal)
+                        : handleConnect(selectedDeal)
+                    }
+                    className="btn-ghost w-full"
+                  >
+                    {connectingId === selectedDeal?.id
+                      ? "Please wait..."
+                      : connectedMap[selectedDeal.id]
+                      ? "Remove from dashboard"
+                      : "Save to dashboard"}
+                  </button>
                 )}
                 <button
                   type="button"

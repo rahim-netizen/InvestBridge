@@ -38,7 +38,7 @@ class OpportunityController extends Controller
             'description' => ['nullable', 'string', 'max:2000'],
             'timeline' => ['nullable', 'string', 'max:255'],
             'image' => ['nullable', 'string'],
-            'status' => ['nullable', 'string', 'in:Active,Pending,Completed'],
+            'status' => ['nullable', 'string', 'in:Active,Pending,Completed,Progress'],
         ]);
 
         if (!empty($validated['image']) && str_starts_with((string) $validated['image'], 'data:')) {
@@ -88,7 +88,7 @@ class OpportunityController extends Controller
             'description' => ['nullable', 'string', 'max:2000'],
             'timeline' => ['nullable', 'string', 'max:255'],
             'image' => ['nullable', 'string'],
-            'status' => ['nullable', 'string', 'in:Active,Pending,Completed'],
+            'status' => ['nullable', 'string', 'in:Active,Pending,Completed,Progress'],
         ]);
 
         if (!empty($validated['image']) && str_starts_with((string) $validated['image'], 'data:')) {
