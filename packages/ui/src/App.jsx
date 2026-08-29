@@ -217,7 +217,7 @@ export default function App() {
             path={path}
             element={
               <PageLayout navigate={navigate} theme={theme} toggleTheme={toggleTheme}>
-                <InfoPage navigate={navigate} content={content} />
+                <InfoPage navigate={navigate} content={{ ...content, path }} />
               </PageLayout>
             }
           />
