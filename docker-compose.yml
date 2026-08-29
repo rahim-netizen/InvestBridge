@@ -1,0 +1,108 @@
+services:
+  # ---------------------------------------------------------------------------
+  # MySQL database for the Laravel backend
+  # ---------------------------------------------------------------------------
+  mysql:
+    image: mysql:8.0
+    container_name: investbridge-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: investbridge_db
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_USER: investbridge
+      MYSQL_PASSWORD: investbridge
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - investbridge
+
+  # ---------------------------------------------------------------------------
+  # Laravel API backend (PHP 8.3 + Composer)
+  # ---------------------------------------------------------------------------
+  api:
+    build:
+      context: .
+      dockerfile: packages/api-backend/Dockerfile
+    container_name: investbridge-api
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      # Override the local .env so the container talks to the DB service.
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_DATABASE: investbridge_db
+      DB_USERNAME: investbridge
+      DB_PASSWORD: investbridge
+      APP_URL: http://localhost:8000
+      FRONTEND_URL: http://localhost:5173
+      SANCTUM_STATEFUL_DOMAINS: localhost:5173,127.0.0.1:5173,localhost:8000,127.0.0.1:8000
+    ports:
+      - "8000:8000"
+    volumes:
+      # Live source for development
+      - ./packages/api-backend:/var/www
+      # Keep container-managed dependencies off the host
+      - api_vendor:/var/www/vendor
+    networks:
+      - investbridge
+
+  # ---------------------------------------------------------------------------
+  # React / Vite frontend
+  # ---------------------------------------------------------------------------
+  ui:
+    build:
+      context: .
+      dockerfile: packages/ui/Dockerfile
+    container_name: investbridge-ui
+    restart: unless-stopped
+    depends_on:
+      - api
+    environment:
+      # Proxy API calls to the backend service inside the compose network.
+      VITE_API_PROXY_TARGET: http://api:8000
+      # Enable file polling for reliable HMR on Windows bind mounts.
+      VITE_USE_POLLING: "true"
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./packages/ui:/app
+      # Use container's own node_modules (host node_modules are not portable)
+      - ui_node_modules:/app/node_modules
+    networks:
+      - investbridge
+
+  # ---------------------------------------------------------------------------
+  # phpMyAdmin for easy database inspection (optional)
+  # ---------------------------------------------------------------------------
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: investbridge-phpmyadmin
+    restart: unless-stopped
+    depends_on:
+      - mysql
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "8080:80"
+    networks:
+      - investbridge
+
+volumes:
+  mysql_data:
+  api_vendor:
+  ui_node_modules:
+
+networks:
+  investbridge:
+    driver: bridge

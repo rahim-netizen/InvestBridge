@@ -185,6 +185,8 @@ export default function PaymentPage({ navigate }) {
     try {
       const data = await initiateInvestment(deal.id, checkpoints);
       if (data.gateway_url) {
+        // Send the current tab to the SSLCommerz gateway. After payment it
+        // redirects back to the SPA, which shows the result modal in-page.
         window.location.href = data.gateway_url;
         return;
       }

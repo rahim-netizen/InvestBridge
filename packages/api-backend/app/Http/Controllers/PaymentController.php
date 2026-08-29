@@ -81,12 +81,20 @@ class PaymentController extends Controller
         $customerName = $profile?->full_name ?: ($user->name ?: 'Customer');
         $customerEmail = $user->email ?: 'customer@example.com';
 
+        // SSLCommerz redirects the browser back to these URLs after payment.
+        // Build them from the frontend origin (the URL the browser actually
+        // uses) and route them through the Vite /api proxy so they are always
+        // reachable, rather than relying on APP_URL/route() host resolution.
+        $frontendBase = rtrim(
+            env('FRONTEND_URL', Config::get('app.url', 'http://localhost:5173')),
+            '/',
+        );
         $response = (new SslCommerzService())->initiate([
             'total_amount' => number_format($subtotal, 2, '.', ''),
             'tran_id' => $tranId,
-            'success_url' => route('payment.success'),
-            'fail_url' => route('payment.fail'),
-            'cancel_url' => route('payment.cancel'),
+            'success_url' => $frontendBase . '/api/payment/success',
+            'fail_url' => $frontendBase . '/api/payment/fail',
+            'cancel_url' => $frontendBase . '/api/payment/cancel',
             'product_name' => 'Investment: ' . $opportunity->company,
             'product_category' => 'Investment',
             'product_profile' => 'general',
@@ -203,13 +211,37 @@ class PaymentController extends Controller
             env('FRONTEND_URL', Config::get('app.url', 'http://localhost:5173')),
             '/',
         );
-        $path = $opportunityId
-            ? "/payment/{$opportunityId}"
-            : '/deals';
-        $url = "{$base}{$path}?status={$status}";
+        // Return to the user dashboard, which renders the result modal in-page.
+        $url = "{$base}/dashboard?status={$status}";
         if ($tranId) {
             $url .= "&tran_id=" . rawurlencode($tranId);
         }
-        return redirect($url);
+
+        // SSLCommerz often loads the gateway (and this success redirect) inside
+        // an iframe, so a normal HTTP redirect or window.opener/postMessage can
+        // leave the user stuck on this API URL. Force the top-level window to
+        // navigate to the SPA dashboard, which shows the result modal.
+        $safeUrl = htmlspecialchars($url, ENT_QUOTES, 'UTF-8');
+        $html = <<<HTML
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="refresh" content="0; url={$safeUrl}">
+    <title>Redirecting…</title>
+</head>
+<body>
+    <script>
+    (function () {
+        var url = "{$safeUrl}";
+        try { window.top.location.href = url; }
+        catch (e) { window.location.href = url; }
+    })();
+    </script>
+</body>
+</html>
+HTML;
+
+        return response($html)->header('Content-Type', 'text/html; charset=utf-8');
     }
 }
