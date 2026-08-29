@@ -3,6 +3,8 @@ import {
   BarChart3,
   Bookmark,
   Briefcase,
+  CheckCircle2,
+  AlertTriangle,
   MapPin,
   PenLine,
   Plus,
@@ -18,6 +20,7 @@ import {
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useCallback, useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import PageBackground from "./PageBackground.jsx";
 import { deleteOpportunity, getCheckpoints, getMyOpportunities, updateOpportunity } from "../api/opportunities";
 import {
@@ -439,6 +442,81 @@ function StatusModal({ opp, isOwner, onClose, navigate, onAccepted }) {
   );
 }
 
+function PaymentResultModal({ status, tranId, onClose, navigate }) {
+  const success = status === "success";
+  const cancelled = status === "cancel";
+
+  return (
+    <motion.div
+      className="fixed inset-0 z-[60] grid place-items-center bg-ink-950/50 px-4 backdrop-blur-sm"
+      variants={modalOverlay}
+      initial="hidden"
+      animate="visible"
+      exit="exit"
+      onClick={onClose}
+    >
+      <motion.div
+        className="w-full max-w-md rounded-[1.75rem] border border-white/40 bg-white/95 p-6 text-center shadow-lift backdrop-blur-2xl dark:border-white/10 dark:bg-ink-900/95"
+        variants={modalPanel}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div
+          className={
+            "mx-auto grid h-14 w-14 place-items-center rounded-full " +
+            (success
+              ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300"
+              : "bg-rose-100 text-rose-700 dark:bg-rose-500/10 dark:text-rose-300")
+          }
+        >
+          {success ? (
+            <CheckCircle2 className="h-7 w-7" />
+          ) : (
+            <AlertTriangle className="h-7 w-7" />
+          )}
+        </div>
+
+        <h2 className="mt-4 font-display text-xl font-bold text-ink-900 dark:text-ink-50">
+          {success
+            ? "Investment successful"
+            : cancelled
+              ? "Payment cancelled"
+              : "Payment failed"}
+        </h2>
+        <p className="mt-2 text-sm text-ink-600 dark:text-ink-300">
+          {success
+            ? "Your investment was completed successfully."
+            : cancelled
+              ? "You cancelled the payment. No checkpoints were saved."
+              : "The payment could not be completed. No checkpoints were saved."}
+        </p>
+
+        {tranId && (
+          <p className="mt-1 text-xs text-ink-400 dark:text-ink-500">
+            Transaction: {tranId}
+          </p>
+        )}
+
+        <div className="mt-6 flex flex-wrap justify-center gap-3">
+          <button
+            type="button"
+            onClick={() => navigate("/dashboard")}
+            className="btn-primary"
+          >
+            Go to dashboard
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate("/deals")}
+            className="btn-ghost"
+          >
+            Browse deals
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
 export default function UserDashboard({ navigate }) {
   const [user, setUser] = useState(() => getStoredUser());
   const [allOpportunities, setAllOpportunities] = useState([]);
@@ -460,6 +538,27 @@ export default function UserDashboard({ navigate }) {
   const [editLoading, setEditLoading] = useState(false);
   const [, setProgressVersion] = useState(0);
   const [statusModal, setStatusModal] = useState(null);
+  const location = useLocation();
+  const [paymentReturn, setPaymentReturn] = useState(null);
+
+  // Show the payment result modal when returning from the SSLCommerz gateway
+  // (the backend redirects here with ?status=success|fail|cancel).
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const returnStatus = params.get("status");
+    if (
+      returnStatus === "success" ||
+      returnStatus === "fail" ||
+      returnStatus === "cancel"
+    ) {
+      setPaymentReturn({
+        status: returnStatus,
+        tranId: params.get("tran_id"),
+      });
+      // Clean the query string so a refresh doesn't re-show the modal.
+      navigate("/dashboard", { replace: true });
+    }
+  }, [location.search, navigate]);
 
   const sectors = ["HealthTech", "CleanEnergy", "E-commerce", "AgriTech", "FinTech", "EdTech", "Others"];
 
@@ -1243,6 +1342,17 @@ export default function UserDashboard({ navigate }) {
               onClose={() => setStatusModal(null)}
               navigate={navigate}
               onAccepted={handleAccepted}
+            />
+          )}
+        </AnimatePresence>
+
+        <AnimatePresence>
+          {paymentReturn && (
+            <PaymentResultModal
+              status={paymentReturn.status}
+              tranId={paymentReturn.tranId}
+              onClose={() => setPaymentReturn(null)}
+              navigate={navigate}
             />
           )}
         </AnimatePresence>
