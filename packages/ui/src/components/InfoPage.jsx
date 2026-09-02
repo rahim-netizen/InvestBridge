@@ -1,6 +1,7 @@
 import { ArrowLeft, ArrowRight, CheckCircle2, FileText, Sparkles, Zap } from "lucide-react";
 import { motion } from "framer-motion";
 import PageBackground from "./PageBackground.jsx";
+import GradientText from "./GradientText.jsx";
 import { fadeUp, stagger } from "../lib/motion.jsx";
 
 export const infoPages = {
@@ -71,11 +72,20 @@ export default function InfoPage({ navigate, content }) {
 
   return (
     <section className="relative min-h-screen overflow-hidden px-4 py-20 sm:px-6 lg:px-8">
-      <PageBackground />
+      <PageBackground image={false} />
       <div className="mx-auto max-w-5xl">
         <motion.div initial="hidden" animate="visible" variants={stagger} className="max-w-3xl">
           <motion.span className="eyebrow" variants={fadeUp}><Sparkles className="h-3.5 w-3.5" />{content.eyebrow}</motion.span>
-          <motion.h1 variants={fadeUp} className="mt-6 font-display text-4xl font-extrabold tracking-tight text-white sm:text-6xl">{content.title}</motion.h1>
+          <motion.h1 variants={fadeUp} className="mt-6">
+            <GradientText
+              colors={["#10b981", "#fbbf24", "#10b981"]}
+              animationSpeed={5}
+              direction="horizontal"
+              className="font-display text-4xl font-extrabold tracking-tight sm:text-6xl"
+            >
+              {content.title}
+            </GradientText>
+          </motion.h1>
           <motion.p variants={fadeUp} className="mt-5 text-lg leading-relaxed text-white/80">{content.description}</motion.p>
         </motion.div>
         <motion.div variants={stagger} initial="hidden" animate="visible" className="mt-12 grid gap-4 md:grid-cols-3">

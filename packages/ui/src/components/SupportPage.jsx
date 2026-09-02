@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { AlertCircle, CheckCircle2, Send } from "lucide-react";
 import PageBackground from "./PageBackground.jsx";
+import GradientText from "./GradientText.jsx";
 import { createComplaint, getComplaints } from "../api/support";
 
 export default function SupportPage() {
@@ -31,10 +32,19 @@ export default function SupportPage() {
 
   return (
     <section className="relative min-h-screen overflow-hidden px-4 py-20 sm:px-6 lg:px-8">
-      <PageBackground />
+      <PageBackground image={false} />
       <div className="mx-auto grid max-w-5xl gap-6 lg:grid-cols-2">
         <div className="glass-panel-strong rounded-[2rem] p-6">
-          <h1 className="font-display text-3xl font-bold text-white">Report a problem</h1>
+          <h1>
+            <GradientText
+              colors={["#10b981", "#fbbf24", "#10b981"]}
+              animationSpeed={5}
+              direction="horizontal"
+              className="font-display text-3xl font-bold"
+            >
+              Report a problem
+            </GradientText>
+          </h1>
           <p className="mt-2 text-sm text-white/75">Send a complaint and we will review it.</p>
           <form onSubmit={handleSubmit} className="mt-6 space-y-4">
             <input required value={subject} onChange={(event) => setSubject(event.target.value)} placeholder="Subject" className="w-full rounded-2xl border border-white/20 bg-white/70 px-4 py-3 text-sm outline-none" />

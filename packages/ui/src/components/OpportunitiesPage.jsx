@@ -24,6 +24,7 @@ import {
 import { AnimatePresence, motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import PageBackground from "./PageBackground.jsx";
+import GradientText from "./GradientText.jsx";
 import { createOpportunity, deleteOpportunity, getMyOpportunities } from "../api/opportunities";
 import { fadeUp, fadeUpBlur, stagger, useTilt } from "../lib/motion.jsx";
 import {
@@ -353,7 +354,7 @@ export default function OpportunitiesPage({ navigate }) {
   if (!user) {
     return (
       <section className="relative min-h-screen overflow-hidden px-4 py-20 transition-colors duration-300 sm:px-6 lg:px-8">
-        <PageBackground />
+        <PageBackground image={false} />
         <div className="pointer-events-none absolute inset-0 -z-10 opacity-60">
           <div className="absolute left-[-5rem] top-24 h-72 w-72 rounded-full bg-brand-200/35 blur-3xl" />
           <div className="absolute right-[-4rem] bottom-10 h-80 w-80 rounded-full bg-gold-200/20 blur-3xl" />
@@ -383,7 +384,7 @@ export default function OpportunitiesPage({ navigate }) {
 
   return (
     <section className="relative min-h-screen overflow-hidden px-4 py-20 transition-colors duration-300 sm:px-6 lg:px-8">
-      <PageBackground />
+      <PageBackground image={false} />
       <div className="pointer-events-none absolute inset-0 -z-10 opacity-60">
         <div className="absolute left-[-5rem] top-24 h-72 w-72 rounded-full bg-brand-200/35 blur-3xl" />
         <div className="absolute right-[-4rem] bottom-10 h-80 w-80 rounded-full bg-gold-200/20 blur-3xl" />
@@ -401,8 +402,15 @@ export default function OpportunitiesPage({ navigate }) {
               <PenLine className="h-3.5 w-3.5" />
               My opportunities
             </span>
-            <h1 className="mt-4 font-display text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
-              Opportunities you posted
+            <h1 className="mt-4">
+              <GradientText
+                colors={["#10b981", "#fbbf24", "#10b981"]}
+                animationSpeed={5}
+                direction="horizontal"
+                className="font-display text-3xl font-extrabold tracking-tight sm:text-4xl"
+              >
+                Opportunities you posted
+              </GradientText>
             </h1>
             <p className="mt-3 max-w-xl text-lg leading-relaxed text-white/80">
               These are the opportunities you have published on InvestBridge.

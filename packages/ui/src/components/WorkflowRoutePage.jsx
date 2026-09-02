@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import PageBackground from "./PageBackground.jsx";
+import GradientText from "./GradientText.jsx";
 import { fadeUp, stagger } from "../lib/motion.jsx";
 
 export default function WorkflowRoutePage({ navigate, content, variant }) {
@@ -16,7 +17,7 @@ export default function WorkflowRoutePage({ navigate, content, variant }) {
 
   return (
     <section className="relative min-h-screen overflow-hidden px-4 py-20 transition-colors duration-300 sm:px-6 lg:px-8">
-      <PageBackground />
+      <PageBackground image={false} />
       <div className="pointer-events-none absolute inset-0 -z-10 opacity-60">
         <div className="absolute left-[-6rem] top-20 h-72 w-72 rounded-full bg-brand-200/35 blur-3xl" />
         <div className="absolute right-[-5rem] bottom-12 h-80 w-80 rounded-full bg-gold-200/20 blur-3xl" />
@@ -35,8 +36,15 @@ export default function WorkflowRoutePage({ navigate, content, variant }) {
           <motion.div className="mt-4 inline-flex rounded-full border border-brand-200 bg-brand-50 px-4 py-2 text-xs font-semibold uppercase tracking-wider text-brand-700 dark:border-brand-400/30 dark:bg-brand-400/10 dark:text-brand-300" variants={fadeUp}>
             {content.badge}
           </motion.div>
-          <motion.h1 className="mt-6 font-display text-4xl font-extrabold tracking-tight text-white sm:text-5xl" variants={fadeUp}>
-            {content.title}
+          <motion.h1 className="mt-6" variants={fadeUp}>
+            <GradientText
+              colors={["#10b981", "#fbbf24", "#10b981"]}
+              animationSpeed={5}
+              direction="horizontal"
+              className="font-display text-4xl font-extrabold tracking-tight sm:text-5xl"
+            >
+              {content.title}
+            </GradientText>
           </motion.h1>
           <motion.p className="mt-4 max-w-xl text-lg leading-relaxed text-white/80" variants={fadeUp}>
             {content.description}

@@ -2,6 +2,7 @@ import { CheckCircle2, Sparkles, UserRound, Camera } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import PageBackground from "./PageBackground.jsx";
+import GradientText from "./GradientText.jsx";
 import { getCurrentUser, setAuthToken, onAuthChange } from "../api/auth";
 import { updateProfile } from "../api/profile";
 
@@ -248,7 +249,7 @@ export default function ProfileDashboard({ onOpenDeals, onOpenConnect, onOpenPay
   if (!user) {
     return (
       <section className="relative min-h-screen px-4 py-20 sm:px-6 lg:px-8 transition-colors duration-300">
-        <PageBackground />
+        <PageBackground image={false} />
         <div className="mx-auto max-w-2xl rounded-3xl border border-white/40 bg-white/70 p-8 shadow-lift backdrop-blur-2xl dark:border-white/10 dark:bg-ink-900/70 dark:text-ink-50">
           <p className="text-sm font-semibold text-brand-700 dark:text-brand-400">
             No active session
@@ -274,7 +275,7 @@ export default function ProfileDashboard({ onOpenDeals, onOpenConnect, onOpenPay
 
   return (
     <section className="relative min-h-screen px-4 py-20 sm:px-6 lg:px-8 transition-colors duration-300">
-      <PageBackground />
+      <PageBackground image={false} />
       <div className="mx-auto flex max-w-7xl flex-col gap-8 lg:flex-row">
         <motion.div
           className="w-full max-w-xl rounded-3xl border border-white/40 bg-white/70 p-8 shadow-lift backdrop-blur-2xl dark:border-white/10 dark:bg-ink-900/70 dark:text-ink-50"
@@ -286,8 +287,15 @@ export default function ProfileDashboard({ onOpenDeals, onOpenConnect, onOpenPay
             <Sparkles className="h-3.5 w-3.5" />
             Complete your profile
           </span>
-          <h1 className="mt-5 font-display text-3xl font-bold text-ink-900 dark:text-ink-50">
-            Build your InvestBridge profile
+          <h1 className="mt-5">
+            <GradientText
+              colors={["#10b981", "#fbbf24", "#10b981"]}
+              animationSpeed={5}
+              direction="horizontal"
+              className="font-display text-3xl font-bold"
+            >
+              Build your InvestBridge profile
+            </GradientText>
           </h1>
           <p className="mt-3 text-lg leading-relaxed text-ink-600 dark:text-ink-300">
             Share your background, interests, and expertise. Whether you're

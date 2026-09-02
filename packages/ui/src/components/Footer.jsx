@@ -1,6 +1,7 @@
 import { Landmark, MessagesSquare, Send, Code } from "lucide-react";
 import { motion } from "framer-motion";
 import { fadeUp, stagger } from "../lib/motion.jsx";
+import GradientText from "./GradientText.jsx";
 
 const columns = [
   {
@@ -46,7 +47,7 @@ const columns = [
 
 export default function Footer({ navigate }) {
   return (
-    <footer className="border-t border-white/40 bg-white/60 backdrop-blur-2xl dark:border-white/10 dark:bg-ink-950/60">
+    <footer className="border-t border-white/10 bg-ink-950/60 backdrop-blur-2xl">
       <div className="container-page py-14">
         <motion.div
           className="grid gap-10 lg:grid-cols-[1.4fr_repeat(4,1fr)]"
@@ -60,11 +61,16 @@ export default function Footer({ navigate }) {
               <span className="grid h-9 w-9 place-items-center rounded-xl bg-brand-600 text-white">
                 <Landmark className="h-5 w-5" />
               </span>
-              <span className="font-display text-lg font-extrabold tracking-tight text-ink-900">
-                Invest<span className="text-brand-600">Bridge</span>
-              </span>
+              <GradientText
+                colors={["#10b981", "#fbbf24", "#10b981"]}
+                animationSpeed={4}
+                direction="horizontal"
+                className="font-display text-lg font-black tracking-tight"
+              >
+                InvestBridge
+              </GradientText>
             </button>
-            <p className="mt-4 max-w-xs text-sm leading-relaxed text-ink-500">
+            <p className="mt-4 max-w-xs text-sm leading-relaxed text-white/55">
               The bridge between ambitious founders and serious investors. Discover, fund, and grow
               the next generation of startups.
             </p>
@@ -75,7 +81,7 @@ export default function Footer({ navigate }) {
                   href={["https://www.linkedin.com", "https://t.me", "https://github.com"][i]}
                   target="_blank"
                   rel="noreferrer"
-                  className="social-link grid h-9 w-9 place-items-center rounded-lg border border-ink-200 text-ink-500 transition-colors hover:border-brand-300 hover:text-brand-700"
+                  className="social-link grid h-9 w-9 place-items-center rounded-lg border border-white/15 text-white/50 transition-colors hover:border-brand-400/50 hover:text-brand-300"
                   aria-label={["LinkedIn", "Telegram", "GitHub"][i]}
                   whileHover={{ y: -2, scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
@@ -88,14 +94,14 @@ export default function Footer({ navigate }) {
 
           {columns.map((col) => (
             <motion.div key={col.title} variants={fadeUp}>
-              <p className="font-display text-sm font-bold text-ink-900">{col.title}</p>
+              <p className="font-display text-sm font-bold text-white">{col.title}</p>
               <ul className="mt-4 space-y-2.5">
                 {col.links.map(([label, path]) => (
                   <li key={label}>
                     <button
                       type="button"
                       onClick={() => navigate(path)}
-                      className="footer-link text-left text-sm text-ink-500 transition-colors hover:text-brand-700"
+                      className="footer-link text-left text-sm text-white/55 transition-colors hover:text-brand-300"
                     >
                       {label}
                     </button>
@@ -106,11 +112,11 @@ export default function Footer({ navigate }) {
           ))}
         </motion.div>
 
-        <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-white/40 pt-6 dark:border-white/10 sm:flex-row">
-          <p className="text-xs text-ink-500">
+        <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-6 sm:flex-row">
+          <p className="text-xs text-white/50">
             © {new Date().getFullYear()} InvestBridge. All rights reserved.
           </p>
-          <p className="text-xs text-ink-400">
+          <p className="text-xs text-white/40">
             Investing involves risk. Past performance is not indicative of future results.
           </p>
         </div>

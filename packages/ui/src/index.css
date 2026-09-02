@@ -220,6 +220,39 @@
   }
 }
 
+/* Homepage sits on an always-dark backdrop (PageBackground) regardless of
+   the light/dark theme toggle, so cards there need to stay dark-glass in
+   both themes. .holo-card's own background defaults to a light gradient
+   (only switching under .dark), which would wash out white card text in
+   light mode — this class overrides that unconditionally. */
+.holo-card-dark {
+  border-color: rgba(255, 255, 255, 0.12) !important;
+  background:
+    linear-gradient(135deg, rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0.55)),
+    linear-gradient(120deg, rgba(16, 185, 129, 0.12), rgba(0, 0, 0, 0)) !important;
+  box-shadow:
+    0 18px 45px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+.holo-card-dark::before {
+  background: linear-gradient(
+    125deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.08) 24%,
+    rgba(255, 255, 255, 0.03) 45%,
+    transparent 70%
+  ) !important;
+}
+.holo-card-dark:hover {
+  background:
+    linear-gradient(135deg, rgba(0, 0, 0, 0.92), rgba(0, 0, 0, 0.65)),
+    linear-gradient(120deg, rgba(16, 185, 129, 0.16), rgba(0, 0, 0, 0)) !important;
+  box-shadow:
+    0 24px 60px rgba(0, 0, 0, 0.45),
+    0 0 0 1px rgba(255, 255, 255, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
 .dark .card {
   background-color: rgba(15, 23, 42, 0.7) !important;
   border-color: rgba(255, 255, 255, 0.1) !important;
