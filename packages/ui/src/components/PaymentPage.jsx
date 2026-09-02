@@ -14,6 +14,7 @@ import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { useLocation, useParams } from "react-router-dom";
 import PageBackground from "./PageBackground.jsx";
+import GradientText from "./GradientText.jsx";
 import { getAllOpportunities, initiateInvestment, getCheckpoints } from "../api/opportunities";
 import { fadeUpBlur } from "../lib/motion.jsx";
 
@@ -203,7 +204,7 @@ export default function PaymentPage({ navigate }) {
   if (!user) {
     return (
       <section className="relative min-h-screen px-4 py-20 sm:px-6 lg:px-8 transition-colors duration-300">
-        <PageBackground />
+        <PageBackground image={false} />
         <div className="mx-auto max-w-2xl rounded-3xl border border-white/40 bg-white/70 p-8 shadow-lift backdrop-blur-2xl dark:border-white/10 dark:bg-ink-900/70 dark:text-ink-50">
           <p className="text-sm font-semibold text-brand-700 dark:text-brand-400">
             No active session
@@ -229,7 +230,7 @@ export default function PaymentPage({ navigate }) {
   if (loading) {
     return (
       <section className="relative min-h-screen px-4 py-20 sm:px-6 lg:px-8 transition-colors duration-300">
-        <PageBackground />
+        <PageBackground image={false} />
         <div className="mx-auto max-w-2xl rounded-3xl border border-white/40 bg-white/70 p-8 text-center shadow-lift backdrop-blur-2xl dark:border-white/10 dark:bg-ink-900/70 dark:text-ink-50">
           <p className="text-ink-600 dark:text-ink-300">
             Loading opportunity details...
@@ -242,7 +243,7 @@ export default function PaymentPage({ navigate }) {
   if (notFound || !deal) {
     return (
       <section className="relative min-h-screen px-4 py-20 sm:px-6 lg:px-8 transition-colors duration-300">
-        <PageBackground />
+        <PageBackground image={false} />
         <div className="mx-auto max-w-2xl rounded-3xl border border-white/40 bg-white/70 p-8 shadow-lift backdrop-blur-2xl dark:border-white/10 dark:bg-ink-900/70 dark:text-ink-50">
           <h1 className="font-display text-2xl font-bold text-ink-900 dark:text-ink-50">
             Opportunity not found
@@ -338,7 +339,7 @@ export default function PaymentPage({ navigate }) {
     const cancelled = paymentReturn.status === "cancel";
     return (
       <section className="relative min-h-screen px-4 py-20 sm:px-6 lg:px-8 transition-colors duration-300">
-        <PageBackground />
+        <PageBackground image={false} />
         <div className="mx-auto max-w-xl">
           <motion.div
             className="glass-panel-strong holo-card rounded-[2rem] p-8 text-center sm:p-10"
@@ -381,7 +382,7 @@ export default function PaymentPage({ navigate }) {
 
   return (
     <section className="relative min-h-screen overflow-hidden px-4 py-20 transition-colors duration-300 sm:px-6 lg:px-8">
-      <PageBackground />
+      <PageBackground image={false} />
       <div className="pointer-events-none absolute inset-0 -z-10 opacity-60">
         <div className="absolute left-[-5rem] top-24 h-72 w-72 rounded-full bg-brand-200/35 blur-3xl" />
         <div className="absolute right-[-4rem] bottom-10 h-80 w-80 rounded-full bg-gold-200/20 blur-3xl" />
@@ -402,8 +403,15 @@ export default function PaymentPage({ navigate }) {
             <Sparkles className="h-3.5 w-3.5" />
             Secure checkout
           </span>
-          <h1 className="mt-4 font-display text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
-            Invest in {deal.company}
+          <h1 className="mt-4">
+            <GradientText
+              colors={["#10b981", "#fbbf24", "#10b981"]}
+              animationSpeed={5}
+              direction="horizontal"
+              className="font-display text-3xl font-extrabold tracking-tight sm:text-4xl"
+            >
+              Invest in {deal.company}
+            </GradientText>
           </h1>
           <p className="mt-3 max-w-xl text-lg leading-relaxed text-white/80">
             Add one or more checkpoints with a title, description, and amount

@@ -19,6 +19,8 @@ import {
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 import PageBackground from "./PageBackground.jsx";
+import GradientText from "./GradientText.jsx";
+import BorderGlow from "./BorderGlow.jsx";
 import { getAllOpportunities, getPlatformStats } from "../api/opportunities";
 import {
   fadeUp,
@@ -26,7 +28,6 @@ import {
   stagger,
   useCountUp,
   useInView,
-  useTilt,
   Parallax,
 } from "../lib/motion.jsx";
 
@@ -256,11 +257,14 @@ function Hero() {
 function StatItem({ s, isInView }) {
   const display = useCountUp(s.value, isInView);
   return (
-    <motion.div className="text-center" variants={fadeUp}>
-      <p className="font-display text-3xl font-extrabold text-white sm:text-4xl">
+    <motion.div
+      className="px-4 py-6 text-center sm:py-0"
+      variants={fadeUp}
+    >
+      <p className="bg-gradient-to-br from-white to-white/70 bg-clip-text font-display text-3xl font-extrabold text-transparent sm:text-4xl">
         {display}
       </p>
-      <p className="mt-1 text-sm text-white/70">{s.label}</p>
+      <p className="mt-1.5 text-sm text-white/65">{s.label}</p>
     </motion.div>
   );
 }
@@ -291,19 +295,21 @@ function Stats() {
   }, []);
 
   return (
-    <section className="border-y border-white/10 py-12">
-      <motion.div
-        ref={containerRef}
-        className="container-page grid grid-cols-2 gap-8 lg:grid-cols-4"
-        variants={stagger}
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, amount: 0.4 }}
-      >
-        {stats.map((s) => (
-          <StatItem key={s.label} s={s} isInView={isInView} />
-        ))}
-      </motion.div>
+    <section className="py-16 sm:py-20">
+      <div className="container-page">
+        <motion.div
+          ref={containerRef}
+          className="mx-auto grid max-w-5xl grid-cols-2 divide-y divide-white/10 rounded-3xl border border-white/10 bg-white/[0.03] px-4 shadow-[0_24px_60px_rgba(2,6,23,0.35)] backdrop-blur-xl sm:divide-x sm:divide-y-0 sm:px-4 lg:grid-cols-4"
+          variants={stagger}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.4 }}
+        >
+          {stats.map((s) => (
+            <StatItem key={s.label} s={s} isInView={isInView} />
+          ))}
+        </motion.div>
+      </div>
     </section>
   );
 }
@@ -326,8 +332,15 @@ function HowItWorks({ navigate }) {
             variants={fadeUpBlur}
           >
             <span className="eyebrow">How it works</span>
-            <h2 className="mt-4 font-display text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
-              Three steps from pitch to funded
+            <h2 className="mt-4">
+              <GradientText
+                colors={["#10b981", "#fbbf24", "#10b981"]}
+                animationSpeed={5}
+                direction="horizontal"
+                className="font-display text-3xl font-extrabold tracking-tight sm:text-4xl"
+              >
+                Three steps from pitch to funded
+              </GradientText>
             </h2>
             <p className="mt-4 text-lg text-white/75">
               A transparent process that keeps founders focused on building and
@@ -353,39 +366,45 @@ function HowItWorks({ navigate }) {
 }
 
 function StepCard({ s, i, navigate }) {
-  const tilt = useTilt();
-
   return (
-    <motion.button
-      ref={tilt.ref}
-      type="button"
-      onClick={() => navigate(s.route)}
-      onMouseMove={tilt.onMouseMove}
-      onMouseLeave={tilt.onMouseLeave}
-      style={tilt.style}
-      className="card holo-card group relative p-7 text-left"
-      variants={fadeUp}
-      whileHover={{ y: -4, transition: { duration: 0.25 } }}
+    <BorderGlow
+      backgroundColor="transparent"
+      borderRadius={40}
+      glowRadius={4}
+      glowIntensity={1.8}
+      edgeSensitivity={35}
+      coneSpread={35}
+      glowColor="40 90 60"
+      colors={["#10b981", "#fbbf24", "#10b981"]}
+      className="h-full"
     >
-      <span className="absolute right-6 top-6 font-display text-5xl font-extrabold text-ink-100">
-        {i + 1}
-      </span>
-      <motion.span
-        className="grid h-12 w-12 place-items-center rounded-xl bg-brand-50 text-brand-700"
-        whileHover={{ rotate: 8, scale: 1.1 }}
-        transition={{ type: "spring", stiffness: 300, damping: 15 }}
+      <motion.button
+        type="button"
+        onClick={() => navigate(s.route)}
+        className="holo-card holo-card-dark group relative h-full w-full rounded-[40px] p-7 text-left"
+        variants={fadeUp}
+        whileHover={{ y: -4, transition: { duration: 0.25 } }}
       >
-        <s.icon className="h-6 w-6" />
-      </motion.span>
-      <h3 className="mt-5 font-display text-lg font-bold text-ink-900">
-        {s.title}
-      </h3>
-      <p className="mt-2 text-sm leading-relaxed text-ink-600">{s.desc}</p>
-      <span className="mt-5 inline-flex items-center gap-1 text-sm font-semibold text-brand-700">
-        {s.action}
-        <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1 group-hover:-translate-y-0.5" />
-      </span>
-    </motion.button>
+        <span className="absolute right-6 top-6 font-display text-5xl font-extrabold text-white/10">
+          {i + 1}
+        </span>
+        <motion.span
+          className="grid h-12 w-12 place-items-center rounded-xl bg-brand-500/15 text-brand-300"
+          whileHover={{ rotate: 8, scale: 1.1 }}
+          transition={{ type: "spring", stiffness: 300, damping: 15 }}
+        >
+          <s.icon className="h-6 w-6" />
+        </motion.span>
+        <h3 className="mt-5 font-display text-lg font-bold text-white">
+          {s.title}
+        </h3>
+        <p className="mt-2 text-sm leading-relaxed text-white/65">{s.desc}</p>
+        <span className="mt-5 inline-flex items-center gap-1 text-sm font-semibold text-brand-300 transition-colors group-hover:text-brand-200">
+          {s.action}
+          <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1 group-hover:-translate-y-0.5" />
+        </span>
+      </motion.button>
+    </BorderGlow>
   );
 }
 
@@ -437,8 +456,15 @@ function FeaturedStartups({ navigate, imageErrors, handleImageError }) {
           >
             <div className="max-w-2xl">
               <span className="eyebrow">Live deals</span>
-              <h2 className="mt-4 font-display text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
-                Featured startups raising now
+              <h2 className="mt-4">
+                <GradientText
+                  colors={["#10b981", "#fbbf24", "#10b981"]}
+                  animationSpeed={5}
+                  direction="horizontal"
+                  className="font-display text-3xl font-extrabold tracking-tight sm:text-4xl"
+                >
+                  Featured startups raising now
+                </GradientText>
               </h2>
               <p className="mt-4 text-lg text-white/75">
                 A snapshot of vetted rounds currently open for investment on
@@ -457,8 +483,8 @@ function FeaturedStartups({ navigate, imageErrors, handleImageError }) {
         </Parallax>
 
         {!loading && startups.length === 0 ? (
-          <div className="mt-12 card holo-card p-10 text-center">
-            <p className="text-ink-600">
+          <div className="mt-12 rounded-[40px] border border-white/10 bg-white/[0.04] p-10 text-center backdrop-blur">
+            <p className="text-white/65">
               No opportunities have been posted yet. Be the first to raise a
               round on InvestBridge.
             </p>
@@ -496,70 +522,76 @@ function FeaturedStartups({ navigate, imageErrors, handleImageError }) {
 }
 
 function StartupCard({ s, navigate, imageErrors, handleImageError }) {
-  const tilt = useTilt(5);
-
   return (
-    <motion.article
-      ref={tilt.ref}
-      onMouseMove={tilt.onMouseMove}
-      onMouseLeave={tilt.onMouseLeave}
-      style={tilt.style}
-      className="card holo-card group overflow-hidden hover:shadow-lift cursor-pointer"
-      variants={fadeUp}
-      onClick={() => navigate("/deals")}
+    <BorderGlow
+      backgroundColor="transparent"
+      borderRadius={40}
+      glowRadius={4}
+      glowIntensity={1.8}
+      edgeSensitivity={35}
+      coneSpread={35}
+      glowColor="40 90 60"
+      colors={["#10b981", "#fbbf24", "#10b981"]}
+      className="h-full"
     >
-      <div className="relative h-40 overflow-hidden bg-ink-900">
-        {s.image && !imageErrors[s.id] ? (
-          <img
-            src={s.image}
-            alt={s.name}
-            loading="lazy"
-            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-            onError={() => handleImageError(s.id)}
-          />
-        ) : (
-          <img
-            src={DEFAULT_DEAL_IMAGE}
-            alt={s.name}
-            loading="lazy"
-            className="h-full w-full object-cover"
-          />
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-ink-950/70 via-ink-950/10 to-transparent" />
-        <div className="absolute left-4 top-4 flex gap-2">
-          <span className="rounded-full bg-white/90 px-2.5 py-1 text-xs font-semibold text-ink-800 backdrop-blur">
-            {s.sector}
-          </span>
-        </div>
-        <div className="absolute bottom-4 left-4 flex items-center gap-2 text-white">
-          <span className="font-display text-lg font-bold">{s.name}</span>
-        </div>
-      </div>
-
-      <div className="p-5">
-        <p className="text-xs font-semibold uppercase tracking-wider text-ink-400">
-          {s.company}
-        </p>
-        <p className="mt-2 text-sm leading-relaxed text-ink-600 line-clamp-2">
-          {s.blurb}
-        </p>
-        <div className="mt-3 flex flex-wrap items-center gap-4 text-xs text-ink-500">
-          <span className="flex items-center gap-1">
-            <MapPin className="h-3.5 w-3.5" />
-            {s.location}
-          </span>
-          <span className="flex items-center gap-1">
-            <DollarSign className="h-3.5 w-3.5" />
-            Goal {s.goal}
-          </span>
+      <motion.article
+        className="holo-card holo-card-dark group h-full cursor-pointer overflow-hidden rounded-[40px] hover:shadow-lift"
+        variants={fadeUp}
+        onClick={() => navigate("/deals")}
+      >
+        <div className="relative h-40 overflow-hidden bg-black">
+          {s.image && !imageErrors[s.id] ? (
+            <img
+              src={s.image}
+              alt={s.name}
+              loading="lazy"
+              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+              onError={() => handleImageError(s.id)}
+            />
+          ) : (
+            <img
+              src={DEFAULT_DEAL_IMAGE}
+              alt={s.name}
+              loading="lazy"
+              className="h-full w-full object-cover"
+            />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-ink-950/70 via-ink-950/10 to-transparent" />
+          <div className="absolute left-4 top-4 flex gap-2">
+            <span className="rounded-full bg-white/90 px-2.5 py-1 text-xs font-semibold text-ink-800 backdrop-blur">
+              {s.sector}
+            </span>
+          </div>
+          <div className="absolute bottom-4 left-4 flex items-center gap-2 text-white">
+            <span className="font-display text-lg font-bold">{s.name}</span>
+          </div>
         </div>
 
-        <span className="mt-5 inline-flex items-center gap-1 text-sm font-semibold text-brand-700 transition-colors group-hover:text-brand-800 group-hover:gap-1.5">
-          View deal room
-          <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1 group-hover:-translate-y-0.5" />
-        </span>
-      </div>
-    </motion.article>
+        <div className="p-5">
+          <p className="text-xs font-semibold uppercase tracking-wider text-white/55">
+            {s.company}
+          </p>
+          <p className="mt-2 text-sm leading-relaxed text-white/65 line-clamp-2">
+            {s.blurb}
+          </p>
+          <div className="mt-3 flex flex-wrap items-center gap-4 text-xs text-white/55">
+            <span className="flex items-center gap-1">
+              <MapPin className="h-3.5 w-3.5" />
+              {s.location}
+            </span>
+            <span className="flex items-center gap-1">
+              <DollarSign className="h-3.5 w-3.5" />
+              Goal {s.goal}
+            </span>
+          </div>
+
+          <span className="mt-5 inline-flex items-center gap-1 text-sm font-semibold text-brand-300 transition-colors group-hover:text-brand-200 group-hover:gap-1.5">
+            View deal room
+            <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1 group-hover:-translate-y-0.5" />
+          </span>
+        </div>
+      </motion.article>
+    </BorderGlow>
   );
 }
 
@@ -576,8 +608,15 @@ function ForWho() {
             variants={fadeUpBlur}
           >
             <span className="eyebrow">Features for everyone</span>
-            <h2 className="mt-4 font-display text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
-              Everything you need on one platform
+            <h2 className="mt-4">
+              <GradientText
+                colors={["#10b981", "#fbbf24", "#10b981"]}
+                animationSpeed={5}
+                direction="horizontal"
+                className="font-display text-3xl font-extrabold tracking-tight sm:text-4xl"
+              >
+                Everything you need on one platform
+              </GradientText>
             </h2>
             <p className="mt-3 text-white/75">
               Whether you're looking to share an opportunity, find an investment,
@@ -604,28 +643,34 @@ function ForWho() {
 }
 
 function BenefitCard({ b }) {
-  const tilt = useTilt(5);
-
   return (
-    <motion.div
-      ref={tilt.ref}
-      onMouseMove={tilt.onMouseMove}
-      onMouseLeave={tilt.onMouseLeave}
-      style={tilt.style}
-      className="card holo-card p-8 hover:shadow-lift"
-      variants={fadeUp}
-      whileHover={{ y: -3, transition: { duration: 0.25 } }}
+    <BorderGlow
+      backgroundColor="transparent"
+      borderRadius={40}
+      glowRadius={4}
+      glowIntensity={1.8}
+      edgeSensitivity={35}
+      coneSpread={35}
+      glowColor="40 90 60"
+      colors={["#10b981", "#fbbf24", "#10b981"]}
+      className="h-full"
     >
-      <motion.span
-        className="grid h-12 w-12 place-items-center rounded-xl bg-brand-50 text-brand-700"
-        whileHover={{ rotate: -8, scale: 1.1 }}
-        transition={{ type: "spring", stiffness: 300, damping: 15 }}
+      <motion.div
+        className="holo-card holo-card-dark h-full rounded-[40px] p-8 hover:shadow-lift"
+        variants={fadeUp}
+        whileHover={{ y: -3, transition: { duration: 0.25 } }}
       >
-        <b.icon className="h-6 w-6" />
-      </motion.span>
-      <p className="mt-4 font-display font-bold text-ink-900">{b.title}</p>
-      <p className="mt-2 text-sm leading-relaxed text-ink-600">{b.desc}</p>
-    </motion.div>
+        <motion.span
+          className="grid h-12 w-12 place-items-center rounded-xl bg-brand-500/15 text-brand-300"
+          whileHover={{ rotate: -8, scale: 1.1 }}
+          transition={{ type: "spring", stiffness: 300, damping: 15 }}
+        >
+          <b.icon className="h-6 w-6" />
+        </motion.span>
+        <p className="mt-4 font-display font-bold text-white">{b.title}</p>
+        <p className="mt-2 text-sm leading-relaxed text-white/65">{b.desc}</p>
+      </motion.div>
+    </BorderGlow>
   );
 }
 
@@ -644,8 +689,15 @@ function Testimonials({ imageErrors, handleImageError }) {
             <span className="inline-flex items-center gap-2 rounded-full border border-ink-200 bg-ink-50 px-3.5 py-1.5 text-xs font-semibold uppercase tracking-wider text-brand-600 dark:border-white/15 dark:bg-white/5 dark:text-brand-300">
               Success stories
             </span>
-            <h2 className="mt-4 font-display text-3xl font-extrabold tracking-tight sm:text-4xl">
-              Trusted by founders and investors alike
+            <h2 className="mt-4">
+              <GradientText
+                colors={["#10b981", "#fbbf24", "#10b981"]}
+                animationSpeed={5}
+                direction="horizontal"
+                className="font-display text-3xl font-extrabold tracking-tight sm:text-4xl"
+              >
+                Trusted by founders and investors alike
+              </GradientText>
             </h2>
           </motion.div>
         </Parallax>
@@ -682,62 +734,68 @@ const starPop = {
 };
 
 function TestimonialCard({ t, imageErrors, handleImageError }) {
-  const tilt = useTilt(5);
-
   return (
-    <motion.figure
-      ref={tilt.ref}
-      onMouseMove={tilt.onMouseMove}
-      onMouseLeave={tilt.onMouseLeave}
-      style={tilt.style}
-      className="holo-card relative rounded-2xl border border-white/10 bg-white/[0.04] p-7 backdrop-blur transition-colors hover:bg-white/[0.07]"
-      variants={fadeUp}
-      whileHover={{ y: -3, transition: { duration: 0.25 } }}
+    <BorderGlow
+      backgroundColor="transparent"
+      borderRadius={40}
+      glowRadius={4}
+      glowIntensity={1.8}
+      edgeSensitivity={35}
+      coneSpread={35}
+      glowColor="40 90 60"
+      colors={["#10b981", "#fbbf24", "#10b981"]}
+      className="h-full"
     >
-      <motion.div whileHover={{ rotate: -10, scale: 1.1 }}>
-        <Quote className="h-8 w-8 text-brand-400/60" />
-      </motion.div>
-      <blockquote className="mt-4 text-sm leading-relaxed text-ink-200">
-        {t.quote}
-      </blockquote>
-      <div className="mt-6 flex items-center gap-3">
-        {!imageErrors[t.name] ? (
-          <img
-            src={t.avatar}
-            alt={t.name}
-            className="h-11 w-11 rounded-full object-cover"
-            loading="lazy"
-            onError={() => handleImageError(t.name)}
-          />
-        ) : (
-          <div className="h-11 w-11 rounded-full bg-ink-200 flex items-center justify-center dark:bg-ink-800">
-            <span className="text-ink-600 text-xs font-semibold dark:text-ink-300">
-              {t.name.charAt(0)}
-            </span>
+      <motion.figure
+        className="holo-card holo-card-dark relative h-full rounded-[40px] p-7"
+        variants={fadeUp}
+        whileHover={{ y: -3, transition: { duration: 0.25 } }}
+      >
+        <motion.div whileHover={{ rotate: -10, scale: 1.1 }}>
+          <Quote className="h-8 w-8 text-brand-400/60" />
+        </motion.div>
+        <blockquote className="mt-4 text-sm leading-relaxed text-white/75">
+          {t.quote}
+        </blockquote>
+        <div className="mt-6 flex items-center gap-3">
+          {!imageErrors[t.name] ? (
+            <img
+              src={t.avatar}
+              alt={t.name}
+              className="h-11 w-11 rounded-full object-cover"
+              loading="lazy"
+              onError={() => handleImageError(t.name)}
+            />
+          ) : (
+            <div className="h-11 w-11 rounded-full bg-ink-200 flex items-center justify-center dark:bg-ink-800">
+              <span className="text-ink-600 text-xs font-semibold dark:text-ink-300">
+                {t.name.charAt(0)}
+              </span>
+            </div>
+          )}
+          <div>
+            <figcaption className="text-sm font-semibold text-white">
+              {t.name}
+            </figcaption>
+            <p className="text-xs text-white/55">{t.role}</p>
           </div>
-        )}
-        <div>
-          <figcaption className="text-sm font-semibold text-white">
-            {t.name}
-          </figcaption>
-          <p className="text-xs text-ink-400">{t.role}</p>
         </div>
-      </div>
-      <div className="mt-4 flex gap-0.5 text-gold-400">
-        {Array.from({ length: 5 }).map((_, i) => (
-          <motion.span
-            key={i}
-            custom={i}
-            variants={starPop}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, amount: 0.6 }}
-          >
-            <Star className="h-4 w-4 fill-current" />
-          </motion.span>
-        ))}
-      </div>
-    </motion.figure>
+        <div className="mt-4 flex gap-0.5 text-gold-400">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <motion.span
+              key={i}
+              custom={i}
+              variants={starPop}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, amount: 0.6 }}
+            >
+              <Star className="h-4 w-4 fill-current" />
+            </motion.span>
+          ))}
+        </div>
+      </motion.figure>
+    </BorderGlow>
   );
 }
 
@@ -771,7 +829,7 @@ function CTA({ navigate }) {
           viewport={{ once: true, amount: 0.4 }}
           transition={{ duration: 0.6, ease: "easeOut" }}
         >
-          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-700 via-brand-600 to-brand-800 px-6 py-16 text-center shadow-lift holo-card sm:px-12">
+          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-700 via-brand-600 to-brand-800 px-6 py-16 text-center shadow-lift ring-1 ring-white/15 holo-card sm:px-12">
             <motion.div
               className="pointer-events-none absolute inset-0 opacity-20"
               animate={{ opacity: [0.14, 0.26, 0.14] }}
@@ -786,8 +844,15 @@ function CTA({ navigate }) {
               />
             </motion.div>
             <div className="relative mx-auto max-w-2xl holo-layer-soft">
-              <h2 className="font-display text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
-                Ready to build the bridge?
+              <h2>
+                <GradientText
+                  colors={["#ffffff", "#fbbf24", "#ffffff"]}
+                  animationSpeed={5}
+                  direction="horizontal"
+                  className="font-display text-3xl font-extrabold tracking-tight sm:text-4xl"
+                >
+                  Ready to build the bridge?
+                </GradientText>
               </h2>
               <p className="mt-4 text-lg text-brand-50">
                 Join thousands of founders and investors turning bold ideas into
@@ -833,7 +898,7 @@ export default function Homepage({ navigate }) {
 
   return (
     <>
-      <PageBackground />
+      <PageBackground src="/homepage-luxury-bg.jpg" />
       <Hero />
       <Stats />
       <HowItWorks navigate={navigate} />

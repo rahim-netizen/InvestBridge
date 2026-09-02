@@ -18,6 +18,7 @@ import {
   LifeBuoy,
 } from "lucide-react";
 import { apiLogout, onAuthChange } from "../api/auth";
+import GradientText from "./GradientText.jsx";
 
 const links = [
   { label: "How it works", href: "#how-it-works" },
@@ -90,8 +91,8 @@ export default function Navbar({ navigate, theme, toggleTheme }) {
             ? "border-brand-500/15 bg-ink-950/80 shadow-[0_10px_30px_rgba(2,6,23,0.45)]"
             : "border-brand-500/10 bg-ink-950/55 shadow-[0_8px_24px_rgba(2,6,23,0.3)]"
           : scrolled
-            ? "border-white/20 bg-white/70 shadow-[0_10px_30px_rgba(15,23,42,0.08)] dark:border-white/10 dark:bg-ink-950/65 dark:shadow-[0_10px_30px_rgba(2,6,23,0.35)]"
-            : "border-white/20 bg-white/45 shadow-[0_8px_24px_rgba(15,23,42,0.04)] dark:bg-ink-950/45 dark:shadow-[0_8px_24px_rgba(2,6,23,0.24)]"
+            ? "border-white/10 bg-ink-950/80 shadow-[0_10px_30px_rgba(2,6,23,0.45)]"
+            : "border-white/10 bg-ink-950/55 shadow-[0_8px_24px_rgba(2,6,23,0.3)]"
       }`}
     >
       <nav className="container-page flex h-16 items-center justify-between sm:h-20">
@@ -103,13 +104,14 @@ export default function Navbar({ navigate, theme, toggleTheme }) {
           <span className="grid h-9 w-9 place-items-center rounded-xl border border-white/25 bg-brand-600/90 text-white shadow-soft backdrop-blur-sm">
             <Landmark className="h-5 w-5" />
           </span>
-          <span
-            className={`font-display text-lg font-extrabold tracking-tight ${
-              showProfileMenu ? "text-white" : "text-ink-900"
-            }`}
+          <GradientText
+            colors={["#10b981", "#fbbf24", "#10b981"]}
+            animationSpeed={4}
+            direction="horizontal"
+            className="font-display text-lg font-black tracking-tight"
           >
-            Invest<span className="text-brand-500">Bridge</span>
-          </span>
+            InvestBridge
+          </GradientText>
         </button>
 
         <div className="hidden items-center gap-8 md:flex">
@@ -122,24 +124,40 @@ export default function Navbar({ navigate, theme, toggleTheme }) {
                     key={l.path}
                     type="button"
                     onClick={() => navigate(l.path)}
-                    className={`nav-link flex items-center gap-1.5 text-sm font-medium transition-colors ${
+                    className={`nav-link flex items-center gap-1.5 text-sm font-bold transition-colors ${
                       active
                         ? "text-brand-400"
                         : "text-ink-100/75 hover:text-brand-400"
                     }`}
                   >
                     <Icon className="h-4 w-4" />
-                    {l.label}
+                    {active ? (
+                      l.label
+                    ) : (
+                      <GradientText
+                        colors={["#10b981", "#fbbf24", "#10b981"]}
+                        animationSpeed={4}
+                        direction="horizontal"
+                        pauseOnHover
+                        className="text-sm font-bold"
+                      >
+                        {l.label}
+                      </GradientText>
+                    )}
                   </button>
                 );
               })
             : links.map((l) => (
-                <a
-                  key={l.href}
-                  href={l.href}
-                  className="nav-link text-sm font-medium text-ink-600 transition-colors hover:text-brand-700 dark:text-ink-100 dark:hover:text-brand-400"
-                >
-                  {l.label}
+                <a key={l.href} href={l.href} className="nav-link">
+                  <GradientText
+                    colors={["#10b981", "#fbbf24", "#10b981"]}
+                    animationSpeed={4}
+                    direction="horizontal"
+                    pauseOnHover
+                    className="text-sm font-bold"
+                  >
+                    {l.label}
+                  </GradientText>
                 </a>
               ))}
         </div>
@@ -148,11 +166,7 @@ export default function Navbar({ navigate, theme, toggleTheme }) {
           <button
             type="button"
             onClick={toggleTheme}
-            className={
-              showProfileMenu
-                ? "theme-toggle grid h-10 w-10 place-items-center rounded-xl border border-white/10 bg-white/5 text-ink-100 shadow-[0_6px_18px_rgba(2,6,23,0.3)] transition hover:border-brand-500/40 hover:bg-white/10 hover:text-brand-400"
-                : "theme-toggle grid h-10 w-10 place-items-center rounded-xl border border-white/30 bg-white/35 text-ink-700 shadow-[0_6px_18px_rgba(15,23,42,0.08)] transition hover:border-brand-300 hover:bg-white/55 hover:text-brand-700 hover:shadow-glow dark:border-white/10 dark:bg-ink-950/40 dark:text-ink-100 dark:hover:border-brand-400 dark:hover:bg-ink-950/60 dark:hover:text-brand-400"
-            }
+            className="theme-toggle grid h-10 w-10 place-items-center rounded-xl border border-white/10 bg-white/5 text-ink-100 shadow-[0_6px_18px_rgba(2,6,23,0.3)] transition hover:border-brand-500/40 hover:bg-white/10 hover:text-brand-400"
             aria-label="Toggle theme"
           >
             {theme === "dark" ? (
@@ -263,7 +277,7 @@ export default function Navbar({ navigate, theme, toggleTheme }) {
               <button
                 type="button"
                 onClick={() => navigate("/login")}
-                className="nav-link text-sm font-semibold text-ink-700 hover:text-brand-700 dark:text-ink-100 dark:hover:text-brand-400"
+                className="nav-link text-sm font-bold text-ink-100 hover:text-brand-400"
               >
                 Sign in
               </button>
@@ -280,11 +294,7 @@ export default function Navbar({ navigate, theme, toggleTheme }) {
 
         <button
           onClick={() => setOpen((v) => !v)}
-          className={
-            showProfileMenu
-              ? "theme-toggle grid h-10 w-10 place-items-center rounded-xl border border-white/10 bg-white/5 text-ink-100 shadow-[0_6px_18px_rgba(2,6,23,0.3)] transition hover:border-brand-500/40 hover:bg-white/10 hover:text-brand-400 md:hidden"
-              : "theme-toggle grid h-10 w-10 place-items-center rounded-xl border border-white/30 bg-white/35 text-ink-700 shadow-[0_6px_18px_rgba(15,23,42,0.08)] transition hover:border-brand-300 hover:bg-white/55 hover:text-brand-700 hover:shadow-glow dark:border-white/10 dark:bg-ink-950/40 dark:text-ink-100 dark:hover:border-brand-400 dark:hover:bg-ink-950/60 dark:hover:text-brand-400 md:hidden"
-          }
+          className="theme-toggle grid h-10 w-10 place-items-center rounded-xl border border-white/10 bg-white/5 text-ink-100 shadow-[0_6px_18px_rgba(2,6,23,0.3)] transition hover:border-brand-500/40 hover:bg-white/10 hover:text-brand-400 md:hidden"
           aria-label="Toggle menu"
         >
           {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -298,11 +308,7 @@ export default function Navbar({ navigate, theme, toggleTheme }) {
           animate={{ opacity: 1, height: "auto" }}
           exit={{ opacity: 0, height: 0 }}
           transition={{ duration: 0.25, ease: "easeInOut" }}
-          className={
-            showProfileMenu
-              ? "overflow-hidden border-t border-white/10 bg-ink-950/90 backdrop-blur-2xl md:hidden"
-              : "overflow-hidden border-t border-white/30 bg-white/75 backdrop-blur-2xl dark:border-white/10 dark:bg-ink-950/70 md:hidden"
-          }
+          className="overflow-hidden border-t border-white/10 bg-ink-950/90 backdrop-blur-2xl md:hidden"
         >
           <div className="container-page flex flex-col gap-1 py-4">
             {showProfileMenu
@@ -317,14 +323,25 @@ export default function Navbar({ navigate, theme, toggleTheme }) {
                         setOpen(false);
                         navigate(l.path);
                       }}
-                      className={`flex items-center gap-2 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition ${
+                      className={`flex items-center gap-2 rounded-xl px-3 py-2.5 text-left text-sm font-bold transition ${
                         active
                           ? "bg-brand-500/10 text-brand-400"
                           : "text-ink-100 hover:bg-white/5"
                       }`}
                     >
                       <Icon className="h-4 w-4" />
-                      {l.label}
+                      {active ? (
+                        l.label
+                      ) : (
+                        <GradientText
+                          colors={["#10b981", "#fbbf24", "#10b981"]}
+                          animationSpeed={4}
+                          direction="horizontal"
+                          className="text-sm font-bold"
+                        >
+                          {l.label}
+                        </GradientText>
+                      )}
                     </button>
                   );
                 })
@@ -333,20 +350,23 @@ export default function Navbar({ navigate, theme, toggleTheme }) {
                     key={l.href}
                     href={l.href}
                     onClick={() => setOpen(false)}
-                    className="rounded-xl px-3 py-2.5 text-sm font-medium text-ink-700 transition hover:bg-white/70 dark:text-ink-100 dark:hover:bg-white/5"
+                    className="rounded-xl px-3 py-2.5 transition hover:bg-white/5"
                   >
-                    {l.label}
+                    <GradientText
+                      colors={["#10b981", "#fbbf24", "#10b981"]}
+                      animationSpeed={4}
+                      direction="horizontal"
+                      className="text-sm font-bold"
+                    >
+                      {l.label}
+                    </GradientText>
                   </a>
                 ))}
             <div className="mt-2 flex flex-wrap items-center gap-3">
               <button
                 type="button"
                 onClick={toggleTheme}
-                className={
-                  showProfileMenu
-                    ? "theme-toggle grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-white/10 bg-white/5 text-ink-100 shadow-[0_6px_18px_rgba(2,6,23,0.3)] transition hover:border-brand-500/40 hover:bg-white/10 hover:text-brand-400"
-                    : "theme-toggle grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-white/30 bg-white/35 text-ink-700 shadow-[0_6px_18px_rgba(15,23,42,0.08)] transition hover:border-brand-300 hover:bg-white/55 hover:text-brand-700 hover:shadow-glow dark:border-white/10 dark:bg-ink-950/40 dark:text-ink-100 dark:hover:border-brand-400 dark:hover:bg-ink-950/60 dark:hover:text-brand-400"
-                }
+                className="theme-toggle grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-white/10 bg-white/5 text-ink-100 shadow-[0_6px_18px_rgba(2,6,23,0.3)] transition hover:border-brand-500/40 hover:bg-white/10 hover:text-brand-400"
                 aria-label="Toggle theme"
               >
                 {theme === "dark" ? (
@@ -390,7 +410,7 @@ export default function Navbar({ navigate, theme, toggleTheme }) {
                       setOpen(false);
                       navigate("/login");
                     }}
-                    className="btn-ghost flex-1"
+                    className="flex flex-1 items-center justify-center gap-2 rounded-full border border-white/15 bg-white/5 px-6 py-3 text-sm font-semibold text-ink-100 transition-all duration-200 hover:border-brand-500/40 hover:bg-white/10 hover:text-brand-400"
                   >
                     Sign in
                   </button>
