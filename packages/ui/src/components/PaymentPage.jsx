@@ -13,7 +13,7 @@ import {
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { useLocation, useParams } from "react-router-dom";
-import PageBackground from "./PageBackground.jsx";
+import PageBackground, { AURORA_BG } from "./PageBackground.jsx";
 import GradientText from "./GradientText.jsx";
 import { getAllOpportunities, initiateInvestment, getCheckpoints } from "../api/opportunities";
 import { fadeUpBlur } from "../lib/motion.jsx";
@@ -203,8 +203,8 @@ export default function PaymentPage({ navigate }) {
 
   if (!user) {
     return (
-      <section className="relative min-h-screen px-4 py-20 sm:px-6 lg:px-8 transition-colors duration-300">
-        <PageBackground image={false} />
+      <section className="dark relative min-h-screen px-4 py-20 sm:px-6 lg:px-8 transition-colors duration-300">
+        <PageBackground image={false} gradient={AURORA_BG} />
         <div className="mx-auto max-w-2xl rounded-3xl border border-white/40 bg-white/70 p-8 shadow-lift backdrop-blur-2xl dark:border-white/10 dark:bg-ink-900/70 dark:text-ink-50">
           <p className="text-sm font-semibold text-brand-700 dark:text-brand-400">
             No active session
@@ -229,8 +229,8 @@ export default function PaymentPage({ navigate }) {
 
   if (loading) {
     return (
-      <section className="relative min-h-screen px-4 py-20 sm:px-6 lg:px-8 transition-colors duration-300">
-        <PageBackground image={false} />
+      <section className="dark relative min-h-screen px-4 py-20 sm:px-6 lg:px-8 transition-colors duration-300">
+        <PageBackground image={false} gradient={AURORA_BG} />
         <div className="mx-auto max-w-2xl rounded-3xl border border-white/40 bg-white/70 p-8 text-center shadow-lift backdrop-blur-2xl dark:border-white/10 dark:bg-ink-900/70 dark:text-ink-50">
           <p className="text-ink-600 dark:text-ink-300">
             Loading opportunity details...
@@ -242,8 +242,8 @@ export default function PaymentPage({ navigate }) {
 
   if (notFound || !deal) {
     return (
-      <section className="relative min-h-screen px-4 py-20 sm:px-6 lg:px-8 transition-colors duration-300">
-        <PageBackground image={false} />
+      <section className="dark relative min-h-screen px-4 py-20 sm:px-6 lg:px-8 transition-colors duration-300">
+        <PageBackground image={false} gradient={AURORA_BG} />
         <div className="mx-auto max-w-2xl rounded-3xl border border-white/40 bg-white/70 p-8 shadow-lift backdrop-blur-2xl dark:border-white/10 dark:bg-ink-900/70 dark:text-ink-50">
           <h1 className="font-display text-2xl font-bold text-ink-900 dark:text-ink-50">
             Opportunity not found
@@ -266,7 +266,7 @@ export default function PaymentPage({ navigate }) {
 
   if (paymentReturn?.status === "success") {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink-950/50 px-4 backdrop-blur-sm">
+      <div className="dark fixed inset-0 z-50 flex items-center justify-center bg-ink-950/50 px-4 backdrop-blur-sm">
         <div className="w-full max-w-md rounded-[1.75rem] border border-white/40 bg-white/95 p-6 text-center shadow-lift backdrop-blur-2xl dark:border-white/10 dark:bg-ink-900/95">
           <div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">
             <CheckCircle2 className="h-7 w-7" />
@@ -338,8 +338,8 @@ export default function PaymentPage({ navigate }) {
   if (paymentReturn?.status === "fail" || paymentReturn?.status === "cancel") {
     const cancelled = paymentReturn.status === "cancel";
     return (
-      <section className="relative min-h-screen px-4 py-20 sm:px-6 lg:px-8 transition-colors duration-300">
-        <PageBackground image={false} />
+      <section className="dark relative min-h-screen px-4 py-20 sm:px-6 lg:px-8 transition-colors duration-300">
+        <PageBackground image={false} gradient={AURORA_BG} />
         <div className="mx-auto max-w-xl">
           <motion.div
             className="glass-panel-strong holo-card rounded-[2rem] p-8 text-center sm:p-10"
@@ -381,8 +381,8 @@ export default function PaymentPage({ navigate }) {
   }
 
   return (
-    <section className="relative min-h-screen overflow-hidden px-4 py-20 transition-colors duration-300 sm:px-6 lg:px-8">
-      <PageBackground image={false} />
+    <section className="dark relative min-h-screen overflow-hidden px-4 py-20 transition-colors duration-300 sm:px-6 lg:px-8">
+      <PageBackground image={false} gradient={AURORA_BG} />
       <div className="pointer-events-none absolute inset-0 -z-10 opacity-60">
         <div className="absolute left-[-5rem] top-24 h-72 w-72 rounded-full bg-brand-200/35 blur-3xl" />
         <div className="absolute right-[-4rem] bottom-10 h-80 w-80 rounded-full bg-gold-200/20 blur-3xl" />

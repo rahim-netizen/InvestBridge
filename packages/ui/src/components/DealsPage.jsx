@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useCallback, useEffect, useState } from "react";
-import PageBackground from "./PageBackground.jsx";
+import PageBackground, { AURORA_BG } from "./PageBackground.jsx";
 import GradientText from "./GradientText.jsx";
 import { deleteOpportunity, getAllOpportunities } from "../api/opportunities";
 import {
@@ -59,7 +59,7 @@ function DealCard({ deal, user, saved, onOpen, onDelete }) {
       onMouseMove={tilt.onMouseMove}
       onMouseLeave={tilt.onMouseLeave}
       style={tilt.style}
-      className="glass-panel-strong holo-card group overflow-hidden hover:shadow-lift cursor-pointer"
+      className="glass-panel-strong holo-card group cursor-pointer overflow-hidden rounded-[2rem] transition-shadow duration-300 hover:shadow-lift"
       variants={fadeUp}
       whileHover={{ y: -4, transition: { duration: 0.25 } }}
       onClick={onOpen}
@@ -116,7 +116,7 @@ function DealCard({ deal, user, saved, onOpen, onDelete }) {
             e.preventDefault();
             onOpen();
           }}
-          className="inline-flex items-center gap-1 text-sm font-semibold text-brand-700 transition-colors hover:text-brand-800"
+          className="inline-flex items-center gap-1 text-sm font-semibold text-brand-700 transition-colors hover:text-brand-800 dark:text-brand-300 dark:hover:text-brand-200"
         >
           View deal room
           <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1 group-hover:-translate-y-0.5" />
@@ -303,8 +303,8 @@ export default function DealsPage({ navigate }) {
     searchQuery.trim() !== "" || sectorFilter !== "All" || goalSort !== "None";
 
   return (
-    <section className="relative min-h-screen overflow-hidden px-4 py-20 transition-colors duration-300 sm:px-6 lg:px-8">
-      <PageBackground image={false} />
+    <section className="dark relative min-h-screen overflow-hidden px-4 py-20 transition-colors duration-300 sm:px-6 lg:px-8">
+      <PageBackground image={false} gradient={AURORA_BG} />
       <div className="pointer-events-none absolute inset-0 -z-10 opacity-60">
         <div className="absolute left-[-5rem] top-24 h-72 w-72 rounded-full bg-brand-200/35 blur-3xl" />
         <div className="absolute right-[-4rem] bottom-10 h-80 w-80 rounded-full bg-gold-200/20 blur-3xl" />

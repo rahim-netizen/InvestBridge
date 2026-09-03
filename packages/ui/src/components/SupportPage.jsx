@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { AlertCircle, CheckCircle2, Send } from "lucide-react";
-import PageBackground from "./PageBackground.jsx";
+import PageBackground, { AURORA_BG } from "./PageBackground.jsx";
 import GradientText from "./GradientText.jsx";
 import { createComplaint, getComplaints } from "../api/support";
 
@@ -31,8 +31,8 @@ export default function SupportPage() {
   }
 
   return (
-    <section className="relative min-h-screen overflow-hidden px-4 py-20 sm:px-6 lg:px-8">
-      <PageBackground image={false} />
+    <section className="dark relative min-h-screen overflow-hidden px-4 py-20 sm:px-6 lg:px-8">
+      <PageBackground image={false} gradient={AURORA_BG} />
       <div className="mx-auto grid max-w-5xl gap-6 lg:grid-cols-2">
         <div className="glass-panel-strong rounded-[2rem] p-6">
           <h1>
@@ -47,8 +47,8 @@ export default function SupportPage() {
           </h1>
           <p className="mt-2 text-sm text-white/75">Send a complaint and we will review it.</p>
           <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-            <input required value={subject} onChange={(event) => setSubject(event.target.value)} placeholder="Subject" className="w-full rounded-2xl border border-white/20 bg-white/70 px-4 py-3 text-sm outline-none" />
-            <textarea required value={message} onChange={(event) => setMessage(event.target.value)} placeholder="Explain the problem" rows="6" className="w-full rounded-2xl border border-white/20 bg-white/70 px-4 py-3 text-sm outline-none" />
+            <input required value={subject} onChange={(event) => setSubject(event.target.value)} placeholder="Subject" className="w-full rounded-2xl border border-white/20 bg-white/70 px-4 py-3 text-sm text-ink-900 outline-none placeholder:text-ink-400 dark:border-white/10 dark:text-ink-50 dark:placeholder:text-ink-500" />
+            <textarea required value={message} onChange={(event) => setMessage(event.target.value)} placeholder="Explain the problem" rows="6" className="w-full rounded-2xl border border-white/20 bg-white/70 px-4 py-3 text-sm text-ink-900 outline-none placeholder:text-ink-400 dark:border-white/10 dark:text-ink-50 dark:placeholder:text-ink-500" />
             <button type="submit" className="btn-primary"><Send className="h-4 w-4" /> Send complaint</button>
           </form>
           {status && <p className="mt-4 flex items-center gap-2 text-sm text-emerald-700"><CheckCircle2 className="h-4 w-4" />{status}</p>}
@@ -58,11 +58,11 @@ export default function SupportPage() {
           <h2 className="font-display text-2xl font-bold text-ink-900 dark:text-white">My complaints</h2>
           <div className="mt-5 space-y-3">
             {complaints.length === 0 ? <p className="text-sm text-ink-500">No complaints yet.</p> : complaints.map((complaint) => (
-              <div key={complaint.id} className="rounded-2xl border border-white/20 bg-white/60 p-4">
-                <div className="flex items-center justify-between gap-3"><strong className="text-sm">{complaint.subject}</strong><span className="text-xs uppercase text-brand-700">{complaint.status}</span></div>
-                <p className="mt-2 text-sm text-ink-600">{complaint.message}</p>
+              <div key={complaint.id} className="rounded-2xl border border-white/20 bg-white/60 p-4 dark:border-white/10 dark:bg-ink-950/40">
+                <div className="flex items-center justify-between gap-3"><strong className="text-sm text-ink-900 dark:text-ink-50">{complaint.subject}</strong><span className="text-xs uppercase text-brand-700 dark:text-brand-300">{complaint.status}</span></div>
+                <p className="mt-2 text-sm text-ink-600 dark:text-ink-300">{complaint.message}</p>
                 {complaint.feedback && (
-                  <div className="mt-3 rounded-xl bg-emerald-50 p-3 text-sm text-emerald-800">
+                  <div className="mt-3 rounded-xl bg-emerald-50 p-3 text-sm text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-200">
                     <strong>Admin feedback:</strong> {complaint.feedback}
                   </div>
                 )}

@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState } from "react";
-import PageBackground from "./PageBackground.jsx";
+import PageBackground, { AURORA_BG } from "./PageBackground.jsx";
 import GradientText from "./GradientText.jsx";
 import { fadeUp, fadeUpBlur, stagger } from "../lib/motion.jsx";
 import { getChatMessages, sendChatMessage } from "../api/support";
@@ -237,8 +237,8 @@ export default function ConnectPage({ navigate }) {
     "w-full rounded-2xl border border-white/20 bg-white/35 px-4 py-3 text-sm text-ink-900 outline-none placeholder:text-ink-400 backdrop-blur-sm dark:border-white/10 dark:bg-ink-950/35 dark:text-ink-50 dark:placeholder:text-ink-500";
 
   return (
-    <section className="relative min-h-screen overflow-hidden px-4 py-20 transition-colors duration-300 sm:px-6 lg:px-8">
-      <PageBackground image={false} />
+    <section className="dark relative min-h-screen overflow-hidden px-4 py-20 transition-colors duration-300 sm:px-6 lg:px-8">
+      <PageBackground image={false} gradient={AURORA_BG} />
       <div className="pointer-events-none absolute inset-0 -z-10 opacity-60">
         <div className="absolute left-[-5rem] top-24 h-72 w-72 rounded-full bg-brand-200/35 blur-3xl" />
         <div className="absolute right-[-4rem] bottom-10 h-80 w-80 rounded-full bg-gold-200/20 blur-3xl" />
