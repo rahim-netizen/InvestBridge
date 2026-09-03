@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import PageBackground from "./PageBackground.jsx";
+import PageBackground, { AURORA_BG } from "./PageBackground.jsx";
 import {
   AlertTriangle,
   Banknote,
@@ -375,8 +375,8 @@ export default function AdminPage({ navigate, theme, toggleTheme }) {
   };
 
   return (
-    <div className="relative min-h-screen overflow-hidden px-4 pb-10 pt-24 sm:px-6 sm:pt-28 lg:px-8">
-      <PageBackground image={false} />
+    <div className="dark relative min-h-screen overflow-hidden px-4 pb-10 pt-24 sm:px-6 sm:pt-28 lg:px-8">
+      <PageBackground image={false} gradient={AURORA_BG} />
       <div className="pointer-events-none absolute inset-0 -z-10 opacity-60">
         <div className="absolute left-[-5rem] top-24 h-80 w-80 rounded-full bg-brand-200/30 blur-3xl" />
         <div className="absolute right-[-5rem] bottom-12 h-96 w-96 rounded-full bg-gold-200/20 blur-3xl" />
