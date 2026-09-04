@@ -6,13 +6,18 @@
   flex-direction: row;
   align-items: center;
   justify-content: center;
-  border-radius: 1.25rem;
   transition: box-shadow 0.5s ease-out;
-  overflow: hidden;
 }
 
+/* The rounded pill + clipping only make sense when the gradient is being
+   painted as a background behind the text (the `showBorder` variant).
+   For plain gradient text, keep it a rectangle so tall letters and
+   descenders (y, p, g, j, uppercase) are never cropped by the corner
+   radius. */
 .animated-gradient-text.with-border {
   padding: 0.35rem 0.75rem;
+  border-radius: 1.25rem;
+  overflow: hidden;
   backdrop-filter: blur(10px);
 }
 

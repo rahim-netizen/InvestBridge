@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+﻿import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import PageBackground, { AURORA_BG } from "./PageBackground.jsx";
+import PageDecor from "./PageDecor.jsx";
 import {
   AlertTriangle,
   Banknote,
@@ -14,13 +15,11 @@ import {
   LogOut,
   Menu,
   MessageSquareWarning,
-  Moon,
   PauseCircle,
   PlayCircle,
   RefreshCw,
   Search,
   ShieldCheck,
-  Sun,
   Table as TableIcon,
   Trash2,
   UserCircle2,
@@ -79,7 +78,9 @@ function StatCard({ icon: Icon, label, value, tone, onClick, isInView }) {
       whileHover={{ y: -3 }}
       className={`group flex flex-col overflow-hidden rounded-2xl text-left text-white shadow-[0_18px_40px_rgba(2,6,23,0.35)] ring-1 ring-white/10 transition-shadow hover:shadow-[0_24px_60px_rgba(2,6,23,0.5)]`}
     >
-      <div className={`flex items-center gap-4 bg-gradient-to-br ${tones.body} p-5`}>
+      <div
+        className={`flex items-center gap-4 bg-gradient-to-br ${tones.body} p-5`}
+      >
         <div className="grid h-12 w-12 place-items-center rounded-2xl bg-white/15 ring-1 ring-white/30 backdrop-blur-sm">
           <Icon className="h-6 w-6" />
         </div>
@@ -116,10 +117,14 @@ function ContentCard({ icon: Icon, title, actions, children }) {
     >
       <header className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 bg-white/60 px-5 py-3.5 dark:bg-ink-950/60">
         <div className="flex items-center gap-2 text-sm font-semibold text-ink-800 dark:text-ink-100">
-          {Icon && <Icon className="h-4 w-4 text-brand-600 dark:text-brand-400" />}
+          {Icon && (
+            <Icon className="h-4 w-4 text-brand-600 dark:text-brand-400" />
+          )}
           {title}
         </div>
-        {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
+        {actions && (
+          <div className="flex flex-wrap items-center gap-2">{actions}</div>
+        )}
       </header>
       <div className="p-5">{children}</div>
     </motion.section>
@@ -127,7 +132,7 @@ function ContentCard({ icon: Icon, title, actions, children }) {
 }
 
 function formatDate(value) {
-  if (!value) return "—";
+  if (!value) return "â€”";
   try {
     return new Date(value).toLocaleDateString(undefined, {
       year: "numeric",
@@ -135,7 +140,7 @@ function formatDate(value) {
       day: "numeric",
     });
   } catch {
-    return "—";
+    return "â€”";
   }
 }
 
@@ -160,7 +165,9 @@ function ToastStack({ toasts, onDismiss }) {
             ) : (
               <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
             )}
-            <p className="flex-1 text-sm font-medium leading-snug">{toast.message}</p>
+            <p className="flex-1 text-sm font-medium leading-snug">
+              {toast.message}
+            </p>
             <button
               type="button"
               onClick={() => onDismiss(toast.id)}
@@ -200,8 +207,12 @@ function ConfirmDialog({ config, onCancel, onConfirm, busy }) {
                 <AlertTriangle className="h-5 w-5" />
               </span>
               <div>
-                <h3 className="text-base font-semibold text-ink-900">{config.title}</h3>
-                <p className="mt-1 text-sm leading-relaxed text-ink-600">{config.message}</p>
+                <h3 className="text-base font-semibold text-ink-900">
+                  {config.title}
+                </h3>
+                <p className="mt-1 text-sm leading-relaxed text-ink-600">
+                  {config.message}
+                </p>
               </div>
             </div>
             <div className="mt-6 flex justify-end gap-2">
@@ -259,7 +270,9 @@ const sectionMeta = {
 function getStoredUser() {
   if (typeof window === "undefined") return null;
   try {
-    return JSON.parse(localStorage.getItem("investbridgeSessionUser") || "null");
+    return JSON.parse(
+      localStorage.getItem("investbridgeSessionUser") || "null",
+    );
   } catch {
     return null;
   }
@@ -267,7 +280,7 @@ function getStoredUser() {
 
 /* ---------- main component ----------------------------------------------- */
 
-export default function AdminPage({ navigate, theme, toggleTheme }) {
+export default function AdminPage({ navigate }) {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [stats, setStats] = useState({
@@ -321,12 +334,13 @@ export default function AdminPage({ navigate, theme, toggleTheme }) {
     setLoading(true);
     setLoadError("");
     try {
-      const [statsRes, usersRes, opportunitiesRes, complaintsRes] = await Promise.all([
-        getAdminStats(),
-        getAdminUsers(),
-        getAdminOpportunities(),
-        getAdminComplaints(),
-      ]);
+      const [statsRes, usersRes, opportunitiesRes, complaintsRes] =
+        await Promise.all([
+          getAdminStats(),
+          getAdminUsers(),
+          getAdminOpportunities(),
+          getAdminComplaints(),
+        ]);
       setStats(statsRes.stats || stats);
       setUsers(usersRes.users || []);
       setProjects(opportunitiesRes.opportunities || []);
@@ -417,7 +431,9 @@ export default function AdminPage({ navigate, theme, toggleTheme }) {
         runConfirmed(async () => {
           try {
             await deleteAdminOpportunity(project.id);
-            setProjects((current) => current.filter((p) => p.id !== project.id));
+            setProjects((current) =>
+              current.filter((p) => p.id !== project.id),
+            );
             pushToast(`"${project.title}" was removed.`);
           } catch (err) {
             pushToast(err.message || "Failed to remove project.", "error");
@@ -449,10 +465,11 @@ export default function AdminPage({ navigate, theme, toggleTheme }) {
   };
 
   // The old file called handlePayMilestone from the progress cell but never
-  // defined it — clicking Pay would throw. This wires the button up against
+  // defined it â€” clicking Pay would throw. This wires the button up against
   // the same local-storage progress store the rest of the app reads.
   const handlePayMilestone = (project) => {
-    const state = projectProgress[project.id] || getProjectPaymentState(project);
+    const state =
+      projectProgress[project.id] || getProjectPaymentState(project);
     const next = getNextMilestone(state.progress);
     if (!next) return;
     const paidMilestones = Array.from(new Set([...state.paidMilestones, next]));
@@ -471,7 +488,9 @@ export default function AdminPage({ navigate, theme, toggleTheme }) {
     try {
       const response = await sendComplaintFeedback(complaint.id, text);
       setComplaints((current) =>
-        current.map((item) => (item.id === complaint.id ? response.complaint : item)),
+        current.map((item) =>
+          item.id === complaint.id ? response.complaint : item,
+        ),
       );
       setFeedback((current) => ({ ...current, [complaint.id]: "" }));
       pushToast("Feedback sent to the user.");
@@ -538,22 +557,31 @@ export default function AdminPage({ navigate, theme, toggleTheme }) {
         <ContentCard icon={Users} title="Recent sign-ups">
           <ul className="divide-y divide-white/5">
             {recentUsers.length === 0 && (
-              <li className="py-6 text-center text-sm text-ink-400">No users yet.</li>
+              <li className="py-6 text-center text-sm text-ink-400">
+                No users yet.
+              </li>
             )}
             {recentUsers.map((user) => (
-              <li key={user.id} className="flex items-center justify-between gap-3 py-3">
+              <li
+                key={user.id}
+                className="flex items-center justify-between gap-3 py-3"
+              >
                 <div className="flex items-center gap-3">
                   <span className="grid h-9 w-9 place-items-center rounded-full bg-brand-500/15 text-sm font-semibold text-brand-500 ring-1 ring-brand-500/25">
-                    {String(user.name || user.email || "?").charAt(0).toUpperCase()}
+                    {String(user.name || user.email || "?")
+                      .charAt(0)
+                      .toUpperCase()}
                   </span>
                   <div>
                     <p className="text-sm font-semibold text-ink-900 dark:text-ink-100">
-                      {user.name || "—"}
+                      {user.name || "â€”"}
                     </p>
                     <p className="text-xs text-ink-500">{user.email}</p>
                   </div>
                 </div>
-                <span className="text-xs text-ink-400">{formatDate(user.created_at)}</span>
+                <span className="text-xs text-ink-400">
+                  {formatDate(user.created_at)}
+                </span>
               </li>
             ))}
           </ul>
@@ -561,10 +589,15 @@ export default function AdminPage({ navigate, theme, toggleTheme }) {
         <ContentCard icon={TableIcon} title="Recent projects">
           <ul className="divide-y divide-white/5">
             {recentProjects.length === 0 && (
-              <li className="py-6 text-center text-sm text-ink-400">No projects yet.</li>
+              <li className="py-6 text-center text-sm text-ink-400">
+                No projects yet.
+              </li>
             )}
             {recentProjects.map((project) => (
-              <li key={project.id} className="flex items-center justify-between gap-3 py-3">
+              <li
+                key={project.id}
+                className="flex items-center justify-between gap-3 py-3"
+              >
                 <div>
                   <p className="text-sm font-semibold text-ink-900 dark:text-ink-100">
                     {project.title}
@@ -601,7 +634,7 @@ export default function AdminPage({ navigate, theme, toggleTheme }) {
             type="text"
             value={userSearch}
             onChange={(event) => setUserSearch(event.target.value)}
-            placeholder="Search name or email…"
+            placeholder="Search name or emailâ€¦"
             className="w-full rounded-xl border border-ink-100 bg-white/70 py-2 pl-9 pr-3 text-sm text-ink-700 outline-none transition-colors focus:border-brand-300 dark:border-ink-800 dark:bg-ink-950/40"
           />
         </div>
@@ -632,7 +665,9 @@ export default function AdminPage({ navigate, theme, toggleTheme }) {
                     {user.name}
                   </td>
                   <td className="px-4 py-3.5 text-ink-500">{user.email}</td>
-                  <td className="px-4 py-3.5 text-ink-500">{formatDate(user.created_at)}</td>
+                  <td className="px-4 py-3.5 text-ink-500">
+                    {formatDate(user.created_at)}
+                  </td>
                   <td className="px-4 py-3.5 text-right">
                     <button
                       type="button"
@@ -670,7 +705,7 @@ export default function AdminPage({ navigate, theme, toggleTheme }) {
             type="text"
             value={projectSearch}
             onChange={(event) => setProjectSearch(event.target.value)}
-            placeholder="Search project or founder…"
+            placeholder="Search project or founderâ€¦"
             className="w-full rounded-xl border border-ink-100 bg-white/70 py-2 pl-9 pr-3 text-sm text-ink-700 outline-none transition-colors focus:border-brand-300 dark:border-ink-800 dark:bg-ink-950/40"
           />
         </div>
@@ -691,7 +726,9 @@ export default function AdminPage({ navigate, theme, toggleTheme }) {
           <tbody className="divide-y divide-white/5 text-sm">
             <AnimatePresence initial={false}>
               {filteredProjects.map((project) => {
-                const state = projectProgress[project.id] || getProjectPaymentState(project);
+                const state =
+                  projectProgress[project.id] ||
+                  getProjectPaymentState(project);
                 const nextMilestone = getNextMilestone(state.progress);
                 return (
                   <motion.tr
@@ -709,7 +746,7 @@ export default function AdminPage({ navigate, theme, toggleTheme }) {
                       {project.user?.name || "Unknown"}
                     </td>
                     <td className="px-4 py-3.5 font-medium text-ink-900 dark:text-ink-100">
-                      {project.funding_goal || "—"}
+                      {project.funding_goal || "â€”"}
                     </td>
                     <td className="min-w-44 px-4 py-3.5">
                       <div className="space-y-2">
@@ -730,7 +767,9 @@ export default function AdminPage({ navigate, theme, toggleTheme }) {
                         <button
                           type="button"
                           onClick={() => handlePayMilestone(project)}
-                          disabled={!nextMilestone || pendingRowId === project.id}
+                          disabled={
+                            !nextMilestone || pendingRowId === project.id
+                          }
                           className="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-700 transition-colors hover:text-brand-800 disabled:cursor-not-allowed disabled:text-ink-400 dark:text-brand-400"
                           title={
                             nextMilestone
@@ -760,7 +799,9 @@ export default function AdminPage({ navigate, theme, toggleTheme }) {
                             : "bg-emerald-100 text-emerald-800"
                         }`}
                       >
-                        {project.status === "suspended" ? "Suspended" : "Active"}
+                        {project.status === "suspended"
+                          ? "Suspended"
+                          : "Active"}
                       </span>
                     </td>
                     <td className="px-4 py-3.5">
@@ -778,7 +819,9 @@ export default function AdminPage({ navigate, theme, toggleTheme }) {
                           ) : (
                             <PauseCircle className="h-3.5 w-3.5" />
                           )}
-                          {project.status === "suspended" ? "Activate" : "Suspend"}
+                          {project.status === "suspended"
+                            ? "Activate"
+                            : "Suspend"}
                         </button>
                         <button
                           type="button"
@@ -808,7 +851,10 @@ export default function AdminPage({ navigate, theme, toggleTheme }) {
   );
 
   const renderComplaintsTable = () => (
-    <ContentCard icon={MessageSquareWarning} title={`Complaints (${complaints.length})`}>
+    <ContentCard
+      icon={MessageSquareWarning}
+      title={`Complaints (${complaints.length})`}
+    >
       <div className="overflow-x-auto">
         <table className="w-full border-collapse text-left">
           <thead>
@@ -828,7 +874,9 @@ export default function AdminPage({ navigate, theme, toggleTheme }) {
                   <p className="font-semibold text-ink-900 dark:text-ink-100">
                     {complaint.user?.name || "Unknown"}
                   </p>
-                  <p className="text-xs text-ink-500">{complaint.user?.email}</p>
+                  <p className="text-xs text-ink-500">
+                    {complaint.user?.email}
+                  </p>
                 </td>
                 <td className="px-4 py-3.5 font-semibold text-ink-900 dark:text-ink-100">
                   {complaint.subject}
@@ -841,7 +889,9 @@ export default function AdminPage({ navigate, theme, toggleTheme }) {
                     {complaint.status}
                   </span>
                 </td>
-                <td className="px-4 py-3.5 text-ink-500">{formatDate(complaint.created_at)}</td>
+                <td className="px-4 py-3.5 text-ink-500">
+                  {formatDate(complaint.created_at)}
+                </td>
                 <td className="min-w-64 px-4 py-3.5">
                   {complaint.feedback && (
                     <p className="mb-2 text-xs text-emerald-700 dark:text-emerald-400">
@@ -888,7 +938,7 @@ export default function AdminPage({ navigate, theme, toggleTheme }) {
       return (
         <div className="glass-panel flex flex-col items-center justify-center gap-3 rounded-2xl py-16 text-ink-400">
           <Loader2 className="h-6 w-6 animate-spin" />
-          <p className="text-sm font-medium">Loading admin data…</p>
+          <p className="text-sm font-medium">Loading admin dataâ€¦</p>
         </div>
       );
     }
@@ -905,7 +955,7 @@ export default function AdminPage({ navigate, theme, toggleTheme }) {
       );
     }
     // Each renderer returns a ContentCard (or a grid of them) that animates
-    // its own mount, so a plain switch here is enough — wrapping in
+    // its own mount, so a plain switch here is enough â€” wrapping in
     // AnimatePresence mode="wait" around plain-div children swallowed the
     // swap in practice.
     if (activeTab === "users") return renderUsersTable();
@@ -936,7 +986,9 @@ export default function AdminPage({ navigate, theme, toggleTheme }) {
                   {group.heading}
                 </p>
               )}
-              {collapsed && <div className="mx-auto my-2 h-px w-6 bg-white/10" />}
+              {collapsed && (
+                <div className="mx-auto my-2 h-px w-6 bg-white/10" />
+              )}
               <ul className="space-y-1">
                 {group.items.map((item) => {
                   const Icon = item.icon;
@@ -1003,8 +1055,9 @@ export default function AdminPage({ navigate, theme, toggleTheme }) {
   return (
     <div className="dark relative min-h-screen">
       <PageBackground image={false} gradient={AURORA_BG} />
+        <PageDecor />
 
-      {/* Top navbar — fixed across the top like SB-Admin's .sb-topnav */}
+      {/* Top navbar â€” fixed across the top like SB-Admin's .sb-topnav */}
       <header className="fixed inset-x-0 top-0 z-40 flex h-16 items-center border-b border-white/10 bg-ink-950/85 pl-0 pr-4 backdrop-blur-2xl sm:pr-6">
         {/* Brand block spans the sidebar column on desktop */}
         <div
@@ -1040,7 +1093,7 @@ export default function AdminPage({ navigate, theme, toggleTheme }) {
           <Menu className="h-4 w-4" />
         </button>
 
-        {/* Global search — hidden on very small screens */}
+        {/* Global search â€” hidden on very small screens */}
         <div className="ml-3 hidden max-w-md flex-1 md:block">
           <div className="relative">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400" />
@@ -1048,13 +1101,13 @@ export default function AdminPage({ navigate, theme, toggleTheme }) {
               type="text"
               value={globalSearch}
               onChange={(event) => setGlobalSearch(event.target.value)}
-              placeholder="Search users or projects…"
+              placeholder="Search users or projectsâ€¦"
               className="w-full rounded-xl border border-white/10 bg-white/5 py-2 pl-9 pr-3 text-sm text-ink-100 placeholder:text-ink-500 outline-none transition-colors focus:border-brand-400/50"
             />
           </div>
         </div>
 
-        {/* Brand initials on mobile — a compact wordmark since the sidebar
+        {/* Brand initials on mobile â€” a compact wordmark since the sidebar
             brand is hidden */}
         <span className="ml-3 flex items-center gap-2 font-display text-base font-extrabold text-white md:hidden">
           <span className="grid h-8 w-8 place-items-center rounded-lg border border-white/20 bg-brand-600/90">
@@ -1066,14 +1119,6 @@ export default function AdminPage({ navigate, theme, toggleTheme }) {
         </span>
 
         <div className="ml-auto flex items-center gap-2">
-          <button
-            type="button"
-            onClick={toggleTheme}
-            className="grid h-10 w-10 place-items-center rounded-xl border border-white/10 bg-white/5 text-ink-100 transition hover:border-brand-500/40 hover:bg-white/10 hover:text-brand-400"
-            aria-label="Toggle theme"
-          >
-            {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-          </button>
           <button
             type="button"
             onClick={loadAll}
@@ -1146,7 +1191,7 @@ export default function AdminPage({ navigate, theme, toggleTheme }) {
           <SideNav mode={sidebarCollapsed ? "collapsed" : "expanded"} />
         </div>
 
-        {/* Mobile drawer + backdrop — the drawer only mounts while open so
+        {/* Mobile drawer + backdrop â€” the drawer only mounts while open so
             we never race a stalled CSS transition. */}
         {mobileNavOpen && (
           <div
@@ -1160,7 +1205,7 @@ export default function AdminPage({ navigate, theme, toggleTheme }) {
           </div>
         )}
 
-        {/* Main content column — offset by the sidebar width on desktop */}
+        {/* Main content column â€” offset by the sidebar width on desktop */}
         <main
           className={`flex min-h-[calc(100vh-4rem)] w-full flex-col ${
             sidebarCollapsed ? "md:pl-16" : "md:pl-64"
@@ -1183,11 +1228,11 @@ export default function AdminPage({ navigate, theme, toggleTheme }) {
             </div>
           </div>
 
-          {/* Footer — echoes SB-Admin's small copyright strip */}
+          {/* Footer â€” echoes SB-Admin's small copyright strip */}
           <footer className="mt-auto border-t border-white/10 bg-ink-950/60 px-4 py-4 backdrop-blur-xl sm:px-8">
             <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-2 text-xs text-ink-400 sm:flex-row">
               <span>
-                © {new Date().getFullYear()} InvestBridge · Admin console
+                Â© {new Date().getFullYear()} InvestBridge Â· Admin console
               </span>
               <span className="flex items-center gap-3">
                 <BarChart3 className="h-3.5 w-3.5" />

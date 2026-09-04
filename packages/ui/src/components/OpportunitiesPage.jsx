@@ -1,4 +1,4 @@
-import {
+﻿import {
   ArrowLeft,
   ArrowUpRight,
   CheckCircle2,
@@ -24,6 +24,7 @@ import {
 import { AnimatePresence, motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import PageBackground, { AURORA_BG } from "./PageBackground.jsx";
+import PageDecor from "./PageDecor.jsx";
 import GradientText from "./GradientText.jsx";
 import { createOpportunity, deleteOpportunity, getMyOpportunities } from "../api/opportunities";
 import { fadeUp, fadeUpBlur, stagger, useTilt } from "../lib/motion.jsx";
@@ -355,6 +356,7 @@ export default function OpportunitiesPage({ navigate }) {
     return (
       <section className="dark relative min-h-screen overflow-hidden px-4 py-20 transition-colors duration-300 sm:px-6 lg:px-8">
         <PageBackground image={false} gradient={AURORA_BG} />
+        <PageDecor />
         <div className="pointer-events-none absolute inset-0 -z-10 opacity-60">
           <div className="absolute left-[-5rem] top-24 h-72 w-72 rounded-full bg-brand-200/35 blur-3xl" />
           <div className="absolute right-[-4rem] bottom-10 h-80 w-80 rounded-full bg-gold-200/20 blur-3xl" />
@@ -385,6 +387,7 @@ export default function OpportunitiesPage({ navigate }) {
   return (
     <section className="dark relative min-h-screen overflow-hidden px-4 py-20 transition-colors duration-300 sm:px-6 lg:px-8">
       <PageBackground image={false} gradient={AURORA_BG} />
+        <PageDecor />
       <div className="pointer-events-none absolute inset-0 -z-10 opacity-60">
         <div className="absolute left-[-5rem] top-24 h-72 w-72 rounded-full bg-brand-200/35 blur-3xl" />
         <div className="absolute right-[-4rem] bottom-10 h-80 w-80 rounded-full bg-gold-200/20 blur-3xl" />

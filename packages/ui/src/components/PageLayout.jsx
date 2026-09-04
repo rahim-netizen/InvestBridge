@@ -17,7 +17,7 @@ const routeTransition = {
   exit: { opacity: 0, y: -10, transition: { duration: 0.2, ease: "easeIn" } },
 };
 
-export default function PageLayout({ children, navigate, theme, toggleTheme }) {
+export default function PageLayout({ children, navigate }) {
   const location = useLocation();
 
   // Smoothly scroll back to the top on every route change, so a page
@@ -29,7 +29,7 @@ export default function PageLayout({ children, navigate, theme, toggleTheme }) {
   return (
     <>
       <ScrollProgressBar />
-      <Navbar navigate={navigate} theme={theme} toggleTheme={toggleTheme} />
+      <Navbar navigate={navigate} />
       <main>
         <AnimatePresence mode="wait" initial={false}>
           <motion.div

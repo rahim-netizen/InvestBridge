@@ -1,4 +1,4 @@
-import {
+﻿import {
   ArrowLeft,
   Building2,
   CheckCircle2,
@@ -14,6 +14,7 @@ import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { useLocation, useParams } from "react-router-dom";
 import PageBackground, { AURORA_BG } from "./PageBackground.jsx";
+import PageDecor from "./PageDecor.jsx";
 import GradientText from "./GradientText.jsx";
 import { getAllOpportunities, initiateInvestment, getCheckpoints } from "../api/opportunities";
 import { fadeUpBlur } from "../lib/motion.jsx";
@@ -205,6 +206,7 @@ export default function PaymentPage({ navigate }) {
     return (
       <section className="dark relative min-h-screen px-4 py-20 sm:px-6 lg:px-8 transition-colors duration-300">
         <PageBackground image={false} gradient={AURORA_BG} />
+        <PageDecor />
         <div className="mx-auto max-w-2xl rounded-3xl border border-white/40 bg-white/70 p-8 shadow-lift backdrop-blur-2xl dark:border-white/10 dark:bg-ink-900/70 dark:text-ink-50">
           <p className="text-sm font-semibold text-brand-700 dark:text-brand-400">
             No active session
@@ -231,6 +233,7 @@ export default function PaymentPage({ navigate }) {
     return (
       <section className="dark relative min-h-screen px-4 py-20 sm:px-6 lg:px-8 transition-colors duration-300">
         <PageBackground image={false} gradient={AURORA_BG} />
+        <PageDecor />
         <div className="mx-auto max-w-2xl rounded-3xl border border-white/40 bg-white/70 p-8 text-center shadow-lift backdrop-blur-2xl dark:border-white/10 dark:bg-ink-900/70 dark:text-ink-50">
           <p className="text-ink-600 dark:text-ink-300">
             Loading opportunity details...
@@ -244,6 +247,7 @@ export default function PaymentPage({ navigate }) {
     return (
       <section className="dark relative min-h-screen px-4 py-20 sm:px-6 lg:px-8 transition-colors duration-300">
         <PageBackground image={false} gradient={AURORA_BG} />
+        <PageDecor />
         <div className="mx-auto max-w-2xl rounded-3xl border border-white/40 bg-white/70 p-8 shadow-lift backdrop-blur-2xl dark:border-white/10 dark:bg-ink-900/70 dark:text-ink-50">
           <h1 className="font-display text-2xl font-bold text-ink-900 dark:text-ink-50">
             Opportunity not found
@@ -340,6 +344,7 @@ export default function PaymentPage({ navigate }) {
     return (
       <section className="dark relative min-h-screen px-4 py-20 sm:px-6 lg:px-8 transition-colors duration-300">
         <PageBackground image={false} gradient={AURORA_BG} />
+        <PageDecor />
         <div className="mx-auto max-w-xl">
           <motion.div
             className="glass-panel-strong holo-card rounded-[2rem] p-8 text-center sm:p-10"
@@ -383,6 +388,7 @@ export default function PaymentPage({ navigate }) {
   return (
     <section className="dark relative min-h-screen overflow-hidden px-4 py-20 transition-colors duration-300 sm:px-6 lg:px-8">
       <PageBackground image={false} gradient={AURORA_BG} />
+        <PageDecor />
       <div className="pointer-events-none absolute inset-0 -z-10 opacity-60">
         <div className="absolute left-[-5rem] top-24 h-72 w-72 rounded-full bg-brand-200/35 blur-3xl" />
         <div className="absolute right-[-4rem] bottom-10 h-80 w-80 rounded-full bg-gold-200/20 blur-3xl" />
@@ -463,7 +469,7 @@ export default function PaymentPage({ navigate }) {
                             {cp.title}
                           </td>
                           <td className="px-4 py-3 text-ink-600 dark:text-ink-300">
-                            {cp.description || "—"}
+                            {cp.description || "â€”"}
                           </td>
                           <td className="px-4 py-3 text-right font-semibold text-ink-900 dark:text-ink-50">
                             ${(parseFloat(cp.amount) || 0).toLocaleString()}
@@ -616,7 +622,7 @@ export default function PaymentPage({ navigate }) {
               <ShieldCheck className="h-4 w-4" />
               {status === "processing"
                 ? "Processing..."
-                : `Confirm investment${totalAmount ? ` · $${totalAmount.toLocaleString()}` : ""}`}
+                : `Confirm investment${totalAmount ? ` Â· $${totalAmount.toLocaleString()}` : ""}`}
             </motion.button>
 
             {!canPay && (
@@ -627,7 +633,7 @@ export default function PaymentPage({ navigate }) {
 
             <p className="mt-4 flex items-center justify-center gap-1.5 text-center text-xs text-ink-400 dark:text-ink-500">
               <Lock className="h-3.5 w-3.5" />
-              Demo checkout — no real payment is processed.
+              Demo checkout â€” no real payment is processed.
             </p>
           </motion.form>
           )}

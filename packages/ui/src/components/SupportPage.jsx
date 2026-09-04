@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { AlertCircle, CheckCircle2, Send } from "lucide-react";
 import PageBackground, { AURORA_BG } from "./PageBackground.jsx";
+import PageDecor from "./PageDecor.jsx";
 import GradientText from "./GradientText.jsx";
 import { createComplaint, getComplaints } from "../api/support";
 
@@ -33,6 +34,7 @@ export default function SupportPage() {
   return (
     <section className="dark relative min-h-screen overflow-hidden px-4 py-20 sm:px-6 lg:px-8">
       <PageBackground image={false} gradient={AURORA_BG} />
+        <PageDecor />
       <div className="mx-auto grid max-w-5xl gap-6 lg:grid-cols-2">
         <div className="glass-panel-strong rounded-[2rem] p-6">
           <h1>

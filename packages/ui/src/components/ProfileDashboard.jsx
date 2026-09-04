@@ -1,7 +1,8 @@
-import { CheckCircle2, Sparkles, UserRound, Camera } from "lucide-react";
+﻿import { CheckCircle2, Sparkles, UserRound, Camera } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import PageBackground, { AURORA_BG } from "./PageBackground.jsx";
+import PageDecor from "./PageDecor.jsx";
 import GradientText from "./GradientText.jsx";
 import { getCurrentUser, setAuthToken, onAuthChange } from "../api/auth";
 import { updateProfile } from "../api/profile";
@@ -250,6 +251,7 @@ export default function ProfileDashboard({ onOpenDeals, onOpenConnect, onOpenPay
     return (
       <section className="dark relative min-h-screen px-4 py-20 sm:px-6 lg:px-8 transition-colors duration-300">
         <PageBackground image={false} gradient={AURORA_BG} />
+        <PageDecor />
         <div className="mx-auto max-w-2xl rounded-3xl border border-white/40 bg-white/70 p-8 shadow-lift backdrop-blur-2xl dark:border-white/10 dark:bg-ink-900/70 dark:text-ink-50">
           <p className="text-sm font-semibold text-brand-700 dark:text-brand-400">
             No active session
@@ -276,6 +278,7 @@ export default function ProfileDashboard({ onOpenDeals, onOpenConnect, onOpenPay
   return (
     <section className="dark relative min-h-screen px-4 py-20 sm:px-6 lg:px-8 transition-colors duration-300">
       <PageBackground image={false} gradient={AURORA_BG} />
+        <PageDecor />
       <div className="mx-auto flex max-w-7xl flex-col gap-8 lg:flex-row">
         <motion.div
           className="w-full max-w-xl rounded-3xl border border-white/40 bg-white/70 p-8 shadow-lift backdrop-blur-2xl dark:border-white/10 dark:bg-ink-900/70 dark:text-ink-50"
@@ -318,7 +321,7 @@ export default function ProfileDashboard({ onOpenDeals, onOpenConnect, onOpenPay
                   Welcome back, {user.name || user.email}
                 </p>
                 <p className="text-sm text-ink-600 dark:text-ink-300">
-                  We’ll use this profile to personalize your experience.
+                  Weâ€™ll use this profile to personalize your experience.
                 </p>
               </div>
             </div>
