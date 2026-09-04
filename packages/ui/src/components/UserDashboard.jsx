@@ -1,4 +1,4 @@
-import {
+﻿import {
   ArrowLeft,
   BarChart3,
   Bookmark,
@@ -22,8 +22,14 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useCallback, useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import PageBackground, { AURORA_BG } from "./PageBackground.jsx";
+import PageDecor from "./PageDecor.jsx";
 import GradientText from "./GradientText.jsx";
-import { deleteOpportunity, getCheckpoints, getMyOpportunities, updateOpportunity } from "../api/opportunities";
+import {
+  deleteOpportunity,
+  getCheckpoints,
+  getMyOpportunities,
+  updateOpportunity,
+} from "../api/opportunities";
 import {
   getConnectedOpportunities,
   disconnectOpportunity,
@@ -145,8 +151,12 @@ function DashboardCard({ opp, actions }) {
 
         <div className="mt-5 rounded-2xl border border-brand-100 bg-brand-50/60 p-3 dark:border-brand-900/50 dark:bg-brand-950/25">
           <div className="flex items-center justify-between text-xs">
-            <span className="font-semibold text-ink-700 dark:text-ink-300">Funding goal</span>
-            <span className="font-display font-bold text-brand-700 dark:text-brand-300">{opp.goal}</span>
+            <span className="font-semibold text-ink-700 dark:text-ink-300">
+              Funding goal
+            </span>
+            <span className="font-display font-bold text-brand-700 dark:text-brand-300">
+              {opp.goal}
+            </span>
           </div>
         </div>
 
@@ -209,184 +219,21 @@ function StatusModal({ opp, isOwner, onClose, navigate, onAccepted }) {
     <>
       <motion.div
         className="fixed inset-0 z-50 grid place-items-center bg-black/40 px-4"
-      variants={modalOverlay}
-      initial="hidden"
-      animate="visible"
-      exit="exit"
-      onClick={onClose}
-    >
-      <motion.div
-        className="glass-panel-strong holo-card w-full max-w-lg rounded-[2rem] p-6"
-        variants={modalPanel}
-        onClick={(e) => e.stopPropagation()}
+        variants={modalOverlay}
+        initial="hidden"
+        animate="visible"
+        exit="exit"
+        onClick={onClose}
       >
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h2 className="font-display text-xl font-bold text-ink-900 dark:text-ink-50">
-              Project status
-            </h2>
-            <p className="mt-1 text-sm text-ink-500 dark:text-ink-400">
-              {opp.title}
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="text-ink-400 hover:text-ink-700 dark:text-ink-500 dark:hover:text-ink-300"
-            aria-label="Close"
-          >
-            <X className="h-5 w-5" />
-          </button>
-        </div>
-
-        <div className="mt-4">
-          <span
-            className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${STATUS_STYLES[STATUS_OPTIONS.includes(opp.status) ? opp.status : "Active"]}`}
-          >
-            Status: {opp.status || "Active"}
-          </span>
-        </div>
-
-        <div className="mt-6">
-          {isOwner ? (
-            <>
-              <h3 className="text-sm font-semibold text-ink-700 dark:text-ink-300">
-                Investors who connected with this project
-              </h3>
-              {loading ? (
-                <p className="mt-3 text-sm text-ink-500">Loading…</p>
-              ) : connections.length === 0 ? (
-                <p className="mt-3 text-sm text-ink-500">
-                  No investors have connected with this project yet.
-                </p>
-              ) : (
-                <ul className="mt-3 space-y-2">
-                  {connections.map((c) => (
-                    <li
-                      key={c.id}
-                      className="flex items-center justify-between gap-3 rounded-xl border border-white/20 bg-white/40 px-4 py-3 dark:border-white/10 dark:bg-ink-950/40"
-                    >
-                      <div>
-                        <p className="font-semibold text-ink-900 dark:text-ink-50">
-                          {c.name || "Unknown"}
-                        </p>
-                        <p className="text-xs text-ink-500">{c.email}</p>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <span className="text-xs text-ink-400">
-                          {c.connected_at
-                            ? new Date(c.connected_at).toLocaleDateString()
-                            : ""}
-                        </span>
-                        {c.accepted ? (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700">
-                            Accepted
-                          </span>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={() => handleAccept(c.id)}
-                            className="btn-primary"
-                          >
-                            Accept
-                          </button>
-                        )}
-                        <button
-                          type="button"
-                          onClick={() => navigate("/connect")}
-                          className="btn-ghost"
-                        >
-                          <MessageCircle className="h-4 w-4" />
-                          Chat
-                        </button>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              )}
-
-              <button
-                type="button"
-                onClick={() => {
-                  setProgressOpen(true);
-                  openProgress();
-                }}
-                className="btn-primary mt-4 w-full"
-              >
-                <BarChart3 className="h-4 w-4" />
-                Progress
-              </button>
-            </>
-          ) : (
-            <div className="space-y-4">
-              <div className="rounded-xl border border-white/20 bg-white/40 px-4 py-3 dark:border-white/10 dark:bg-ink-950/40">
-                <p className="text-xs font-semibold uppercase tracking-wider text-ink-400">
-                  Interested user
-                </p>
-                <p className="mt-1 font-semibold text-ink-900 dark:text-ink-50">
-                  {opp.postedByName || "Unknown"}
-                </p>
-                <p className="text-xs text-ink-500">{opp.postedBy || ""}</p>
-              </div>
-              <div className="flex flex-col gap-3 sm:flex-row">
-                <button
-                  type="button"
-                  onClick={() => {
-                    onClose();
-                    navigate("/connect");
-                  }}
-                  className="btn-primary flex-1"
-                >
-                  <MessageCircle className="h-4 w-4" />
-                  Chat
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    onClose();
-                    navigate("/payment/" + opp.id, {
-                      state: {
-                        deal: {
-                          id: opp.id,
-                          name: opp.title,
-                          company: opp.company,
-                          sector: opp.sector,
-                          location: opp.location || "TBD",
-                          goal: opp.goal || "$0",
-                          status: opp.status || "Active",
-                          blurb: opp.blurb || "",
-                          timeline: opp.timeline || "TBD",
-                          image: opp.image || null,
-                          postedBy: opp.postedBy || null,
-                        },
-                      },
-                    });
-                  }}
-                  className="btn-ghost flex-1"
-                >
-                  <CreditCard className="h-4 w-4" />
-                  Payment
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-      </motion.div>
-    </motion.div>
-
-    {progressOpen && (
-      <div
-        className="fixed inset-0 z-[60] grid place-items-center bg-black/50 px-4"
-        onClick={() => setProgressOpen(false)}
-      >
-        <div
-          className="glass-panel-strong holo-card w-full max-w-md rounded-[2rem] p-6"
+        <motion.div
+          className="glass-panel-strong holo-card w-full max-w-lg rounded-[2rem] p-6"
+          variants={modalPanel}
           onClick={(e) => e.stopPropagation()}
         >
           <div className="flex items-start justify-between gap-4">
             <div>
               <h2 className="font-display text-xl font-bold text-ink-900 dark:text-ink-50">
-                Investment progress
+                Project status
               </h2>
               <p className="mt-1 text-sm text-ink-500 dark:text-ink-400">
                 {opp.title}
@@ -394,7 +241,7 @@ function StatusModal({ opp, isOwner, onClose, navigate, onAccepted }) {
             </div>
             <button
               type="button"
-              onClick={() => setProgressOpen(false)}
+              onClick={onClose}
               className="text-ink-400 hover:text-ink-700 dark:text-ink-500 dark:hover:text-ink-300"
               aria-label="Close"
             >
@@ -402,43 +249,208 @@ function StatusModal({ opp, isOwner, onClose, navigate, onAccepted }) {
             </button>
           </div>
 
-          <div className="mt-5">
-            {progressLoading ? (
-              <p className="text-sm text-ink-500">Loading…</p>
-            ) : progress.length === 0 ? (
-              <p className="text-sm text-ink-500">
-                No checkpoints have been added yet.
-              </p>
-            ) : (
-              <div className="overflow-hidden rounded-2xl border border-ink-100 dark:border-ink-800">
-                <table className="w-full text-left text-sm">
-                  <thead className="bg-ink-50 text-xs uppercase tracking-wider text-ink-500 dark:bg-ink-900/60 dark:text-ink-400">
-                    <tr>
-                      <th className="px-4 py-3">#</th>
-                      <th className="px-4 py-3">Title</th>
-                      <th className="px-4 py-3 text-right">Amount</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-ink-100 dark:divide-ink-800">
-                    {progress.map((cp, index) => (
-                      <tr key={cp.id || index}>
-                        <td className="px-4 py-3 text-ink-400">{index + 1}</td>
-                        <td className="px-4 py-3 font-medium text-ink-900 dark:text-ink-50">
-                          {cp.title}
-                        </td>
-                        <td className="px-4 py-3 text-right font-semibold text-ink-900 dark:text-ink-50">
-                          ${(parseFloat(cp.amount) || 0).toLocaleString()}
-                        </td>
-                      </tr>
+          <div className="mt-4">
+            <span
+              className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${STATUS_STYLES[STATUS_OPTIONS.includes(opp.status) ? opp.status : "Active"]}`}
+            >
+              Status: {opp.status || "Active"}
+            </span>
+          </div>
+
+          <div className="mt-6">
+            {isOwner ? (
+              <>
+                <h3 className="text-sm font-semibold text-ink-700 dark:text-ink-300">
+                  Investors who connected with this project
+                </h3>
+                {loading ? (
+                  <p className="mt-3 text-sm text-ink-500">Loadingâ€¦</p>
+                ) : connections.length === 0 ? (
+                  <p className="mt-3 text-sm text-ink-500">
+                    No investors have connected with this project yet.
+                  </p>
+                ) : (
+                  <ul className="mt-3 space-y-2">
+                    {connections.map((c) => (
+                      <li
+                        key={c.id}
+                        className="flex items-center justify-between gap-3 rounded-xl border border-white/20 bg-white/40 px-4 py-3 dark:border-white/10 dark:bg-ink-950/40"
+                      >
+                        <div>
+                          <p className="font-semibold text-ink-900 dark:text-ink-50">
+                            {c.name || "Unknown"}
+                          </p>
+                          <p className="text-xs text-ink-500">{c.email}</p>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className="text-xs text-ink-400">
+                            {c.connected_at
+                              ? new Date(c.connected_at).toLocaleDateString()
+                              : ""}
+                          </span>
+                          {c.accepted ? (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700">
+                              Accepted
+                            </span>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => handleAccept(c.id)}
+                              className="btn-primary"
+                            >
+                              Accept
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => navigate("/connect")}
+                            className="btn-ghost"
+                          >
+                            <MessageCircle className="h-4 w-4" />
+                            Chat
+                          </button>
+                        </div>
+                      </li>
                     ))}
-                  </tbody>
-                </table>
+                  </ul>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setProgressOpen(true);
+                    openProgress();
+                  }}
+                  className="btn-primary mt-4 w-full"
+                >
+                  <BarChart3 className="h-4 w-4" />
+                  Progress
+                </button>
+              </>
+            ) : (
+              <div className="space-y-4">
+                <div className="rounded-xl border border-white/20 bg-white/40 px-4 py-3 dark:border-white/10 dark:bg-ink-950/40">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-ink-400">
+                    Interested user
+                  </p>
+                  <p className="mt-1 font-semibold text-ink-900 dark:text-ink-50">
+                    {opp.postedByName || "Unknown"}
+                  </p>
+                  <p className="text-xs text-ink-500">{opp.postedBy || ""}</p>
+                </div>
+                <div className="flex flex-col gap-3 sm:flex-row">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onClose();
+                      navigate("/connect");
+                    }}
+                    className="btn-primary flex-1"
+                  >
+                    <MessageCircle className="h-4 w-4" />
+                    Chat
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onClose();
+                      navigate("/payment/" + opp.id, {
+                        state: {
+                          deal: {
+                            id: opp.id,
+                            name: opp.title,
+                            company: opp.company,
+                            sector: opp.sector,
+                            location: opp.location || "TBD",
+                            goal: opp.goal || "$0",
+                            status: opp.status || "Active",
+                            blurb: opp.blurb || "",
+                            timeline: opp.timeline || "TBD",
+                            image: opp.image || null,
+                            postedBy: opp.postedBy || null,
+                          },
+                        },
+                      });
+                    }}
+                    className="btn-ghost flex-1"
+                  >
+                    <CreditCard className="h-4 w-4" />
+                    Payment
+                  </button>
+                </div>
               </div>
             )}
           </div>
+        </motion.div>
+      </motion.div>
+
+      {progressOpen && (
+        <div
+          className="fixed inset-0 z-[60] grid place-items-center bg-black/50 px-4"
+          onClick={() => setProgressOpen(false)}
+        >
+          <div
+            className="glass-panel-strong holo-card w-full max-w-md rounded-[2rem] p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h2 className="font-display text-xl font-bold text-ink-900 dark:text-ink-50">
+                  Investment progress
+                </h2>
+                <p className="mt-1 text-sm text-ink-500 dark:text-ink-400">
+                  {opp.title}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setProgressOpen(false)}
+                className="text-ink-400 hover:text-ink-700 dark:text-ink-500 dark:hover:text-ink-300"
+                aria-label="Close"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="mt-5">
+              {progressLoading ? (
+                <p className="text-sm text-ink-500">Loadingâ€¦</p>
+              ) : progress.length === 0 ? (
+                <p className="text-sm text-ink-500">
+                  No checkpoints have been added yet.
+                </p>
+              ) : (
+                <div className="overflow-hidden rounded-2xl border border-ink-100 dark:border-ink-800">
+                  <table className="w-full text-left text-sm">
+                    <thead className="bg-ink-50 text-xs uppercase tracking-wider text-ink-500 dark:bg-ink-900/60 dark:text-ink-400">
+                      <tr>
+                        <th className="px-4 py-3">#</th>
+                        <th className="px-4 py-3">Title</th>
+                        <th className="px-4 py-3 text-right">Amount</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-ink-100 dark:divide-ink-800">
+                      {progress.map((cp, index) => (
+                        <tr key={cp.id || index}>
+                          <td className="px-4 py-3 text-ink-400">
+                            {index + 1}
+                          </td>
+                          <td className="px-4 py-3 font-medium text-ink-900 dark:text-ink-50">
+                            {cp.title}
+                          </td>
+                          <td className="px-4 py-3 text-right font-semibold text-ink-900 dark:text-ink-50">
+                            ${(parseFloat(cp.amount) || 0).toLocaleString()}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
-      </div>
-    )}
+      )}
     </>
   );
 }
@@ -561,7 +573,15 @@ export default function UserDashboard({ navigate }) {
     }
   }, [location.search, navigate]);
 
-  const sectors = ["HealthTech", "CleanEnergy", "E-commerce", "AgriTech", "FinTech", "EdTech", "Others"];
+  const sectors = [
+    "HealthTech",
+    "CleanEnergy",
+    "E-commerce",
+    "AgriTech",
+    "FinTech",
+    "EdTech",
+    "Others",
+  ];
 
   useEffect(() => {
     setUser(getStoredUser());
@@ -682,7 +702,6 @@ export default function UserDashboard({ navigate }) {
     }
   };
 
-
   const openEdit = (opp) => {
     setEditTarget(opp);
     setEditForm({
@@ -785,6 +804,7 @@ export default function UserDashboard({ navigate }) {
     return (
       <section className="dark relative min-h-screen overflow-hidden px-4 py-20 transition-colors duration-300 sm:px-6 lg:px-8">
         <PageBackground image={false} gradient={AURORA_BG} />
+        <PageDecor />
         <div className="pointer-events-none absolute inset-0 -z-10 opacity-60">
           <div className="absolute left-[-5rem] top-24 h-72 w-72 rounded-full bg-brand-200/35 blur-3xl" />
           <div className="absolute right-[-4rem] bottom-10 h-80 w-80 rounded-full bg-gold-200/20 blur-3xl" />
@@ -796,8 +816,8 @@ export default function UserDashboard({ navigate }) {
               Sign in to view your dashboard
             </h1>
             <p className="mt-3 text-ink-600 dark:text-ink-300">
-              Your dashboard shows every project you have posted on InvestBridge.
-              Sign in or create an account to continue.
+              Your dashboard shows every project you have posted on
+              InvestBridge. Sign in or create an account to continue.
             </p>
             <button
               type="button"
@@ -817,6 +837,7 @@ export default function UserDashboard({ navigate }) {
   return (
     <section className="dark relative min-h-screen overflow-hidden px-4 py-20 transition-colors duration-300 sm:px-6 lg:px-8">
       <PageBackground image={false} gradient={AURORA_BG} />
+        <PageDecor />
       <div className="pointer-events-none absolute inset-0 -z-10 opacity-60">
         <div className="absolute left-[-5rem] top-24 h-72 w-72 rounded-full bg-brand-200/35 blur-3xl" />
         <div className="absolute right-[-4rem] bottom-10 h-80 w-80 rounded-full bg-gold-200/20 blur-3xl" />
@@ -871,7 +892,7 @@ export default function UserDashboard({ navigate }) {
             <motion.button
               type="button"
               onClick={() => navigate("/")}
-              className="theme-toggle grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-white/30 bg-white/35 text-ink-700"
+              className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-white/30 bg-white/35 text-ink-700"
               aria-label="Back home"
               whileHover={{ y: -2 }}
               whileTap={{ scale: 0.95 }}
@@ -904,7 +925,10 @@ export default function UserDashboard({ navigate }) {
               initial="hidden"
               animate="visible"
             >
-              <motion.div className="rounded-3xl border border-white/30 bg-white/70 p-5 shadow-soft backdrop-blur-xl dark:border-white/10 dark:bg-ink-950/55" variants={fadeUp}>
+              <motion.div
+                className="rounded-3xl border border-white/30 bg-white/70 p-5 shadow-soft backdrop-blur-xl dark:border-white/10 dark:bg-ink-950/55"
+                variants={fadeUp}
+              >
                 <p className="text-xs font-semibold uppercase tracking-wider text-brand-700 dark:text-brand-300">
                   Projects posted
                 </p>
@@ -912,18 +936,32 @@ export default function UserDashboard({ navigate }) {
                   {totalProjects}
                 </p>
               </motion.div>
-              <motion.div className="rounded-3xl border border-white/30 bg-white/70 p-5 shadow-soft backdrop-blur-xl dark:border-white/10 dark:bg-ink-950/55" variants={fadeUp}>
+              <motion.div
+                className="rounded-3xl border border-white/30 bg-white/70 p-5 shadow-soft backdrop-blur-xl dark:border-white/10 dark:bg-ink-950/55"
+                variants={fadeUp}
+              >
                 <p className="text-xs font-semibold uppercase tracking-wider text-brand-700 dark:text-brand-300">
                   Total funding goal
                 </p>
                 <p className="mt-2 font-display text-2xl font-bold text-ink-900 dark:text-ink-50">
-                  {allOpportunities.reduce((sum, o) => {
-                    const val = parseFloat((o.goal || "$0").replace(/[^0-9.]/g, "")) || 0;
-                    return sum + val;
-                  }, 0).toLocaleString(undefined, { style: "currency", currency: "USD", maximumFractionDigits: 0 })}
+                  {allOpportunities
+                    .reduce((sum, o) => {
+                      const val =
+                        parseFloat((o.goal || "$0").replace(/[^0-9.]/g, "")) ||
+                        0;
+                      return sum + val;
+                    }, 0)
+                    .toLocaleString(undefined, {
+                      style: "currency",
+                      currency: "USD",
+                      maximumFractionDigits: 0,
+                    })}
                 </p>
               </motion.div>
-              <motion.div className="rounded-3xl border border-white/30 bg-white/70 p-5 shadow-soft backdrop-blur-xl dark:border-white/10 dark:bg-ink-950/55" variants={fadeUp}>
+              <motion.div
+                className="rounded-3xl border border-white/30 bg-white/70 p-5 shadow-soft backdrop-blur-xl dark:border-white/10 dark:bg-ink-950/55"
+                variants={fadeUp}
+              >
                 <p className="text-xs font-semibold uppercase tracking-wider text-brand-700 dark:text-brand-300">
                   Latest post
                 </p>
@@ -931,7 +969,11 @@ export default function UserDashboard({ navigate }) {
                   {allOpportunities[0]?.title || "N/A"}
                 </p>
                 <p className="text-xs text-ink-500 dark:text-ink-400">
-                  {allOpportunities[0]?.createdAt ? new Date(allOpportunities[0].createdAt).toLocaleDateString() : "N/A"}
+                  {allOpportunities[0]?.createdAt
+                    ? new Date(
+                        allOpportunities[0].createdAt,
+                      ).toLocaleDateString()
+                    : "N/A"}
                 </p>
               </motion.div>
             </motion.div>
@@ -995,7 +1037,7 @@ export default function UserDashboard({ navigate }) {
                             onClick={() => openStatusModal(opp, true)}
                             className={`rounded-full px-2.5 py-1 text-xs font-semibold ${STATUS_STYLES[STATUS_OPTIONS.includes(opp.status) ? opp.status : "Active"]}`}
                           >
-            Status: {opp.status || "Active"}
+                            Status: {opp.status || "Active"}
                           </button>
                           <button
                             type="button"
@@ -1080,7 +1122,9 @@ export default function UserDashboard({ navigate }) {
                         </button>
                         <button
                           type="button"
-                          onClick={() => confirmDelete(opp.connectionId, "connected")}
+                          onClick={() =>
+                            confirmDelete(opp.connectionId, "connected")
+                          }
                           className="text-xs font-semibold text-rose-500 transition-colors hover:text-rose-700"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
@@ -1096,256 +1140,262 @@ export default function UserDashboard({ navigate }) {
         </div>
 
         <AnimatePresence>
-        {pendingDelete && (
-          <motion.div
-            className="fixed inset-0 z-50 grid place-items-center bg-black/30 px-4"
-            variants={modalOverlay}
-            initial="hidden"
-            animate="visible"
-            exit="exit"
-            onClick={cancelDelete}
-          >
+          {pendingDelete && (
             <motion.div
-              className="glass-panel-strong holo-card w-full max-w-md rounded-[2rem] p-6"
-              variants={modalPanel}
-              onClick={(e) => e.stopPropagation()}
+              className="fixed inset-0 z-50 grid place-items-center bg-black/30 px-4"
+              variants={modalOverlay}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+              onClick={cancelDelete}
             >
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <div className="grid h-11 w-11 place-items-center rounded-2xl border border-white/20 bg-rose-600/90 text-white shadow-soft">
-                    <Trash2 className="h-5 w-5" />
+              <motion.div
+                className="glass-panel-strong holo-card w-full max-w-md rounded-[2rem] p-6"
+                variants={modalPanel}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="grid h-11 w-11 place-items-center rounded-2xl border border-white/20 bg-rose-600/90 text-white shadow-soft">
+                      <Trash2 className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <h2 className="font-display text-xl font-bold text-ink-900 dark:text-ink-50">
+                        {pendingDelete.type === "connected"
+                          ? "Remove saved opportunity?"
+                          : "Remove project?"}
+                      </h2>
+                      <p className="mt-1 text-sm text-ink-600 dark:text-ink-300">
+                        {pendingDelete.type === "connected"
+                          ? "This only removes the post from your dashboard. The original post stays on discovery for everyone."
+                          : "This action cannot be undone. This project will be removed from your dashboard and discovery."}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <h2 className="font-display text-xl font-bold text-ink-900 dark:text-ink-50">
-                      {pendingDelete.type === "connected"
-                        ? "Remove saved opportunity?"
-                        : "Remove project?"}
-                    </h2>
-                    <p className="mt-1 text-sm text-ink-600 dark:text-ink-300">
-                      {pendingDelete.type === "connected"
-                        ? "This only removes the post from your dashboard. The original post stays on discovery for everyone."
-                        : "This action cannot be undone. This project will be removed from your dashboard and discovery."}
-                    </p>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={cancelDelete}
+                    className="text-ink-400 hover:text-ink-700 dark:text-ink-500 dark:hover:text-ink-300"
+                    aria-label="Close"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={cancelDelete}
-                  className="text-ink-400 hover:text-ink-700 dark:text-ink-500 dark:hover:text-ink-300"
-                  aria-label="Close"
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
-              <div className="mt-6 flex items-center justify-end gap-3">
-                <button
-                  type="button"
-                  onClick={cancelDelete}
-                  className="btn-ghost"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={() =>
-                    pendingDelete.type === "connected"
-                      ? handleDisconnect(pendingDelete.id)
-                      : handleDelete(pendingDelete.id)
-                  }
-                  className="rounded-full bg-rose-600 px-5 py-2.5 text-sm font-semibold text-white shadow-soft transition-colors hover:bg-rose-700"
-                >
-                  {pendingDelete.type === "connected"
-                    ? "Remove from dashboard"
-                    : "Remove project"}
-                </button>
-              </div>
+                <div className="mt-6 flex items-center justify-end gap-3">
+                  <button
+                    type="button"
+                    onClick={cancelDelete}
+                    className="btn-ghost"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      pendingDelete.type === "connected"
+                        ? handleDisconnect(pendingDelete.id)
+                        : handleDelete(pendingDelete.id)
+                    }
+                    className="rounded-full bg-rose-600 px-5 py-2.5 text-sm font-semibold text-white shadow-soft transition-colors hover:bg-rose-700"
+                  >
+                    {pendingDelete.type === "connected"
+                      ? "Remove from dashboard"
+                      : "Remove project"}
+                  </button>
+                </div>
+              </motion.div>
             </motion.div>
-          </motion.div>
-        )}
+          )}
         </AnimatePresence>
 
         <AnimatePresence>
-         {editTarget && (
-           <motion.div
-             className="fixed inset-0 z-50 grid place-items-center bg-black/30 px-4"
-             variants={modalOverlay}
-             initial="hidden"
-             animate="visible"
-             exit="exit"
-             onClick={closeEdit}
-           >
-             <motion.div
-               className="glass-panel-strong holo-card w-full max-w-lg rounded-[2rem] p-8"
-               variants={modalPanel}
-               onClick={(e) => e.stopPropagation()}
-             >
-               <div className="flex items-start justify-between gap-4">
-                 <div>
-                   <h2 className="font-display text-xl font-bold text-ink-900 dark:text-ink-50">
-                     Edit opportunity
-                   </h2>
-                   <p className="mt-1 text-sm text-ink-500 dark:text-ink-400">
-                     Update the details below and save your changes.
-                   </p>
-                 </div>
-                 <button
-                   type="button"
-                   onClick={closeEdit}
-                   className="text-ink-400 hover:text-ink-700 dark:text-ink-500 dark:hover:text-ink-300"
-                   aria-label="Close"
-                 >
-                   <X className="h-5 w-5" />
-                 </button>
-               </div>
+          {editTarget && (
+            <motion.div
+              className="fixed inset-0 z-50 grid place-items-center bg-black/30 px-4"
+              variants={modalOverlay}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+              onClick={closeEdit}
+            >
+              <motion.div
+                className="glass-panel-strong holo-card w-full max-w-lg rounded-[2rem] p-8"
+                variants={modalPanel}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <h2 className="font-display text-xl font-bold text-ink-900 dark:text-ink-50">
+                      Edit opportunity
+                    </h2>
+                    <p className="mt-1 text-sm text-ink-500 dark:text-ink-400">
+                      Update the details below and save your changes.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={closeEdit}
+                    className="text-ink-400 hover:text-ink-700 dark:text-ink-500 dark:hover:text-ink-300"
+                    aria-label="Close"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
 
-               {editStatus && (
-                 <p
-                   className={`mt-4 text-sm ${editStatus.includes("successfully") ? "text-brand-700 dark:text-brand-300" : "text-rose-600 dark:text-rose-400"}`}
-                 >
-                   {editStatus}
-                 </p>
-               )}
+                {editStatus && (
+                  <p
+                    className={`mt-4 text-sm ${editStatus.includes("successfully") ? "text-brand-700 dark:text-brand-300" : "text-rose-600 dark:text-rose-400"}`}
+                  >
+                    {editStatus}
+                  </p>
+                )}
 
-               <form className="mt-6 space-y-4" onSubmit={handleEditSubmit}>
-                 <div className="flex flex-col items-center">
-                   <label className="group relative cursor-pointer">
-                     <input
-                       type="file"
-                       accept="image/*"
-                       onChange={handleEditImageChange}
-                       className="sr-only"
-                     />
-                     <div className="flex h-48 w-48 items-center justify-center overflow-hidden rounded-3xl border-2 border-dashed border-ink-300 bg-ink-50 transition group-hover:border-brand-400 group-hover:bg-brand-50 dark:border-ink-600 dark:bg-ink-800 dark:group-hover:border-brand-500 dark:group-hover:bg-brand-900/20">
-                       {editForm.image ? (
-                         <img
-                           src={editForm.image}
-                           alt="Opportunity preview"
-                           className="h-full w-full object-cover"
-                         />
-                       ) : (
-                         <div className="flex flex-col items-center gap-1 text-ink-400 dark:text-ink-500">
-                           <ImageIcon className="h-8 w-8" />
-                           <span className="text-xs font-medium">Opportunity image</span>
-                         </div>
-                       )}
-                     </div>
-                   </label>
-                   <p className="mt-2 text-xs text-ink-500 dark:text-ink-400">
-                     Upload a cover image (optional)
-                   </p>
-                 </div>
+                <form className="mt-6 space-y-4" onSubmit={handleEditSubmit}>
+                  <div className="flex flex-col items-center">
+                    <label className="group relative cursor-pointer">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleEditImageChange}
+                        className="sr-only"
+                      />
+                      <div className="flex h-48 w-48 items-center justify-center overflow-hidden rounded-3xl border-2 border-dashed border-ink-300 bg-ink-50 transition group-hover:border-brand-400 group-hover:bg-brand-50 dark:border-ink-600 dark:bg-ink-800 dark:group-hover:border-brand-500 dark:group-hover:bg-brand-900/20">
+                        {editForm.image ? (
+                          <img
+                            src={editForm.image}
+                            alt="Opportunity preview"
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <div className="flex flex-col items-center gap-1 text-ink-400 dark:text-ink-500">
+                            <ImageIcon className="h-8 w-8" />
+                            <span className="text-xs font-medium">
+                              Opportunity image
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </label>
+                    <p className="mt-2 text-xs text-ink-500 dark:text-ink-400">
+                      Upload a cover image (optional)
+                    </p>
+                  </div>
 
-                 <div className="grid gap-4 md:grid-cols-2">
-                   <label className="block">
-                     <span className={fieldLabelClassName}>Title *</span>
-                     <input
-                       type="text"
-                       name="title"
-                       value={editForm.title}
-                       onChange={handleEditChange}
-                       required
-                       placeholder="e.g., AI-Powered Diagnostic Platform"
-                       className={inputClassName}
-                     />
-                   </label>
-                   <label className="block">
-                     <span className={fieldLabelClassName}>Company *</span>
-                     <input
-                       type="text"
-                       name="company"
-                       value={editForm.company}
-                       onChange={handleEditChange}
-                       required
-                       placeholder="e.g., NovaVet AI"
-                       className={inputClassName}
-                     />
-                   </label>
-                 </div>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <label className="block">
+                      <span className={fieldLabelClassName}>Title *</span>
+                      <input
+                        type="text"
+                        name="title"
+                        value={editForm.title}
+                        onChange={handleEditChange}
+                        required
+                        placeholder="e.g., AI-Powered Diagnostic Platform"
+                        className={inputClassName}
+                      />
+                    </label>
+                    <label className="block">
+                      <span className={fieldLabelClassName}>Company *</span>
+                      <input
+                        type="text"
+                        name="company"
+                        value={editForm.company}
+                        onChange={handleEditChange}
+                        required
+                        placeholder="e.g., NovaVet AI"
+                        className={inputClassName}
+                      />
+                    </label>
+                  </div>
 
-                 <div className="grid gap-4 md:grid-cols-3">
-                   <label className="block">
-                     <span className={fieldLabelClassName}>Sector *</span>
-                     <select
-                       name="sector"
-                       value={editForm.sector}
-                       onChange={handleEditChange}
-                       required
-                       className={inputClassName}
-                     >
-                       <option value="">Select a sector</option>
-                       {sectors.filter((s) => s !== "All").map((s) => (
-                         <option key={s} value={s}>{s}</option>
-                       ))}
-                     </select>
-                   </label>
-                   <label className="block">
-                     <span className={fieldLabelClassName}>Location</span>
-                     <input
-                       type="text"
-                       name="location"
-                       value={editForm.location}
-                       onChange={handleEditChange}
-                       placeholder="e.g., San Francisco, US"
-                       className={inputClassName}
-                     />
-                   </label>
-                   <label className="block">
-                     <span className={fieldLabelClassName}>Funding goal</span>
-                     <input
-                       type="text"
-                       name="fundingGoal"
-                       value={editForm.fundingGoal}
-                       onChange={handleEditChange}
-                       placeholder="e.g., $1.5M"
-                       className={inputClassName}
-                     />
-                   </label>
-                 </div>
+                  <div className="grid gap-4 md:grid-cols-3">
+                    <label className="block">
+                      <span className={fieldLabelClassName}>Sector *</span>
+                      <select
+                        name="sector"
+                        value={editForm.sector}
+                        onChange={handleEditChange}
+                        required
+                        className={inputClassName}
+                      >
+                        <option value="">Select a sector</option>
+                        {sectors
+                          .filter((s) => s !== "All")
+                          .map((s) => (
+                            <option key={s} value={s}>
+                              {s}
+                            </option>
+                          ))}
+                      </select>
+                    </label>
+                    <label className="block">
+                      <span className={fieldLabelClassName}>Location</span>
+                      <input
+                        type="text"
+                        name="location"
+                        value={editForm.location}
+                        onChange={handleEditChange}
+                        placeholder="e.g., San Francisco, US"
+                        className={inputClassName}
+                      />
+                    </label>
+                    <label className="block">
+                      <span className={fieldLabelClassName}>Funding goal</span>
+                      <input
+                        type="text"
+                        name="fundingGoal"
+                        value={editForm.fundingGoal}
+                        onChange={handleEditChange}
+                        placeholder="e.g., $1.5M"
+                        className={inputClassName}
+                      />
+                    </label>
+                  </div>
 
-                 <label className="block">
-                   <span className={fieldLabelClassName}>Description</span>
-                   <textarea
-                     name="description"
-                     value={editForm.description}
-                     onChange={handleEditChange}
-                     rows="3"
-                     placeholder="Describe the opportunity, what problem it solves, and why it matters..."
-                     className={inputClassName}
-                   />
-                 </label>
+                  <label className="block">
+                    <span className={fieldLabelClassName}>Description</span>
+                    <textarea
+                      name="description"
+                      value={editForm.description}
+                      onChange={handleEditChange}
+                      rows="3"
+                      placeholder="Describe the opportunity, what problem it solves, and why it matters..."
+                      className={inputClassName}
+                    />
+                  </label>
 
-                 <label className="block">
-                   <span className={fieldLabelClassName}>Timeline</span>
-                   <input
-                     type="text"
-                     name="timeline"
-                     value={editForm.timeline}
-                     onChange={handleEditChange}
-                     placeholder="e.g., 14 days"
-                     className={inputClassName}
-                   />
-                 </label>
+                  <label className="block">
+                    <span className={fieldLabelClassName}>Timeline</span>
+                    <input
+                      type="text"
+                      name="timeline"
+                      value={editForm.timeline}
+                      onChange={handleEditChange}
+                      placeholder="e.g., 14 days"
+                      className={inputClassName}
+                    />
+                  </label>
 
-                 <div className="flex items-center justify-end gap-3">
-                   <button
-                     type="button"
-                     onClick={closeEdit}
-                     className="btn-ghost"
-                   >
-                     Cancel
-                   </button>
-                   <button
-                     type="submit"
-                     className="btn-primary"
-                     disabled={editLoading}
-                   >
-                     <Rocket className="h-4 w-4" />
-                     {editLoading ? "Saving..." : "Save changes"}
-                   </button>
-                 </div>
-               </form>
-             </motion.div>
-           </motion.div>
+                  <div className="flex items-center justify-end gap-3">
+                    <button
+                      type="button"
+                      onClick={closeEdit}
+                      className="btn-ghost"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="btn-primary"
+                      disabled={editLoading}
+                    >
+                      <Rocket className="h-4 w-4" />
+                      {editLoading ? "Saving..." : "Save changes"}
+                    </button>
+                  </div>
+                </form>
+              </motion.div>
+            </motion.div>
           )}
         </AnimatePresence>
 
@@ -1371,7 +1421,7 @@ export default function UserDashboard({ navigate }) {
             />
           )}
         </AnimatePresence>
-        </div>
-      </section>
-   );
+      </div>
+    </section>
+  );
 }

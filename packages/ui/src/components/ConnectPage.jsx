@@ -1,4 +1,4 @@
-import {
+﻿import {
   ArrowLeft,
   ArrowUpRight,
   MessageCircle,
@@ -15,6 +15,7 @@ import {
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import PageBackground, { AURORA_BG } from "./PageBackground.jsx";
+import PageDecor from "./PageDecor.jsx";
 import GradientText from "./GradientText.jsx";
 import { fadeUp, fadeUpBlur, stagger } from "../lib/motion.jsx";
 import { getChatMessages, sendChatMessage } from "../api/support";
@@ -51,7 +52,7 @@ const saveThreads = (threads) => {
 const initialThreads = [
   {
     id: 1,
-    title: "NovaVet AI · Series A discussion",
+    title: "NovaVet AI Â· Series A discussion",
     participants: ["Amara Okafor", "Daniel Reyes"],
     updatedAt: "2 min ago",
     unread: 3,
@@ -81,7 +82,7 @@ const initialThreads = [
   },
   {
     id: 2,
-    title: "Lumen Grid · Seed round follow-up",
+    title: "Lumen Grid Â· Seed round follow-up",
     participants: ["Mei Lin Tan"],
     updatedAt: "1 hr ago",
     unread: 1,
@@ -104,7 +105,7 @@ const initialThreads = [
   },
   {
     id: 3,
-    title: "Cartful · Pre-seed introduction",
+    title: "Cartful Â· Pre-seed introduction",
     participants: ["Alex Kim"],
     updatedAt: "3 hrs ago",
     unread: 0,
@@ -112,7 +113,7 @@ const initialThreads = [
       {
         id: 1,
         sender: "Alex Kim",
-        text: "Headless checkout that turns every link into a storefront — very interesting.",
+        text: "Headless checkout that turns every link into a storefront â€” very interesting.",
         time: "Yesterday",
         self: false,
       },
@@ -239,6 +240,7 @@ export default function ConnectPage({ navigate }) {
   return (
     <section className="dark relative min-h-screen overflow-hidden px-4 py-20 transition-colors duration-300 sm:px-6 lg:px-8">
       <PageBackground image={false} gradient={AURORA_BG} />
+        <PageDecor />
       <div className="pointer-events-none absolute inset-0 -z-10 opacity-60">
         <div className="absolute left-[-5rem] top-24 h-72 w-72 rounded-full bg-brand-200/35 blur-3xl" />
         <div className="absolute right-[-4rem] bottom-10 h-80 w-80 rounded-full bg-gold-200/20 blur-3xl" />

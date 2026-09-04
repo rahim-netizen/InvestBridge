@@ -5,8 +5,6 @@ import {
   BarChart3,
   LogOut,
   Menu,
-  Moon,
-  Sun,
   X,
   Landmark,
   Pencil,
@@ -49,7 +47,7 @@ const getStoredUser = () => {
   }
 };
 
-export default function Navbar({ navigate, theme, toggleTheme }) {
+export default function Navbar({ navigate }) {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
@@ -124,7 +122,7 @@ export default function Navbar({ navigate, theme, toggleTheme }) {
                     key={l.path}
                     type="button"
                     onClick={() => navigate(l.path)}
-                    className={`nav-link flex items-center gap-1.5 text-sm font-bold transition-colors ${
+                    className={`nav-link relative flex items-center gap-1.5 pb-1.5 text-sm font-bold transition-colors ${
                       active
                         ? "text-brand-400"
                         : "text-ink-100/75 hover:text-brand-400"
@@ -143,6 +141,18 @@ export default function Navbar({ navigate, theme, toggleTheme }) {
                       >
                         {l.label}
                       </GradientText>
+                    )}
+                    {active && (
+                      <motion.span
+                        layoutId="navbar-active-underline"
+                        aria-hidden="true"
+                        transition={{
+                          type: "spring",
+                          stiffness: 380,
+                          damping: 32,
+                        }}
+                        className="pointer-events-none absolute inset-x-0 -bottom-0.5 h-[2.5px] rounded-full bg-gradient-to-r from-emerald-400 via-amber-300 to-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.55)]"
+                      />
                     )}
                   </button>
                 );
@@ -163,18 +173,6 @@ export default function Navbar({ navigate, theme, toggleTheme }) {
         </div>
 
         <div className="hidden items-center gap-3 md:flex">
-          <button
-            type="button"
-            onClick={toggleTheme}
-            className="theme-toggle grid h-10 w-10 place-items-center rounded-xl border border-white/10 bg-white/5 text-ink-100 shadow-[0_6px_18px_rgba(2,6,23,0.3)] transition hover:border-brand-500/40 hover:bg-white/10 hover:text-brand-400"
-            aria-label="Toggle theme"
-          >
-            {theme === "dark" ? (
-              <Sun className="h-5 w-5" />
-            ) : (
-              <Moon className="h-5 w-5" />
-            )}
-          </button>
           {showProfileMenu ? (
             <div className="relative">
               <button
@@ -194,67 +192,66 @@ export default function Navbar({ navigate, theme, toggleTheme }) {
                 )}
               </button>
               <AnimatePresence>
-              {profileMenuOpen && (
-                <motion.div
-                  initial={{ opacity: 0, y: -8, scale: 0.97 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: -8, scale: 0.97 }}
-                  transition={{ duration: 0.18, ease: "easeOut" }}
-                  className="absolute right-0 mt-3 w-72 rounded-3xl border border-brand-500/20 bg-ink-950/95 p-4 shadow-[0_24px_60px_rgba(2,6,23,0.55)] backdrop-blur-2xl">
-                  <div className="flex items-center gap-3 border-b border-white/10 pb-3">
-                    <div className="grid h-11 w-11 place-items-center rounded-full border border-brand-500/30 bg-brand-500/10 text-brand-400 backdrop-blur-sm">
-                      <UserCircle2 className="h-6 w-6" />
+                {profileMenuOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -8, scale: 0.97 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -8, scale: 0.97 }}
+                    transition={{ duration: 0.18, ease: "easeOut" }}
+                    className="absolute right-0 mt-3 w-72 rounded-3xl border border-brand-500/20 bg-ink-950/95 p-4 shadow-[0_24px_60px_rgba(2,6,23,0.55)] backdrop-blur-2xl"
+                  >
+                    <div className="flex items-center gap-3 border-b border-white/10 pb-3">
+                      <div className="grid h-11 w-11 place-items-center rounded-full border border-brand-500/30 bg-brand-500/10 text-brand-400 backdrop-blur-sm">
+                        <UserCircle2 className="h-6 w-6" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-white">
+                          {profileLabel}
+                        </p>
+                        <p className="text-sm text-ink-400">
+                          {currentUser?.role || "Member"}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-semibold text-white">
-                        {profileLabel}
-                      </p>
-                      <p className="text-sm text-ink-400">
-                        {currentUser?.role || "Member"}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="mt-4 space-y-2 text-sm text-ink-300">
-                    <p>
-                      <span className="font-semibold text-white">
-                        Email:
-                      </span>{" "}
-                      {currentUser?.email}
-                    </p>
-                    {currentUser?.profile && (
+                    <div className="mt-4 space-y-2 text-sm text-ink-300">
                       <p>
-                        <span className="font-semibold text-white">
-                          Focus:
-                        </span>{" "}
-                        {currentUser.profile.company ||
-                          currentUser.profile.companyName ||
-                          currentUser.profile.focus ||
-                          "Profile ready"}
+                        <span className="font-semibold text-white">Email:</span>{" "}
+                        {currentUser?.email}
                       </p>
-                    )}
-                  </div>
-                   <button
-                     type="button"
-                     onClick={() => {
-                       setProfileMenuOpen(false);
-                       navigate("/profile");
-                     }}
-                     className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-sm font-semibold text-ink-100 transition hover:border-brand-500/40 hover:bg-brand-500/10 hover:text-brand-400"
-                   >
-                     <Pencil className="h-4 w-4" />
-                     Edit profile
-                   </button>
-                   <button
-                     type="button"
-                     onClick={() => {
-                       setProfileMenuOpen(false);
-                       navigate("/dashboard");
-                     }}
-                     className="mt-2 flex w-full items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-sm font-semibold text-ink-100 transition hover:border-brand-500/40 hover:bg-brand-500/10 hover:text-brand-400"
-                   >
-                     <BarChart3 className="h-4 w-4" />
-                     My dashboard
-                   </button>
+                      {currentUser?.profile && (
+                        <p>
+                          <span className="font-semibold text-white">
+                            Focus:
+                          </span>{" "}
+                          {currentUser.profile.company ||
+                            currentUser.profile.companyName ||
+                            currentUser.profile.focus ||
+                            "Profile ready"}
+                        </p>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setProfileMenuOpen(false);
+                        navigate("/profile");
+                      }}
+                      className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-sm font-semibold text-ink-100 transition hover:border-brand-500/40 hover:bg-brand-500/10 hover:text-brand-400"
+                    >
+                      <Pencil className="h-4 w-4" />
+                      Edit profile
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setProfileMenuOpen(false);
+                        navigate("/dashboard");
+                      }}
+                      className="mt-2 flex w-full items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-sm font-semibold text-ink-100 transition hover:border-brand-500/40 hover:bg-brand-500/10 hover:text-brand-400"
+                    >
+                      <BarChart3 className="h-4 w-4" />
+                      My dashboard
+                    </button>
                     <button
                       type="button"
                       onClick={async () => {
@@ -268,8 +265,8 @@ export default function Navbar({ navigate, theme, toggleTheme }) {
                       <LogOut className="h-4 w-4" />
                       Logout
                     </button>
-                </motion.div>
-              )}
+                  </motion.div>
+                )}
               </AnimatePresence>
             </div>
           ) : (
@@ -294,7 +291,7 @@ export default function Navbar({ navigate, theme, toggleTheme }) {
 
         <button
           onClick={() => setOpen((v) => !v)}
-          className="theme-toggle grid h-10 w-10 place-items-center rounded-xl border border-white/10 bg-white/5 text-ink-100 shadow-[0_6px_18px_rgba(2,6,23,0.3)] transition hover:border-brand-500/40 hover:bg-white/10 hover:text-brand-400 md:hidden"
+          className="grid h-10 w-10 place-items-center rounded-xl border border-white/10 bg-white/5 text-ink-100 shadow-[0_6px_18px_rgba(2,6,23,0.3)] transition hover:border-brand-500/40 hover:bg-white/10 hover:text-brand-400 md:hidden"
           aria-label="Toggle menu"
         >
           {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -302,134 +299,134 @@ export default function Navbar({ navigate, theme, toggleTheme }) {
       </nav>
 
       <AnimatePresence>
-      {open && (
-        <motion.div
-          initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: "auto" }}
-          exit={{ opacity: 0, height: 0 }}
-          transition={{ duration: 0.25, ease: "easeInOut" }}
-          className="overflow-hidden border-t border-white/10 bg-ink-950/90 backdrop-blur-2xl md:hidden"
-        >
-          <div className="container-page flex flex-col gap-1 py-4">
-            {showProfileMenu
-              ? appLinks.map((l) => {
-                  const Icon = l.icon;
-                  const active = location.pathname === l.path;
-                  return (
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.25, ease: "easeInOut" }}
+            className="overflow-hidden border-t border-white/10 bg-ink-950/90 backdrop-blur-2xl md:hidden"
+          >
+            <div className="container-page flex flex-col gap-1 py-4">
+              {showProfileMenu
+                ? appLinks.map((l) => {
+                    const Icon = l.icon;
+                    const active = location.pathname === l.path;
+                    return (
+                      <button
+                        key={l.path}
+                        type="button"
+                        onClick={() => {
+                          setOpen(false);
+                          navigate(l.path);
+                        }}
+                        className={`relative flex items-center gap-2 rounded-xl px-3 py-2.5 text-left text-sm font-bold transition ${
+                          active
+                            ? "bg-brand-500/10 text-brand-400"
+                            : "text-ink-100 hover:bg-white/5"
+                        }`}
+                      >
+                        {active && (
+                          <motion.span
+                            layoutId="navbar-active-rail"
+                            aria-hidden="true"
+                            transition={{
+                              type: "spring",
+                              stiffness: 380,
+                              damping: 32,
+                            }}
+                            className="pointer-events-none absolute inset-y-1 left-0 w-[3px] rounded-full bg-gradient-to-b from-emerald-400 via-amber-300 to-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.55)]"
+                          />
+                        )}
+                        <Icon className="h-4 w-4" />
+                        {active ? (
+                          l.label
+                        ) : (
+                          <GradientText
+                            colors={["#10b981", "#fbbf24", "#10b981"]}
+                            animationSpeed={4}
+                            direction="horizontal"
+                            className="text-sm font-bold"
+                          >
+                            {l.label}
+                          </GradientText>
+                        )}
+                      </button>
+                    );
+                  })
+                : links.map((l) => (
+                    <a
+                      key={l.href}
+                      href={l.href}
+                      onClick={() => setOpen(false)}
+                      className="rounded-xl px-3 py-2.5 transition hover:bg-white/5"
+                    >
+                      <GradientText
+                        colors={["#10b981", "#fbbf24", "#10b981"]}
+                        animationSpeed={4}
+                        direction="horizontal"
+                        className="text-sm font-bold"
+                      >
+                        {l.label}
+                      </GradientText>
+                    </a>
+                  ))}
+              <div className="mt-2 flex flex-wrap items-center gap-3">
+                {showProfileMenu ? (
+                  <>
                     <button
-                      key={l.path}
                       type="button"
                       onClick={() => {
                         setOpen(false);
-                        navigate(l.path);
+                        navigate("/profile");
                       }}
-                      className={`flex items-center gap-2 rounded-xl px-3 py-2.5 text-left text-sm font-bold transition ${
-                        active
-                          ? "bg-brand-500/10 text-brand-400"
-                          : "text-ink-100 hover:bg-white/5"
-                      }`}
+                      className="flex flex-1 items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-sm font-semibold text-ink-100"
                     >
-                      <Icon className="h-4 w-4" />
-                      {active ? (
-                        l.label
-                      ) : (
-                        <GradientText
-                          colors={["#10b981", "#fbbf24", "#10b981"]}
-                          animationSpeed={4}
-                          direction="horizontal"
-                          className="text-sm font-bold"
-                        >
-                          {l.label}
-                        </GradientText>
-                      )}
+                      <UserCircle2 className="h-4 w-4" />
+                      Profile
                     </button>
-                  );
-                })
-              : links.map((l) => (
-                  <a
-                    key={l.href}
-                    href={l.href}
-                    onClick={() => setOpen(false)}
-                    className="rounded-xl px-3 py-2.5 transition hover:bg-white/5"
-                  >
-                    <GradientText
-                      colors={["#10b981", "#fbbf24", "#10b981"]}
-                      animationSpeed={4}
-                      direction="horizontal"
-                      className="text-sm font-bold"
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        await apiLogout();
+                        setCurrentUser(null);
+                        setOpen(false);
+                        navigate("/");
+                      }}
+                      className="flex flex-1 items-center justify-center gap-2 rounded-2xl border border-rose-800/50 bg-rose-950/40 px-3 py-2 text-sm font-semibold text-rose-300"
                     >
-                      {l.label}
-                    </GradientText>
-                  </a>
-                ))}
-            <div className="mt-2 flex flex-wrap items-center gap-3">
-              <button
-                type="button"
-                onClick={toggleTheme}
-                className="theme-toggle grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-white/10 bg-white/5 text-ink-100 shadow-[0_6px_18px_rgba(2,6,23,0.3)] transition hover:border-brand-500/40 hover:bg-white/10 hover:text-brand-400"
-                aria-label="Toggle theme"
-              >
-                {theme === "dark" ? (
-                  <Sun className="h-5 w-5" />
+                      <LogOut className="h-4 w-4" />
+                      Logout
+                    </button>
+                  </>
                 ) : (
-                  <Moon className="h-5 w-5" />
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setOpen(false);
+                        navigate("/login");
+                      }}
+                      className="flex flex-1 items-center justify-center gap-2 rounded-full border border-white/15 bg-white/5 px-6 py-3 text-sm font-semibold text-ink-100 transition-all duration-200 hover:border-brand-500/40 hover:bg-white/10 hover:text-brand-400"
+                    >
+                      Sign in
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setOpen(false);
+                        navigate("/register");
+                      }}
+                      className="btn-primary flex-1"
+                    >
+                      Get started
+                    </button>
+                  </>
                 )}
-              </button>
-              {showProfileMenu ? (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setOpen(false);
-                      navigate("/profile");
-                    }}
-                    className="flex flex-1 items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-sm font-semibold text-ink-100"
-                  >
-                    <UserCircle2 className="h-4 w-4" />
-                    Profile
-                  </button>
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      await apiLogout();
-                      setCurrentUser(null);
-                      setOpen(false);
-                      navigate("/");
-                    }}
-                    className="flex flex-1 items-center justify-center gap-2 rounded-2xl border border-rose-800/50 bg-rose-950/40 px-3 py-2 text-sm font-semibold text-rose-300"
-                  >
-                    <LogOut className="h-4 w-4" />
-                    Logout
-                  </button>
-                </>
-              ) : (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setOpen(false);
-                      navigate("/login");
-                    }}
-                    className="flex flex-1 items-center justify-center gap-2 rounded-full border border-white/15 bg-white/5 px-6 py-3 text-sm font-semibold text-ink-100 transition-all duration-200 hover:border-brand-500/40 hover:bg-white/10 hover:text-brand-400"
-                  >
-                    Sign in
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setOpen(false);
-                      navigate("/register");
-                    }}
-                    className="btn-primary flex-1"
-                  >
-                    Get started
-                  </button>
-                </>
-              )}
+              </div>
             </div>
-          </div>
-        </motion.div>
-      )}
+          </motion.div>
+        )}
       </AnimatePresence>
     </header>
   );
