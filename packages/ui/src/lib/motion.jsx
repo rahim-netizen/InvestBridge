@@ -151,8 +151,7 @@ export function useCountUp(target, isInView) {
       },
     });
     return () => controls.stop();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isInView]);
+  }, [hasComma, isInView, numericValue, prefix, suffix]);
 
   return display;
 }

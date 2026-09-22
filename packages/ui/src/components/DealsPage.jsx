@@ -48,6 +48,22 @@ const getStoredUser = () => {
 
 const sectors = ["All", "HealthTech", "CleanEnergy", "E-commerce", "AgriTech", "FinTech", "EdTech", "Others"];
 
+const sizeBands = [
+  { value: "All", label: "Any size" },
+  { value: "<100K", label: "Under $100K" },
+  { value: "100K-1M", label: "$100K – $1M" },
+  { value: "1M-10M", label: "$1M – $10M" },
+  { value: "10M+", label: "$10M and above" },
+];
+
+const sortOptions = [
+  { value: "None", label: "Featured" },
+  { value: "Newest", label: "Newest first" },
+  { value: "Oldest", label: "Oldest first" },
+  { value: "High to Low", label: "Goal: high to low" },
+  { value: "Low to High", label: "Goal: low to high" },
+];
+
 const DEFAULT_DEAL_IMAGE =
   "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='200' viewBox='0 0 400 200'><rect width='400' height='200' fill='%23e5e7eb'/><text x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%239ca3af' font-family='sans-serif' font-size='16'>No image</text></svg>";
 
@@ -145,6 +161,9 @@ export default function DealsPage({ navigate }) {
   const [deals, setDeals] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [sectorFilter, setSectorFilter] = useState("All");
+  const [locationFilter, setLocationFilter] = useState("All");
+  const [sizeBand, setSizeBand] = useState("All");
+  const [savedOnly, setSavedOnly] = useState(false);
   const [goalSort, setGoalSort] = useState("None");
   const [selectedDeal, setSelectedDeal] = useState(null);
   const [connectedMap, setConnectedMap] = useState({});
@@ -171,6 +190,7 @@ export default function DealsPage({ navigate }) {
             image: opp.image || null,
             postedBy: opp.user?.email || null,
             investorId: opp.investor_id ?? null,
+            createdAt: opp.created_at || null,
           }));
         setDeals(mapped);
       } else {
@@ -277,13 +297,6 @@ export default function DealsPage({ navigate }) {
     }
   };
 
-   const filteredDeals = deals.filter((d) => {
-     const q = searchQuery.toLowerCase();
-     const matchesSearch = d.location.toLowerCase().includes(q);
-     const matchesSector = sectorFilter === "All" || d.sector === sectorFilter;
-     return matchesSearch && matchesSector;
-   });
-
   const parseGoal = (goalStr) => {
     if (!goalStr || goalStr === "$0") return 0;
     const num = parseFloat(String(goalStr).replace(/[^0-9.]/g, ""));
@@ -294,14 +307,88 @@ export default function DealsPage({ navigate }) {
     return num;
   };
 
+  const matchesSizeBand = (goalStr, band) => {
+    if (band === "All") return true;
+    const amount = parseGoal(goalStr);
+    if (amount <= 0) return false;
+    if (band === "<100K") return amount < 100_000;
+    if (band === "100K-1M") return amount >= 100_000 && amount < 1_000_000;
+    if (band === "1M-10M") return amount >= 1_000_000 && amount < 10_000_000;
+    if (band === "10M+") return amount >= 10_000_000;
+    return true;
+  };
+
+  // Distinct locations seen in the loaded deals, so the location filter
+  // never lists options that would return zero results.
+  const locationOptions = [
+    "All",
+    ...Array.from(
+      new Set(
+        deals
+          .map((d) => d.location)
+          .filter((loc) => loc && loc !== "TBD"),
+      ),
+    ).sort(),
+  ];
+
+  const filteredDeals = deals.filter((d) => {
+    const q = searchQuery.trim().toLowerCase();
+    const matchesSearch =
+      !q ||
+      d.location.toLowerCase().includes(q) ||
+      (d.name || "").toLowerCase().includes(q) ||
+      (d.company || "").toLowerCase().includes(q);
+    const matchesSector = sectorFilter === "All" || d.sector === sectorFilter;
+    const matchesLocation =
+      locationFilter === "All" || d.location === locationFilter;
+    const matchesSize = matchesSizeBand(d.goal, sizeBand);
+    const matchesSaved = !savedOnly || Boolean(connectedMap[d.id]);
+    return (
+      matchesSearch &&
+      matchesSector &&
+      matchesLocation &&
+      matchesSize &&
+      matchesSaved
+    );
+  });
+
+  const parseDate = (value) => {
+    if (!value) return 0;
+    const time = new Date(value).getTime();
+    return Number.isNaN(time) ? 0 : time;
+  };
+
   const sortedDeals = [...filteredDeals].sort((a, b) => {
     if (goalSort === "High to Low") return parseGoal(b.goal) - parseGoal(a.goal);
     if (goalSort === "Low to High") return parseGoal(a.goal) - parseGoal(b.goal);
+    if (goalSort === "Newest") return parseDate(b.createdAt) - parseDate(a.createdAt);
+    if (goalSort === "Oldest") return parseDate(a.createdAt) - parseDate(b.createdAt);
     return 0;
   });
 
+  const activeFilterCount =
+    (sectorFilter !== "All" ? 1 : 0) +
+    (locationFilter !== "All" ? 1 : 0) +
+    (sizeBand !== "All" ? 1 : 0) +
+    (savedOnly ? 1 : 0) +
+    (goalSort !== "None" ? 1 : 0);
+
   const hasActiveFilters =
-    searchQuery.trim() !== "" || sectorFilter !== "All" || goalSort !== "None";
+    searchQuery.trim() !== "" || activeFilterCount > 0;
+
+  const clearAllFilters = () => {
+    setSearchQuery("");
+    setSectorFilter("All");
+    setLocationFilter("All");
+    setSizeBand("All");
+    setSavedOnly(false);
+    setGoalSort("None");
+  };
+
+  const sizeBandLabel = (value) =>
+    sizeBands.find((band) => band.value === value)?.label || value;
+  const sortLabel = (value) =>
+    sortOptions.find((opt) => opt.value === value)?.label || value;
 
   return (
     <section className="dark relative min-h-screen overflow-hidden px-4 py-20 transition-colors duration-300 sm:px-6 lg:px-8">
@@ -311,7 +398,7 @@ export default function DealsPage({ navigate }) {
 
       <div className="mx-auto max-w-7xl">
         <motion.div
-          className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between"
+          className="relative z-40 mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between"
           initial="hidden"
           animate="visible"
           variants={fadeUpBlur}
@@ -341,13 +428,11 @@ export default function DealsPage({ navigate }) {
             <IconSearchToggle
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search by location..."
+              placeholder="Search deals, companies, locations..."
             />
             <FilterPopover
               label="Filter deals"
-              activeCount={
-                (sectorFilter !== "All" ? 1 : 0) + (goalSort !== "None" ? 1 : 0)
-              }
+              activeCount={activeFilterCount}
             >
               <PopoverSelect
                 label="Sector"
@@ -356,11 +441,34 @@ export default function DealsPage({ navigate }) {
                 options={sectors}
               />
               <PopoverSelect
-                label="Sort by goal"
+                label="Location"
+                value={locationFilter}
+                onChange={(e) => setLocationFilter(e.target.value)}
+                options={locationOptions}
+              />
+              <PopoverSelect
+                label="Funding goal"
+                value={sizeBand}
+                onChange={(e) => setSizeBand(e.target.value)}
+                options={sizeBands}
+              />
+              <PopoverSelect
+                label="Sort by"
                 value={goalSort}
                 onChange={(e) => setGoalSort(e.target.value)}
-                options={["None", "High to Low", "Low to High"]}
+                options={sortOptions}
               />
+              {user && (
+                <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-ink-200 bg-white/60 px-3 py-2 text-sm font-medium text-ink-800 transition-colors hover:bg-white dark:border-ink-700 dark:bg-ink-900/60 dark:text-ink-100 dark:hover:bg-ink-900">
+                  <input
+                    type="checkbox"
+                    checked={savedOnly}
+                    onChange={(e) => setSavedOnly(e.target.checked)}
+                    className="h-4 w-4 accent-brand-500"
+                  />
+                  Saved only
+                </label>
+              )}
             </FilterPopover>
           </div>
         </motion.div>
@@ -393,10 +501,31 @@ export default function DealsPage({ navigate }) {
                 onRemove={() => setSectorFilter("All")}
               />
             )}
+            {locationFilter !== "All" && (
+              <FilterChip
+                key="location"
+                label={locationFilter}
+                onRemove={() => setLocationFilter("All")}
+              />
+            )}
+            {sizeBand !== "All" && (
+              <FilterChip
+                key="size"
+                label={sizeBandLabel(sizeBand)}
+                onRemove={() => setSizeBand("All")}
+              />
+            )}
+            {savedOnly && (
+              <FilterChip
+                key="saved"
+                label="Saved only"
+                onRemove={() => setSavedOnly(false)}
+              />
+            )}
             {goalSort !== "None" && (
               <FilterChip
                 key="sort"
-                label={goalSort}
+                label={sortLabel(goalSort)}
                 onRemove={() => setGoalSort("None")}
               />
             )}
@@ -404,11 +533,7 @@ export default function DealsPage({ navigate }) {
           {hasActiveFilters && (
             <button
               type="button"
-              onClick={() => {
-                setSearchQuery("");
-                setSectorFilter("All");
-                setGoalSort("None");
-              }}
+              onClick={clearAllFilters}
               className="text-xs font-semibold text-white/60 underline-offset-2 transition-colors hover:text-white hover:underline"
             >
               Clear all
@@ -427,11 +552,7 @@ export default function DealsPage({ navigate }) {
                <p className="text-ink-500 dark:text-ink-400">No deals match your filters.</p>
                <button
                  type="button"
-                 onClick={() => {
-                   setSearchQuery("");
-                   setSectorFilter("All");
-                   setGoalSort("None");
-                 }}
+                 onClick={clearAllFilters}
                  className="mt-4 text-sm font-semibold text-brand-700 hover:text-brand-800 dark:text-brand-400"
                >
                  Clear all filters

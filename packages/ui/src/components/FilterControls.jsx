@@ -113,7 +113,7 @@ export function FilterPopover({ activeCount = 0, children, label = "Filters" }) 
   }, [open]);
 
   return (
-    <div className="relative shrink-0" ref={rootRef}>
+    <div className="relative z-40 shrink-0" ref={rootRef}>
       <motion.button
         type="button"
         onClick={() => setOpen((v) => !v)}
