@@ -18,7 +18,8 @@ import {
 } from "lucide-react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
-import PageBackground from "./PageBackground.jsx";
+import PageBackground, { AURORA_BG } from "./PageBackground.jsx";
+import PageDecor from "./PageDecor.jsx";
 import GradientText from "./GradientText.jsx";
 import BorderGlow from "./BorderGlow.jsx";
 import { getAllOpportunities, getPlatformStats } from "../api/opportunities";
@@ -898,7 +899,8 @@ export default function Homepage({ navigate }) {
 
   return (
     <>
-      <PageBackground src="/homepage-luxury-bg.jpg" />
+      <PageBackground image={false} gradient={AURORA_BG} />
+      <PageDecor />
       <Hero />
       <Stats />
       <HowItWorks navigate={navigate} />

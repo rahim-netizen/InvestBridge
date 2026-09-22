@@ -17,7 +17,7 @@ class AdminController extends Controller
         return response()->json([
             'stats' => [
                 'users' => User::where('role', '!=', 'admin')->count(),
-                'activeOpportunities' => Opportunity::where('status', 'active')->count(),
+                'activeOpportunities' => Opportunity::whereIn('status', ['active', 'Active'])->count(),
                 'connections' => ConnectedOpportunity::count(),
             ],
         ]);

@@ -49,8 +49,8 @@ export default function SupportPage() {
           </h1>
           <p className="mt-2 text-sm text-white/75">Send a complaint and we will review it.</p>
           <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-            <input required value={subject} onChange={(event) => setSubject(event.target.value)} placeholder="Subject" className="w-full rounded-2xl border border-white/20 bg-white/70 px-4 py-3 text-sm text-ink-900 outline-none placeholder:text-ink-400 dark:border-white/10 dark:text-ink-50 dark:placeholder:text-ink-500" />
-            <textarea required value={message} onChange={(event) => setMessage(event.target.value)} placeholder="Explain the problem" rows="6" className="w-full rounded-2xl border border-white/20 bg-white/70 px-4 py-3 text-sm text-ink-900 outline-none placeholder:text-ink-400 dark:border-white/10 dark:text-ink-50 dark:placeholder:text-ink-500" />
+            <input required value={subject} onChange={(event) => setSubject(event.target.value)} placeholder="Subject" className="w-full rounded-2xl border border-white/40 bg-white/85 px-4 py-3 text-sm text-ink-900 outline-none backdrop-blur-sm transition-colors placeholder:text-ink-500 focus:border-brand-400 focus:bg-white focus:ring-2 focus:ring-brand-500/25" />
+            <textarea required value={message} onChange={(event) => setMessage(event.target.value)} placeholder="Explain the problem" rows="6" className="w-full resize-none rounded-2xl border border-white/40 bg-white/85 px-4 py-3 text-sm text-ink-900 outline-none backdrop-blur-sm transition-colors placeholder:text-ink-500 focus:border-brand-400 focus:bg-white focus:ring-2 focus:ring-brand-500/25" />
             <button type="submit" className="btn-primary"><Send className="h-4 w-4" /> Send complaint</button>
           </form>
           {status && <p className="mt-4 flex items-center gap-2 text-sm text-emerald-700"><CheckCircle2 className="h-4 w-4" />{status}</p>}

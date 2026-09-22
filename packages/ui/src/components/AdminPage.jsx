@@ -183,6 +183,111 @@ function ToastStack({ toasts, onDismiss }) {
   );
 }
 
+function FeedbackDialog({
+  complaint,
+  value,
+  onChange,
+  onCancel,
+  onSubmit,
+  busy,
+}) {
+  return (
+    <AnimatePresence>
+      {complaint && (
+        <motion.div
+          className="fixed inset-0 z-[90] flex items-center justify-center bg-ink-950/50 p-4 backdrop-blur-sm"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={onCancel}
+        >
+          <motion.div
+            className="glass-panel-strong w-full max-w-lg rounded-2xl p-6"
+            initial={{ opacity: 0, y: 12, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 12, scale: 0.96 }}
+            transition={{ duration: 0.18 }}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-start gap-3">
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-brand-500/15 text-brand-500">
+                  <MessageSquareWarning className="h-5 w-5" />
+                </span>
+                <div>
+                  <h3 className="text-base font-semibold text-ink-900 dark:text-ink-100">
+                    Send feedback
+                  </h3>
+                  <p className="mt-0.5 text-xs text-ink-500">
+                    To {complaint.user?.name || "user"} · {complaint.subject}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={onCancel}
+                className="rounded-lg p-1 text-ink-400 transition-colors hover:bg-white/10 hover:text-ink-200"
+                aria-label="Close"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="mt-4 rounded-xl border border-white/10 bg-white/5 p-3 text-sm leading-relaxed text-ink-300">
+              {complaint.message}
+            </div>
+
+            {complaint.feedback && (
+              <div className="mt-3 rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-3 text-xs text-emerald-300">
+                <p className="mb-1 font-semibold uppercase tracking-wider">
+                  Previous feedback
+                </p>
+                {complaint.feedback}
+              </div>
+            )}
+
+            <label
+              htmlFor="admin-feedback-textarea"
+              className="mt-4 block text-xs font-semibold uppercase tracking-wider text-ink-400"
+            >
+              Feedback
+            </label>
+            <textarea
+              id="admin-feedback-textarea"
+              value={value}
+              onChange={(event) => onChange(event.target.value)}
+              placeholder="Write feedback"
+              rows="5"
+              autoFocus
+              className="mt-2 w-full resize-none rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm text-ink-900 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/30 dark:border-ink-800 dark:bg-ink-950 dark:text-ink-100"
+            />
+
+            <div className="mt-6 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={onCancel}
+                disabled={busy}
+                className="rounded-xl px-4 py-2 text-sm font-semibold text-ink-500 transition-colors hover:bg-white/10 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={onSubmit}
+                disabled={busy || !value.trim()}
+                className="inline-flex items-center gap-1.5 rounded-xl bg-brand-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-700 disabled:opacity-60"
+              >
+                {busy && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                Send
+              </button>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
+
 function ConfirmDialog({ config, onCancel, onConfirm, busy }) {
   return (
     <AnimatePresence>
@@ -292,6 +397,8 @@ export default function AdminPage({ navigate }) {
   const [projects, setProjects] = useState([]);
   const [complaints, setComplaints] = useState([]);
   const [feedback, setFeedback] = useState({});
+  const [feedbackModal, setFeedbackModal] = useState(null);
+  const [feedbackSending, setFeedbackSending] = useState(false);
 
   const [activeTab, setActiveTab] = useState("dashboard");
   const [userSearch, setUserSearch] = useState("");
@@ -485,6 +592,7 @@ export default function AdminPage({ navigate }) {
     const text = (feedback[complaint.id] || "").trim();
     if (!text) return;
 
+    setFeedbackSending(true);
     try {
       const response = await sendComplaintFeedback(complaint.id, text);
       setComplaints((current) =>
@@ -493,9 +601,12 @@ export default function AdminPage({ navigate }) {
         ),
       );
       setFeedback((current) => ({ ...current, [complaint.id]: "" }));
+      setFeedbackModal(null);
       pushToast("Feedback sent to the user.");
     } catch (err) {
       pushToast(err.message || "Failed to send feedback.", "error");
+    } finally {
+      setFeedbackSending(false);
     }
   };
 
@@ -892,30 +1003,19 @@ export default function AdminPage({ navigate }) {
                 <td className="px-4 py-3.5 text-ink-500">
                   {formatDate(complaint.created_at)}
                 </td>
-                <td className="min-w-64 px-4 py-3.5">
+                <td className="min-w-56 px-4 py-3.5">
                   {complaint.feedback && (
                     <p className="mb-2 text-xs text-emerald-700 dark:text-emerald-400">
                       {complaint.feedback}
                     </p>
                   )}
-                  <textarea
-                    value={feedback[complaint.id] || ""}
-                    onChange={(event) =>
-                      setFeedback((current) => ({
-                        ...current,
-                        [complaint.id]: event.target.value,
-                      }))
-                    }
-                    placeholder="Write feedback"
-                    rows="2"
-                    className="w-full rounded-lg border border-ink-200 bg-white px-2 py-1 text-xs outline-none dark:border-ink-800 dark:bg-ink-950"
-                  />
                   <button
                     type="button"
-                    onClick={() => handleSendFeedback(complaint)}
-                    className="mt-2 rounded-lg bg-brand-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-700"
+                    onClick={() => setFeedbackModal(complaint)}
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-brand-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-700"
                   >
-                    Send
+                    <MessageSquareWarning className="h-3.5 w-3.5" />
+                    {complaint.feedback ? "Edit feedback" : "Feedback"}
                   </button>
                 </td>
               </tr>
@@ -1248,6 +1348,21 @@ export default function AdminPage({ navigate }) {
         onCancel={closeConfirm}
         onConfirm={() => confirmConfig?.onConfirm()}
         busy={busyAction}
+      />
+
+      <FeedbackDialog
+        complaint={feedbackModal}
+        value={feedbackModal ? feedback[feedbackModal.id] || "" : ""}
+        onChange={(text) =>
+          feedbackModal &&
+          setFeedback((current) => ({
+            ...current,
+            [feedbackModal.id]: text,
+          }))
+        }
+        onCancel={() => !feedbackSending && setFeedbackModal(null)}
+        onSubmit={() => feedbackModal && handleSendFeedback(feedbackModal)}
+        busy={feedbackSending}
       />
       <ToastStack toasts={toasts} onDismiss={dismissToast} />
     </div>
