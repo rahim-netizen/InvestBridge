@@ -1,9 +1,8 @@
-﻿import { CheckCircle2, Sparkles, UserRound, Camera } from "lucide-react";
+import { Check, Upload } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import PageBackground, { AURORA_BG } from "./PageBackground.jsx";
 import PageDecor from "./PageDecor.jsx";
-import GradientText from "./GradientText.jsx";
 import { getCurrentUser, setAuthToken, onAuthChange } from "../api/auth";
 import { updateProfile } from "../api/profile";
 
@@ -80,6 +79,93 @@ function mapBackendProfileToForm(backendProfile) {
     nidPhotos: toPhotoArray(backendProfile.nid_photos),
     profileImage: backendProfile.profile_image || null,
   };
+}
+
+const panelClassName =
+  "rounded-[28px] border border-white/10 bg-[rgba(5,9,15,0.55)] backdrop-blur";
+const inputClassName =
+  "h-11 w-full rounded-xl border border-white/[0.12] bg-[rgba(5,9,15,0.5)] px-3.5 text-sm text-white outline-none transition placeholder:text-white/35 focus:border-brand-500 focus:shadow-[0_0_0_3px_rgba(16,185,129,0.18)] focus-visible:border-brand-500 focus-visible:shadow-[0_0_0_3px_rgba(16,185,129,0.18)]";
+const labelClassName = "flex flex-col gap-1.5 text-[13px] font-semibold text-white/85";
+const kickerClassName = "text-[11px] font-semibold uppercase tracking-[0.16em] text-brand-300";
+const subClassName = "mt-1.5 text-[13px] text-white/60";
+const sectionClassName = "flex scroll-mt-24 flex-col gap-4 border-t border-white/[0.08] pt-7";
+
+function Field({ label, textarea = false, ...rest }) {
+  return (
+    <label className={labelClassName}>
+      {label}
+      {textarea ? (
+        <textarea
+          rows={3}
+          {...rest}
+          className={`${inputClassName} h-auto resize-y py-3 font-normal leading-relaxed`}
+        />
+      ) : (
+        <input {...rest} className={`${inputClassName} font-normal`} />
+      )}
+    </label>
+  );
+}
+
+// Dashed image slot; shows the picked image with a "Replace" tag once filled.
+function DropZone({ label, src, onFile, tone = "emerald" }) {
+  const toneClass =
+    tone === "gold"
+      ? "border-amber-400/40 bg-amber-400/[0.05] text-amber-300 hover:border-amber-400/70"
+      : "border-brand-500/40 bg-brand-500/[0.05] text-brand-300 hover:border-brand-500/70";
+  return (
+    <label
+      className={`relative flex h-24 cursor-pointer flex-col items-center justify-center gap-1 overflow-hidden rounded-[14px] border border-dashed text-[13px] font-semibold transition-colors ${toneClass}`}
+    >
+      {src ? (
+        <>
+          <img src={src} alt="" className="absolute inset-0 h-full w-full object-cover" />
+          <span className="absolute bottom-2 left-2 rounded-full bg-[rgba(5,9,15,0.75)] px-2 py-0.5 text-[11px] font-semibold text-white">
+            Replace
+          </span>
+        </>
+      ) : (
+        <>
+          <span className="inline-flex items-center gap-1.5">
+            <Upload className="h-3.5 w-3.5" />
+            {label}
+          </span>
+          <span className="text-[11px] font-normal text-white/50">JPG or PNG</span>
+        </>
+      )}
+      <input
+        type="file"
+        accept="image/png,image/jpeg"
+        className="sr-only"
+        onChange={(event) => onFile(event.target.files?.[0] || null)}
+      />
+    </label>
+  );
+}
+
+function Switch({ on, onChange, label }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={on}
+      onClick={() => onChange(!on)}
+      className="flex items-center gap-2.5 text-[13px] font-medium text-white/80"
+    >
+      {label}
+      <span
+        className={`relative h-[22px] w-10 rounded-full transition-colors duration-200 ${
+          on ? "bg-brand-500" : "bg-white/[0.18]"
+        }`}
+      >
+        <span
+          className={`absolute top-[3px] h-4 w-4 rounded-full bg-[#e9e9ed] transition-[left] duration-200 ${
+            on ? "left-[21px]" : "left-[3px]"
+          }`}
+        />
+      </span>
+    </button>
+  );
 }
 
 export default function ProfileDashboard({ onOpenDeals, onOpenConnect, onOpenPayment, navigate }) {
@@ -168,12 +254,6 @@ export default function ProfileDashboard({ onOpenDeals, onOpenConnect, onOpenPay
     setForm((current) => ({ ...current, [name]: value }));
   };
 
-  const handlePhotoChange = async (event, field) => {
-    const files = Array.from(event.target.files || []);
-    const results = await Promise.all(files.map((file) => resizeImage(file)));
-    setForm((current) => ({ ...current, [field]: results }));
-  };
-
   const handleProfileImageChange = async (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -235,31 +315,29 @@ export default function ProfileDashboard({ onOpenDeals, onOpenConnect, onOpenPay
     }
   };
 
-  const inputWrapperClassName =
-    "flex items-center gap-3 rounded-2xl border border-ink-200 bg-ink-50 px-4 py-3 dark:border-ink-700 dark:bg-ink-800";
-  const inputClassName =
-    "w-full rounded-2xl border border-ink-200 bg-ink-50 px-4 py-3 text-sm text-ink-900 outline-none placeholder:text-ink-400 dark:border-ink-700 dark:bg-ink-800 dark:text-ink-50 dark:placeholder:text-ink-500";
-  const fieldLabelClassName =
-    "mb-2 block text-sm font-medium text-ink-700 dark:text-ink-300";
-  const blurredClassName =
-    "transition-all duration-200 " +
-    (hasCompanyInfo
-      ? "blur-0"
-      : "blur-sm select-none pointer-events-none opacity-60");
+  const setPhotoAt = (field, index) => async (file) => {
+    if (!file) return;
+    try {
+      const dataUrl = await resizeImage(file);
+      setForm((current) => {
+        const photos = [...toPhotoArray(current[field])];
+        photos[index] = dataUrl;
+        return { ...current, [field]: photos.slice(0, 2) };
+      });
+    } catch {
+      // keep the previous photo if the file can't be read
+    }
+  };
 
   if (!user) {
     return (
       <section className="dark relative min-h-screen px-4 py-20 sm:px-6 lg:px-8 transition-colors duration-300">
         <PageBackground image={false} gradient={AURORA_BG} />
         <PageDecor />
-        <div className="mx-auto max-w-2xl rounded-3xl border border-white/40 bg-white/70 p-8 shadow-lift backdrop-blur-2xl dark:border-white/10 dark:bg-ink-900/70 dark:text-ink-50">
-          <p className="text-sm font-semibold text-brand-700 dark:text-brand-400">
-            No active session
-          </p>
-          <h1 className="mt-3 font-display text-3xl font-bold text-ink-900 dark:text-ink-50">
-            Please sign in first
-          </h1>
-          <p className="mt-3 text-ink-600 dark:text-ink-300">
+        <div className={`mx-auto max-w-2xl p-8 ${panelClassName}`}>
+          <p className={kickerClassName}>No active session</p>
+          <h1 className="mt-3 text-3xl font-semibold text-white">Please sign in first</h1>
+          <p className="mt-3 text-white/65">
             Your profile dashboard will appear after you sign in or create an
             account.
           </p>
@@ -275,296 +353,105 @@ export default function ProfileDashboard({ onOpenDeals, onOpenConnect, onOpenPay
     );
   }
 
+  const fullName = (form.fullName || "").trim();
+  const personnelPhotos = toPhotoArray(form.companyPersonnelPhotos);
+  const nidPhotos = toPhotoArray(form.nidPhotos);
+  const nidDone = Boolean(nidPhotos[0] && nidPhotos[1]);
+  const companyDone = Boolean(form.companyName?.trim() && form.position?.trim());
+
+  const sections = [
+    { id: "about", label: "About you", done: Boolean(fullName), note: fullName ? "Done" : "1 field" },
+    {
+      id: "company",
+      label: "Company",
+      done: !hasCompanyInfo || companyDone,
+      note: hasCompanyInfo ? (companyDone ? "Done" : "Add details") : "Skipped",
+    },
+    {
+      id: "investment",
+      label: "Investment details",
+      done: Boolean(form.notes?.trim()),
+      note: form.notes?.trim() ? "Done" : "1 field",
+    },
+    { id: "verify", label: "Verification", done: nidDone, note: nidDone ? "Done" : "NID" },
+  ];
+  const pct = Math.round((sections.filter((s) => s.done).length / sections.length) * 100);
+  const firstName = fullName.split(/\s+/)[0] || user.name || "there";
+  const initialLetter = (fullName[0] || user.email?.[0] || "?").toUpperCase();
+
+  const jumpTo = (id) => (event) => {
+    event.preventDefault();
+    document.getElementById(`profile-${id}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
   return (
     <section className="dark relative min-h-screen px-4 py-20 sm:px-6 lg:px-8 transition-colors duration-300">
       <PageBackground image={false} gradient={AURORA_BG} />
-        <PageDecor />
-      <div className="mx-auto flex max-w-7xl flex-col gap-8 lg:flex-row">
-        <motion.div
-          className="w-full max-w-xl rounded-3xl border border-white/40 bg-white/70 p-8 shadow-lift backdrop-blur-2xl dark:border-white/10 dark:bg-ink-900/70 dark:text-ink-50"
+      <PageDecor />
+      <div className="mx-auto grid max-w-6xl items-start gap-7 lg:grid-cols-[minmax(0,340px)_minmax(0,1fr)]">
+        {/* Left rail: welcome, strength meter, section checklist */}
+        <motion.aside
+          className={`flex flex-col gap-5 p-6 sm:p-7 lg:sticky lg:top-24 ${panelClassName}`}
           initial={{ opacity: 0, x: -24 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5, ease: "easeOut" }}
         >
-          <span className="eyebrow dark:text-brand-400">
-            <Sparkles className="h-3.5 w-3.5" />
+          <span className="self-start rounded-full bg-brand-500/[0.14] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-brand-300">
             Complete your profile
           </span>
-          <h1 className="mt-5">
-            <GradientText
-              colors={["#10b981", "#fbbf24", "#10b981"]}
-              animationSpeed={5}
-              direction="horizontal"
-              className="font-display text-3xl font-bold"
-            >
-              Build your InvestBridge profile
-            </GradientText>
-          </h1>
-          <p className="mt-3 text-lg leading-relaxed text-ink-600 dark:text-ink-300">
-            Share your background, interests, and expertise. Whether you're
-            seeking opportunities or making connections, a complete profile
-            helps you succeed on InvestBridge.
-          </p>
-
-          <div className="mt-8 rounded-2xl border border-brand-100 bg-brand-50 p-5 dark:border-brand-900/60 dark:bg-brand-950/40">
-            <div className="flex items-center gap-3">
-              <motion.div
-                className="grid h-11 w-11 place-items-center rounded-2xl bg-brand-600 text-white"
-                initial={{ scale: 0, rotate: -20 }}
-                animate={{ scale: 1, rotate: 0 }}
-                transition={{ delay: 0.3, duration: 0.4, ease: "backOut" }}
-              >
-                <CheckCircle2 className="h-5 w-5" />
-              </motion.div>
-              <div>
-                <p className="text-sm font-semibold text-ink-900 dark:text-ink-50">
-                  Welcome back, {user.name || user.email}
-                </p>
-                <p className="text-sm text-ink-600 dark:text-ink-300">
-                  Weâ€™ll use this profile to personalize your experience.
-                </p>
-              </div>
+          <div>
+            <h1 className="text-[26px] font-semibold leading-tight text-white">
+              Welcome back, {firstName}
+            </h1>
+            <p className="mt-2.5 text-sm leading-relaxed text-white/65 [text-wrap:pretty]">
+              A complete profile gets you matched faster and helps investors and
+              founders trust who they&apos;re talking to.
+            </p>
+          </div>
+          <div>
+            <div className="flex justify-between text-[13px] font-medium text-white/70">
+              <span>Profile strength</span>
+              <span className="font-semibold text-amber-400">{pct}%</span>
+            </div>
+            <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/[0.08]">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-brand-500 to-amber-400 transition-[width] duration-300"
+                style={{ width: `${pct}%` }}
+              />
             </div>
           </div>
-        </motion.div>
+          <nav className="flex flex-col gap-1">
+            {sections.map((s, i) => (
+              <a
+                key={s.id}
+                href={`#profile-${s.id}`}
+                onClick={jumpTo(s.id)}
+                className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-white/85 transition-colors hover:bg-white/[0.04]"
+              >
+                <span
+                  className={`grid h-[22px] w-[22px] shrink-0 place-items-center rounded-full border text-[11px] font-bold ${
+                    s.done
+                      ? "border-brand-500 bg-brand-500 text-[#05090f]"
+                      : "border-white/25 text-white/60"
+                  }`}
+                >
+                  {s.done ? <Check className="h-3 w-3" strokeWidth={3} /> : i + 1}
+                </span>
+                {s.label}
+                <span className="ml-auto text-xs font-normal text-white/45">{s.note}</span>
+              </a>
+            ))}
+          </nav>
+        </motion.aside>
 
-        <motion.div
-          className="w-full rounded-3xl border border-white/40 bg-white/70 p-8 shadow-lift backdrop-blur-2xl dark:border-white/10 dark:bg-ink-900/70 dark:text-ink-50"
+        {/* Form */}
+        <motion.form
+          onSubmit={handleSubmit}
+          className={`flex flex-col gap-8 p-6 sm:p-8 ${panelClassName}`}
           initial={{ opacity: 0, x: 24 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5, delay: 0.1, ease: "easeOut" }}
         >
-          <div>
-            <p className="text-sm font-semibold text-brand-700 dark:text-brand-400">
-              Profile dashboard
-            </p>
-            <h2 className="mt-1 font-display text-2xl font-bold text-ink-900 dark:text-ink-50">
-              Your information
-            </h2>
-          </div>
-
-          <form className="mt-8 space-y-4" onSubmit={handleSubmit}>
-            <div className="flex flex-col items-center">
-              <label className="group relative cursor-pointer">
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleProfileImageChange}
-                  className="sr-only"
-                />
-                <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-full border-2 border-dashed border-ink-300 bg-ink-50 transition group-hover:border-brand-400 group-hover:bg-brand-50 dark:border-ink-600 dark:bg-ink-800 dark:group-hover:border-brand-500 dark:group-hover:bg-brand-900/20">
-                  {form.profileImage ? (
-                    <img
-                      src={form.profileImage}
-                      alt="Profile preview"
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    <div className="flex flex-col items-center gap-1 text-ink-400 dark:text-ink-500">
-                      <Camera className="h-6 w-6" />
-                      <UserRound className="h-8 w-8" />
-                    </div>
-                  )}
-                </div>
-              </label>
-              <p className="mt-2 text-xs text-ink-500 dark:text-ink-400">
-                Profile image (optional)
-              </p>
-            </div>
-
-            <label className="block">
-              <span className={fieldLabelClassName}>Full name</span>
-              <div className={inputWrapperClassName}>
-                <UserRound className="h-4 w-4 text-ink-400" />
-                <input
-                  type="text"
-                  name="fullName"
-                  value={form.fullName}
-                  onChange={handleChange}
-                  required
-                  placeholder="Your name"
-                  className="w-full border-none bg-transparent text-sm text-ink-900 outline-none dark:text-ink-50"
-                />
-              </div>
-            </label>
-
-            <label className="flex items-center gap-3 rounded-2xl border border-ink-200 bg-ink-50 px-4 py-3 dark:border-ink-700 dark:bg-ink-800">
-              <input
-                type="checkbox"
-                checked={hasCompanyInfo}
-                onChange={(e) => setHasCompanyInfo(e.target.checked)}
-                className="h-4 w-4 rounded border-ink-300 text-brand-600 focus:ring-brand-500"
-              />
-              <span className="text-sm font-medium text-ink-700 dark:text-ink-300">
-                Company information
-              </span>
-            </label>
-
-            <div className={blurredClassName}>
-              <div className="rounded-2xl border border-brand-100 bg-brand-50 p-4 dark:border-brand-900/60 dark:bg-brand-950/40">
-                <p className="text-sm font-semibold text-ink-900 dark:text-ink-50">
-                  Company information
-                </p>
-                <p className="mt-1 text-sm text-ink-600 dark:text-ink-300">
-                  Tell us about your company or firm
-                </p>
-              </div>
-
-              <label className="block">
-                <span className={fieldLabelClassName}>Company/Firm name</span>
-                <input
-                  type="text"
-                  name="companyName"
-                  value={form.companyName}
-                  onChange={handleChange}
-                  placeholder="Your company or firm name"
-                  className={inputClassName}
-                />
-              </label>
-
-              <div className="grid gap-4 md:grid-cols-2">
-                <label className="block">
-                  <span className={fieldLabelClassName}>Industry or focus</span>
-                  <input
-                    type="text"
-                    name="industry"
-                    value={form.industry}
-                    onChange={handleChange}
-                    placeholder="e.g., Healthtech, Fintech, SaaS"
-                    className={inputClassName}
-                  />
-                </label>
-
-                <label className="block">
-                  <span className={fieldLabelClassName}>Position</span>
-                  <input
-                    type="text"
-                    name="position"
-                    value={form.position}
-                    onChange={handleChange}
-                    placeholder="Your position in the company"
-                    className={inputClassName}
-                  />
-                </label>
-              </div>
-
-              <label className="block">
-                <span className={fieldLabelClassName}>Website</span>
-                <input
-                  type="url"
-                  name="website"
-                  value={form.website}
-                  onChange={handleChange}
-                  placeholder="https://yourcompany.com"
-                  className={inputClassName}
-                />
-              </label>
-
-              <label className="block">
-                <span className={fieldLabelClassName}>
-                  Mission or focus areas
-                </span>
-                <textarea
-                  name="mission"
-                  value={form.mission}
-                  onChange={handleChange}
-                  rows="3"
-                  placeholder="Describe your mission, what problems you solve, or your investment focus"
-                  className={inputClassName}
-                />
-              </label>
-
-              <label className="block">
-                <span className={fieldLabelClassName}>
-                  Company personnel photos
-                </span>
-                <p className="mb-2 text-xs text-ink-500 dark:text-ink-400">
-                  Upload up to 2 photos
-                </p>
-                <input
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  onChange={(e) => handlePhotoChange(e, "companyPersonnelPhotos")}
-                  className="block w-full text-sm text-ink-500 file:mr-4 file:rounded-full file:border-0 file:bg-brand-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-brand-700 hover:file:bg-brand-100 dark:file:bg-brand-900/40 dark:file:text-brand-300"
-                />
-                {Array.isArray(form.companyPersonnelPhotos) &&
-                  form.companyPersonnelPhotos.length > 0 && (
-                  <div className="mt-3 flex gap-3">
-                    {form.companyPersonnelPhotos.map((src, idx) => (
-                      <img
-                        key={idx}
-                        src={src}
-                        alt={`Company personnel ${idx + 1}`}
-                        className="h-16 w-16 rounded-xl object-cover"
-                      />
-                    ))}
-                  </div>
-                )}
-              </label>
-            </div>
-
-            <div className="rounded-2xl border border-brand-100 bg-brand-50 p-4 dark:border-brand-900/60 dark:bg-brand-950/40">
-              <p className="text-sm font-semibold text-ink-900 dark:text-ink-50">
-                Investment details
-              </p>
-              <p className="mt-1 text-sm text-ink-600 dark:text-ink-300">
-                Share your investment interests or funding goals
-              </p>
-            </div>
-
-            <label className="block">
-              <span className={fieldLabelClassName}>
-                Additional information
-              </span>
-              <textarea
-                name="notes"
-                value={form.notes}
-                onChange={handleChange}
-                rows="3"
-                placeholder="Any additional details about your background, deal criteria, or connections"
-                className={inputClassName}
-              />
-            </label>
-
-            <label className="block">
-              <span className={fieldLabelClassName}>
-                NID photos
-              </span>
-              <p className="mb-2 text-xs text-ink-500 dark:text-ink-400">
-                Upload up to 2 photos
-              </p>
-              <input
-                type="file"
-                accept="image/*"
-                multiple
-                onChange={(e) => handlePhotoChange(e, "nidPhotos")}
-                className="block w-full text-sm text-ink-500 file:mr-4 file:rounded-full file:border-0 file:bg-brand-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-brand-700 hover:file:bg-brand-100 dark:file:bg-brand-900/40 dark:file:text-brand-300"
-              />
-                {Array.isArray(form.nidPhotos) && form.nidPhotos.length > 0 && (
-                  <div className="mt-3 flex gap-3">
-                    {form.nidPhotos.map((src, idx) => (
-                    <img
-                      key={idx}
-                      src={src}
-                      alt={`NID ${idx + 1}`}
-                      className="h-16 w-16 rounded-xl object-cover"
-                    />
-                  ))}
-                </div>
-              )}
-            </label>
-
-            <motion.button
-              type="submit"
-              className="btn-primary w-full"
-              whileHover={{ y: -2 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              Save profile
-            </motion.button>
-          </form>
-
           <AnimatePresence>
             {status && (
               <motion.p
@@ -572,13 +459,152 @@ export default function ProfileDashboard({ onOpenDeals, onOpenConnect, onOpenPay
                 animate={{ opacity: 1, y: 0, height: "auto" }}
                 exit={{ opacity: 0, height: 0 }}
                 transition={{ duration: 0.25 }}
-                className="mt-4 rounded-2xl border border-brand-100 bg-brand-50 px-4 py-3 text-sm text-brand-700 dark:border-brand-900/60 dark:bg-brand-950/40 dark:text-brand-300"
+                className="rounded-xl border border-brand-500/25 bg-brand-500/[0.08] px-4 py-3 text-sm text-brand-200"
               >
                 {status}
               </motion.p>
             )}
           </AnimatePresence>
-        </motion.div>
+
+          <div id="profile-about" className="flex scroll-mt-24 flex-col gap-4">
+            <p className={kickerClassName}>01 · About you</p>
+            <div className="flex items-center gap-5">
+              <span className="grid h-[76px] w-[76px] shrink-0 place-items-center overflow-hidden rounded-full border border-dashed border-brand-500/50 bg-brand-500/[0.08] text-2xl font-semibold text-brand-300">
+                {form.profileImage ? (
+                  <img src={form.profileImage} alt="" className="h-full w-full object-cover" />
+                ) : (
+                  initialLetter
+                )}
+              </span>
+              <div>
+                <p className="text-sm font-semibold text-white">Profile photo</p>
+                <p className="mb-2.5 mt-1 text-xs text-white/55">
+                  Optional. A square JPG or PNG works best.
+                </p>
+                <label className="inline-block cursor-pointer rounded-full border border-white/[0.14] px-3.5 py-[7px] text-xs font-semibold text-white/85 transition-colors hover:border-white/30">
+                  {form.profileImage ? "Change photo" : "Upload photo"}
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg"
+                    className="sr-only"
+                    onChange={handleProfileImageChange}
+                  />
+                </label>
+              </div>
+            </div>
+            <Field
+              label="Full name"
+              name="fullName"
+              value={form.fullName}
+              onChange={handleChange}
+              required
+              placeholder="Your full name"
+            />
+          </div>
+
+          <div id="profile-company" className={sectionClassName}>
+            <div className="flex flex-wrap items-center gap-4">
+              <div className="min-w-[200px] flex-1">
+                <p className={kickerClassName}>02 · Company</p>
+                <p className={subClassName}>Tell us about the company or firm you represent.</p>
+              </div>
+              <Switch on={hasCompanyInfo} onChange={setHasCompanyInfo} label="I represent a company" />
+            </div>
+            {hasCompanyInfo && (
+              <>
+                <Field
+                  label="Company / firm name"
+                  name="companyName"
+                  value={form.companyName}
+                  onChange={handleChange}
+                  placeholder="e.g. NovaVet AI"
+                />
+                <div className="grid gap-3.5 sm:grid-cols-2">
+                  <Field
+                    label="Industry or focus"
+                    name="industry"
+                    value={form.industry}
+                    onChange={handleChange}
+                    placeholder="e.g. HealthTech, FinTech"
+                  />
+                  <Field
+                    label="Your position"
+                    name="position"
+                    value={form.position}
+                    onChange={handleChange}
+                    placeholder="e.g. Co-founder, Partner"
+                  />
+                </div>
+                <Field
+                  label="Website"
+                  type="url"
+                  name="website"
+                  value={form.website}
+                  onChange={handleChange}
+                  placeholder="https://yourcompany.com"
+                />
+                <Field
+                  label="Mission or focus areas"
+                  textarea
+                  name="mission"
+                  value={form.mission}
+                  onChange={handleChange}
+                  placeholder="What problems you solve, or your investment focus"
+                />
+                <div className="flex flex-col gap-2">
+                  <span className="text-[13px] font-semibold text-white/85">
+                    Team photos <span className="font-normal text-white/50">· up to 2</span>
+                  </span>
+                  <div className="grid grid-cols-2 gap-3">
+                    <DropZone label="Add photo" src={personnelPhotos[0]} onFile={setPhotoAt("companyPersonnelPhotos", 0)} />
+                    <DropZone label="Second photo" src={personnelPhotos[1]} onFile={setPhotoAt("companyPersonnelPhotos", 1)} />
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+
+          <div id="profile-investment" className={sectionClassName}>
+            <div>
+              <p className={kickerClassName}>03 · Investment details</p>
+              <p className={subClassName}>Your investment interests or funding goals.</p>
+            </div>
+            <Field
+              label="Additional information"
+              textarea
+              name="notes"
+              value={form.notes}
+              onChange={handleChange}
+              placeholder="Background, deal criteria, ticket size or connections"
+            />
+          </div>
+
+          <div id="profile-verify" className={sectionClassName}>
+            <div>
+              <p className={kickerClassName}>04 · Verification</p>
+              <p className={subClassName}>Upload the front and back of your National ID.</p>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <DropZone label="NID front" tone="gold" src={nidPhotos[0]} onFile={setPhotoAt("nidPhotos", 0)} />
+              <DropZone label="NID back" tone="gold" src={nidPhotos[1]} onFile={setPhotoAt("nidPhotos", 1)} />
+            </div>
+            <p className="flex gap-2.5 rounded-xl bg-amber-400/[0.07] px-3.5 py-3 text-xs leading-relaxed text-white/75">
+              <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-amber-400" />
+              Only the InvestBridge verification team can see this. It&apos;s never
+              shown on your public profile.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3 border-t border-white/[0.08] pt-5">
+            <span className="text-[13px] text-white/55">You can come back and finish this later.</span>
+            <button
+              type="submit"
+              className="ml-auto rounded-full bg-brand-500 px-6 py-3 text-sm font-semibold text-[#05090f] transition-colors hover:bg-brand-400"
+            >
+              Save profile
+            </button>
+          </div>
+        </motion.form>
       </div>
     </section>
   );

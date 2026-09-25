@@ -224,7 +224,7 @@ export default function App() {
         ))}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-      {!isAdmin && <ChatbotWidget />}
+      {!isAdmin && location.pathname !== "/connect" && <ChatbotWidget />}
     </>
   );
 }

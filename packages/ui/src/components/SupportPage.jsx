@@ -36,7 +36,7 @@ export default function SupportPage() {
       <PageBackground image={false} gradient={AURORA_BG} />
         <PageDecor />
       <div className="mx-auto grid max-w-5xl gap-6 lg:grid-cols-2">
-        <div className="glass-panel-strong rounded-[2rem] p-6">
+        <div className="rounded-[24px] border border-white/10 bg-[rgba(5,9,15,0.55)] p-6 backdrop-blur sm:p-[26px]">
           <h1>
             <GradientText
               colors={["#10b981", "#fbbf24", "#10b981"]}
@@ -56,11 +56,11 @@ export default function SupportPage() {
           {status && <p className="mt-4 flex items-center gap-2 text-sm text-emerald-700"><CheckCircle2 className="h-4 w-4" />{status}</p>}
           {error && <p className="mt-4 flex items-center gap-2 text-sm text-red-700"><AlertCircle className="h-4 w-4" />{error}</p>}
         </div>
-        <div className="glass-panel-strong rounded-[2rem] p-6">
+        <div className="rounded-[24px] border border-white/10 bg-[rgba(5,9,15,0.55)] p-6 backdrop-blur sm:p-[26px]">
           <h2 className="font-display text-2xl font-bold text-ink-900 dark:text-white">My complaints</h2>
           <div className="mt-5 space-y-3">
             {complaints.length === 0 ? <p className="text-sm text-ink-500">No complaints yet.</p> : complaints.map((complaint) => (
-              <div key={complaint.id} className="rounded-2xl border border-white/20 bg-white/60 p-4 dark:border-white/10 dark:bg-ink-950/40">
+              <div key={complaint.id} className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-4 transition-colors duration-300 hover:border-brand-500/50">
                 <div className="flex items-center justify-between gap-3"><strong className="text-sm text-ink-900 dark:text-ink-50">{complaint.subject}</strong><span className="text-xs uppercase text-brand-700 dark:text-brand-300">{complaint.status}</span></div>
                 <p className="mt-2 text-sm text-ink-600 dark:text-ink-300">{complaint.message}</p>
                 {complaint.feedback && (
