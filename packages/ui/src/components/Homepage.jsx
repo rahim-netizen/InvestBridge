@@ -3,10 +3,8 @@ import {
   ArrowUpRight,
   BarChart3,
   ChevronDown,
-  DollarSign,
   Handshake,
   LineChart,
-  MapPin,
   Megaphone,
   PenLine,
   Quote,
@@ -95,9 +93,6 @@ const steps = [
     action: "Open chat workspace",
   },
 ];
-
-const DEFAULT_DEAL_IMAGE =
-  "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='200' viewBox='0 0 400 200'><rect width='400' height='200' fill='%23e5e7eb'/><text x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%239ca3af' font-family='sans-serif' font-size='16'>No image</text></svg>";
 
 const universalBenefits = [
   {
@@ -195,50 +190,321 @@ const testimonials = [
   },
 ];
 
+// Scroll-scrubbed hero composition: two panels (founders / investors) start
+// apart at either edge and close the gap as the user scrolls; a bridge line
+// draws between them; then a brand endcard fades in over a globe photo. The
+// section is 320vh tall with a sticky 100vh stage inside — scrolling through
+// the track drives the timeline. Design ported from InvestBridge Hero.dc.
+const HERO_BG =
+  "radial-gradient(52% 44% at 12% 4%, rgba(16,185,129,0.22) 0%, rgba(16,185,129,0) 60%)," +
+  "radial-gradient(44% 38% at 93% 8%, rgba(245,158,11,0.09) 0%, rgba(245,158,11,0) 56%)," +
+  "radial-gradient(70% 60% at 50% 112%, rgba(16,185,129,0.22) 0%, rgba(6,95,70,0) 66%)," +
+  "linear-gradient(158deg, #05090f 0%, #081512 34%, #0a1f19 68%, #04231b 100%)";
+
+const HERO_GLOW =
+  "radial-gradient(52% 44% at 12% 4%, rgba(16,185,129,0.20) 0%, rgba(16,185,129,0) 60%)," +
+  "radial-gradient(44% 38% at 93% 8%, rgba(245,158,11,0.08) 0%, rgba(245,158,11,0) 56%)," +
+  "radial-gradient(70% 60% at 50% 112%, rgba(16,185,129,0.18) 0%, rgba(6,95,70,0) 66%)";
+
+// A handful of floating motes drawn over the composition — positions are
+// carried from the source design's 1920×720 world and expressed as viewBox
+// coords in the decor SVG.
+const MOTES = [
+  [744, 113], [1455, 131], [1268, 227], [1084, 379], [1641, 341],
+  [265, 404], [1718, 470], [259, 570], [820, 628], [1529, 646],
+  [521, 687], [1158, 743], [966, 512], [612, 258],
+];
+
+function HeroDecor() {
+  const [t, setT] = useState(0);
+  useEffect(() => {
+    let raf;
+    const start = performance.now();
+    const loop = (now) => {
+      setT((now - start) / 1000);
+      raf = requestAnimationFrame(loop);
+    };
+    raf = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
+  const drift = (t % 24) / 24;
+  const wave = (y, amp) =>
+    `M -80 ${y} C 340 ${y - amp} 760 ${y + amp} 1120 ${y - amp * 0.4} S 1700 ${y - amp * 1.5} 2000 ${y - amp * 0.8}`;
+
+  return (
+    <svg
+      viewBox="0 0 1920 720"
+      width="100%"
+      height="100%"
+      preserveAspectRatio="xMidYMid slice"
+      className="pointer-events-none absolute inset-0"
+    >
+      <g fill="none" strokeWidth="1">
+        <path d={wave(560, 120)} stroke="rgba(16,185,129,0.20)" />
+        <path d={wave(610, 140)} stroke="rgba(16,185,129,0.13)" />
+        <path d={wave(500, 100)} stroke="rgba(16,185,129,0.10)" />
+        <path d={wave(585, 150)} stroke="rgba(245,158,11,0.30)" strokeWidth="1.4" />
+      </g>
+      <g fill="none" stroke="rgba(16,185,129,0.34)" strokeWidth="1.2" opacity="0.55">
+        <circle cx="1008" cy="588" r="30" />
+        <circle cx="265" cy="396" r="34" strokeDasharray="4 7" />
+        <path d="M 795 78 l 30 -17 30 17 v 35 l -30 17 -30 -17 z" />
+        <path d="M 1590 500 h 84 v 84 h -84 z" />
+        <path d="M 1606 560 l 20 -22 14 12 24 -30" />
+      </g>
+      <g stroke="rgba(245,158,11,0.30)" strokeWidth="1">
+        <line x1="1652" y1="168" x2="1652" y2="226" />
+        <rect x="1645" y="180" width="14" height="32" fill="none" />
+        <line x1="1680" y1="150" x2="1680" y2="222" />
+        <rect x="1673" y="164" width="14" height="42" fill="none" />
+        <line x1="1708" y1="176" x2="1708" y2="230" />
+        <rect x="1701" y="186" width="14" height="30" fill="none" />
+      </g>
+      {MOTES.map(([x, y], i) => {
+        const ph = (drift + i / MOTES.length) % 1;
+        const a = 0.18 + 0.5 * Math.abs(Math.sin(ph * Math.PI * 2));
+        return (
+          <circle
+            key={i}
+            cx={x}
+            cy={y - ph * 26}
+            r={i % 4 === 0 ? 3 : 2}
+            fill="#10b981"
+            opacity={a}
+          />
+        );
+      })}
+    </svg>
+  );
+}
+
 function Hero() {
-  const sectionRef = useRef(null);
-  // Tracks the hero's own scroll position through the viewport: progress is
-  // 0 while its top edge sits at the viewport top, and reaches 1 once its
-  // bottom edge has scrolled up to the viewport top — i.e. exactly the span
-  // during which the hero is passing out of view underneath the sticky nav.
+  const trackRef = useRef(null);
+  // scrollYProgress runs 0 → 1 as the tall track scrolls through the viewport.
+  // The inner stage is sticky so the composition holds while the track glides
+  // beneath — every layer picks its own sub-range on that progress.
   const { scrollYProgress } = useScroll({
-    target: sectionRef,
-    offset: ["start start", "end start"],
+    target: trackRef,
+    offset: ["start start", "end end"],
   });
 
-  const heroY = useTransform(scrollYProgress, [0, 1], [0, 120]);
-  const heroScale = useTransform(scrollYProgress, [0, 1], [1, 1.06]);
-  const heroOpacity = useTransform(scrollYProgress, [0, 1], [1, 0.1]);
+  // Panels are visible from t=0 — the story opens ON the divide, not with a
+  // fade-in from nothing. The gap between them closes as the user scrolls.
+  const gap = useTransform(scrollYProgress, [0, 0.5], ["24%", "6%"]);
+  const halfGap = useTransform(gap, (g) => `calc(50% - ${g} / 2)`);
+  const halfGapNeg = useTransform(gap, (g) => `calc(50% + ${g} / 2)`);
+
+  // Bridge line + endcap nodes.
+  const bridgeScale = useTransform(scrollYProgress, [0.35, 0.58], [0, 1]);
+  const nodeScale = useTransform(scrollYProgress, [0.5, 0.65], [0, 1]);
+
+  // Brand endcard sweeps in over the globe once the two sides have joined.
+  const brandOpacity = useTransform(scrollYProgress, [0.58, 0.78], [0, 1]);
+  const brandY = useTransform(scrollYProgress, [0.58, 0.82], [24, 0]);
+  const ruleScale = useTransform(scrollYProgress, [0.68, 0.9], [0, 1]);
+  const globeScale = useTransform(scrollYProgress, [0.58, 1], [1.06, 1.16]);
+
+  // Scroll cue fades out once the story is underway.
+  const cueOpacity = useTransform(scrollYProgress, [0, 0.1], [1, 0]);
+
+  const panelBase =
+    "absolute top-0 h-full w-1/2 overflow-hidden bg-[#081512] will-change-transform";
+  const gradient =
+    "linear-gradient(90deg, #10b981, #fbbf24, #10b981)";
 
   return (
     <section
       id="home"
-      ref={sectionRef}
-      className="relative pt-16 sm:pt-20 overflow-hidden"
+      ref={trackRef}
+      className="relative"
+      style={{ height: "320vh" }}
+      aria-label="InvestBridge — where founders meet capital"
     >
-      <motion.div style={{ y: heroY, scale: heroScale, opacity: heroOpacity }}>
-        <motion.video
-          autoPlay
-          muted
-          loop
-          playsInline
-          poster="/homepage-bg.jpg"
-          className="block w-full h-auto"
-          initial={{ opacity: 0, scale: 1.03 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.9, ease: "easeOut" }}
-        >
-          <source src="/investbridge-hero.mp4" type="video/mp4" />
-        </motion.video>
-      </motion.div>
-
-      <motion.div
-        className="pointer-events-none absolute inset-x-0 bottom-6 flex justify-center"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.8, duration: 0.6 }}
+      <div
+        className="sticky top-0 h-screen w-full overflow-hidden"
+        style={{ background: HERO_BG }}
       >
-        <motion.div style={{ opacity: heroOpacity }}>
+        {/* Founders panel */}
+        <motion.div
+          className={panelBase}
+          style={{
+            left: 0,
+            width: halfGap,
+          }}
+        >
+          <img
+            src="/hero-calculator.png"
+            alt=""
+            className="absolute inset-0 h-full w-full object-cover opacity-90 mix-blend-lighten"
+          />
+          <div
+            className="absolute inset-0"
+            style={{
+              background:
+                "linear-gradient(90deg, rgba(5,9,15,0.92) 8%, rgba(5,9,15,0.35) 70%)",
+            }}
+          />
+          <div className="absolute bottom-16 left-4 max-w-[16rem] text-left sm:bottom-24 sm:left-12 sm:max-w-[22rem] md:left-20 lg:left-24">
+            <p
+              className="text-[10px] font-semibold uppercase text-brand-300 sm:text-sm"
+              style={{ letterSpacing: "0.22em" }}
+            >
+              Founders
+            </p>
+            <p
+              className="mt-3 font-display text-lg font-medium leading-[1.1] tracking-tight text-transparent bg-clip-text sm:text-2xl md:text-3xl lg:text-4xl"
+              style={{
+                backgroundImage: gradient,
+                backgroundSize: "300% 100%",
+                animation: "hero-grad 5s ease-in-out infinite",
+              }}
+            >
+              Building something real.
+            </p>
+          </div>
+        </motion.div>
+
+        {/* Investors panel */}
+        <motion.div
+          className={panelBase}
+          style={{
+            right: 0,
+            width: halfGap,
+          }}
+        >
+          <img
+            src="/hero-globe.jpg"
+            alt=""
+            className="absolute inset-0 h-full w-full object-cover opacity-90 mix-blend-lighten"
+          />
+          <div
+            className="absolute inset-0"
+            style={{
+              background:
+                "linear-gradient(270deg, rgba(5,9,15,0.92) 8%, rgba(5,9,15,0.35) 70%)",
+            }}
+          />
+          <div className="absolute bottom-16 right-4 max-w-[16rem] text-right sm:bottom-24 sm:right-12 sm:max-w-[22rem] md:right-20 lg:right-24">
+            <p
+              className="text-[10px] font-semibold uppercase text-brand-300 sm:text-sm"
+              style={{ letterSpacing: "0.22em" }}
+            >
+              Investors
+            </p>
+            <p
+              className="mt-3 font-display text-lg font-medium leading-[1.1] tracking-tight text-transparent bg-clip-text sm:text-2xl md:text-3xl lg:text-4xl"
+              style={{
+                backgroundImage: gradient,
+                backgroundSize: "300% 100%",
+                animation: "hero-grad 5s ease-in-out infinite",
+              }}
+            >
+              Looking for the next one.
+            </p>
+          </div>
+        </motion.div>
+
+        {/* Bridge line + nodes, drawn at vertical centre */}
+        <div
+          className="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2"
+          style={{ height: 2 }}
+        >
+          <motion.div
+            className="mx-auto h-[2px] w-1/2"
+            style={{
+              background: "#10b981",
+              boxShadow: "0 0 18px #10b981",
+              scaleX: bridgeScale,
+              transformOrigin: "center",
+              opacity: bridgeScale,
+            }}
+          />
+        </div>
+        <motion.div
+          className="pointer-events-none absolute top-1/2 h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full"
+          style={{
+            left: halfGap,
+            background: "#10b981",
+            boxShadow: "0 0 26px #10b981",
+            scale: nodeScale,
+          }}
+        />
+        <motion.div
+          className="pointer-events-none absolute top-1/2 h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full"
+          style={{
+            left: halfGapNeg,
+            background: "#10b981",
+            boxShadow: "0 0 26px #10b981",
+            scale: nodeScale,
+          }}
+        />
+
+        {/* Ambient glow overlay + decorative geometry */}
+        <div
+          className="pointer-events-none absolute inset-0"
+          style={{ background: HERO_GLOW, mixBlendMode: "screen" }}
+        />
+        <div className="pointer-events-none absolute inset-0 opacity-90">
+          <HeroDecor />
+        </div>
+
+        {/* Brand endcard — headline + rule + subhead over the globe */}
+        <motion.div
+          className="pointer-events-none absolute inset-0"
+          style={{ opacity: brandOpacity }}
+        >
+          <motion.div
+            className="absolute right-0 top-0 h-full w-[62%]"
+            style={{ scale: globeScale, transformOrigin: "80% 50%" }}
+          >
+            <img
+              src="/hero-globe.jpg"
+              alt=""
+              className="h-full w-full object-cover opacity-90"
+            />
+          </motion.div>
+          <div
+            className="absolute inset-0"
+            style={{
+              background:
+                "linear-gradient(95deg, rgba(5,9,15,0.96) 32%, rgba(5,9,15,0.5) 62%, rgba(5,9,15,0) 88%)",
+            }}
+          />
+          <motion.div
+            className="absolute left-6 top-1/2 w-full max-w-[36rem] -translate-y-1/2 sm:left-12 md:left-20 lg:left-24"
+            style={{ y: brandY }}
+          >
+            <h1
+              className="font-display text-4xl font-medium leading-[1.02] tracking-tight text-transparent bg-clip-text sm:text-5xl md:text-6xl lg:text-7xl"
+              style={{
+                backgroundImage: gradient,
+                backgroundSize: "300% 100%",
+                animation: "hero-grad 5s ease-in-out infinite",
+              }}
+            >
+              Where founders meet capital.
+            </h1>
+            <motion.div
+              className="my-8 h-px w-[70%] max-w-[26rem] origin-left"
+              style={{
+                scaleX: ruleScale,
+                background:
+                  "linear-gradient(90deg, rgba(0,0,0,0), #10b981 20%, #10b981 80%, rgba(0,0,0,0))",
+              }}
+            />
+            <p className="max-w-[32rem] text-base leading-relaxed text-white/70 sm:text-lg md:text-xl">
+              InvestBridge connects entrepreneurs with investors who are ready
+              to move.
+            </p>
+          </motion.div>
+        </motion.div>
+
+        {/* Scroll cue */}
+        <motion.div
+          className="pointer-events-none absolute inset-x-0 bottom-6 flex justify-center"
+          style={{ opacity: cueOpacity }}
+        >
           <motion.div
             animate={{ y: [0, 8, 0] }}
             transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
@@ -250,7 +516,7 @@ function Hero() {
             <ChevronDown className="h-4 w-4" />
           </motion.div>
         </motion.div>
-      </motion.div>
+      </div>
     </section>
   );
 }
@@ -428,6 +694,8 @@ function FeaturedStartups({ navigate, imageErrors, handleImageError }) {
           location: opp.location || "TBD",
           goal: opp.funding_goal || "TBD",
           blurb: opp.description || "",
+          timeline: opp.timeline || "TBD",
+          status: opp.investor_id ? "Funded" : "Open",
           image: opp.image || null,
         }));
         setStartups(mapped);
@@ -500,7 +768,7 @@ function FeaturedStartups({ navigate, imageErrors, handleImageError }) {
           </div>
         ) : (
           <motion.div
-            className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3"
+            className="mt-12 flex flex-col gap-3.5"
             variants={stagger}
             initial="hidden"
             whileInView="visible"
@@ -522,77 +790,102 @@ function FeaturedStartups({ navigate, imageErrors, handleImageError }) {
   );
 }
 
-function StartupCard({ s, navigate, imageErrors, handleImageError }) {
+const initialsOf = (name = "") =>
+  name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0].toUpperCase())
+    .join("") || "?";
+
+function DealStat({ label, value, divider = false }) {
   return (
-    <BorderGlow
-      backgroundColor="transparent"
-      borderRadius={40}
-      glowRadius={4}
-      glowIntensity={1.8}
-      edgeSensitivity={35}
-      coneSpread={35}
-      glowColor="40 90 60"
-      colors={["#10b981", "#fbbf24", "#10b981"]}
-      className="h-full"
+    <div className={`min-w-0 ${divider ? "border-l border-white/[0.08] pl-3" : ""}`}>
+      <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/50">
+        {label}
+      </p>
+      <p className="mt-1.5 truncate text-[15px] font-semibold text-white">{value}</p>
+    </div>
+  );
+}
+
+// Wide deal row: media | name + blurb | stats strip. Collapses to a stacked
+// card on small screens.
+function StartupCard({ s, navigate, imageErrors, handleImageError }) {
+  const hasImage = s.image && !imageErrors[s.id];
+  return (
+    <motion.div
+      variants={fadeUp}
+      className="transition-transform duration-300 ease-out hover:translate-x-1"
     >
-      <motion.article
-        className="holo-card holo-card-dark group h-full cursor-pointer overflow-hidden rounded-[40px] hover:shadow-lift"
-        variants={fadeUp}
-        onClick={() => navigate("/deals")}
+      <BorderGlow
+        backgroundColor="transparent"
+        borderRadius={22}
+        glowRadius={4}
+        glowIntensity={1.8}
+        edgeSensitivity={35}
+        coneSpread={35}
+        glowColor="40 90 60"
+        colors={["#10b981", "#fbbf24", "#10b981"]}
       >
-        <div className="relative h-40 overflow-hidden bg-black">
-          {s.image && !imageErrors[s.id] ? (
-            <img
-              src={s.image}
-              alt={s.name}
-              loading="lazy"
-              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-              onError={() => handleImageError(s.id)}
-            />
-          ) : (
-            <img
-              src={DEFAULT_DEAL_IMAGE}
-              alt={s.name}
-              loading="lazy"
-              className="h-full w-full object-cover"
-            />
-          )}
-          <div className="absolute inset-0 bg-gradient-to-t from-ink-950/70 via-ink-950/10 to-transparent" />
-          <div className="absolute left-4 top-4 flex gap-2">
-            <span className="rounded-full bg-white/90 px-2.5 py-1 text-xs font-semibold text-ink-800 backdrop-blur">
-              {s.sector}
+        <a
+          href="/deals"
+          onClick={(event) => {
+            event.preventDefault();
+            navigate("/deals");
+          }}
+          className="group grid overflow-hidden rounded-[22px] border border-white/10 bg-[rgba(5,9,15,0.55)] text-inherit no-underline backdrop-blur transition-colors duration-300 ease-out hover:border-brand-500/50 md:grid-cols-[180px_minmax(0,1fr)] lg:grid-cols-[220px_minmax(0,1fr)_340px]"
+        >
+          {/* Media */}
+          <div className="relative min-h-[132px] bg-[radial-gradient(90%_100%_at_20%_0%,rgba(16,185,129,0.35)_0%,rgba(16,185,129,0)_70%),#0a1f19]">
+            {hasImage ? (
+              <img
+                src={s.image}
+                alt=""
+                loading="lazy"
+                onError={() => handleImageError(s.id)}
+                className="absolute inset-0 h-full w-full object-cover opacity-85 mix-blend-lighten"
+              />
+            ) : (
+              <span
+                aria-hidden
+                className="absolute inset-0 flex items-center justify-center font-display text-[56px] font-extrabold leading-none text-transparent [-webkit-text-stroke:1px_rgba(110,231,183,0.4)]"
+              >
+                {initialsOf(s.name)}
+              </span>
+            )}
+            <div className="absolute inset-0 bg-gradient-to-t from-[rgba(5,9,15,0.8)] to-transparent md:bg-gradient-to-r md:from-transparent md:from-50% md:to-[rgba(5,9,15,0.8)]" />
+          </div>
+    
+          {/* Body */}
+          <div className="flex flex-col justify-center gap-2 px-6 py-5 sm:px-7">
+            <div className="flex flex-wrap items-center gap-2.5">
+              <span className="text-[19px] font-semibold text-white">{s.name}</span>
+              <span className="rounded-full border border-white/[0.14] px-2.5 py-0.5 text-[11px] font-semibold text-white/80">
+                {s.sector}
+              </span>
+              <span className="text-xs text-white/50">{s.location}</span>
+            </div>
+            <p className="line-clamp-2 text-sm leading-relaxed text-white/70 [text-wrap:pretty]">
+              {s.blurb || s.company}
+            </p>
+          </div>
+    
+          {/* Stats */}
+          <div className="flex flex-col justify-center gap-3 border-t border-white/[0.07] px-6 py-5 md:col-span-2 lg:col-span-1 lg:border-l lg:border-t-0 lg:px-[26px]">
+            <div className="grid grid-cols-3 border-b border-white/[0.08] pb-3">
+              <DealStat label="Goal" value={s.goal} />
+              <DealStat label="Timeline" value={s.timeline} divider />
+              <DealStat label="Status" value={s.status} divider />
+            </div>
+            <span className="inline-flex items-center gap-1 text-[13px] font-semibold text-brand-300 transition-colors group-hover:text-brand-200">
+              View deal room
+              <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
             </span>
           </div>
-          <div className="absolute bottom-4 left-4 flex items-center gap-2 text-white">
-            <span className="font-display text-lg font-bold">{s.name}</span>
-          </div>
-        </div>
-
-        <div className="p-5">
-          <p className="text-xs font-semibold uppercase tracking-wider text-white/55">
-            {s.company}
-          </p>
-          <p className="mt-2 text-sm leading-relaxed text-white/65 line-clamp-2">
-            {s.blurb}
-          </p>
-          <div className="mt-3 flex flex-wrap items-center gap-4 text-xs text-white/55">
-            <span className="flex items-center gap-1">
-              <MapPin className="h-3.5 w-3.5" />
-              {s.location}
-            </span>
-            <span className="flex items-center gap-1">
-              <DollarSign className="h-3.5 w-3.5" />
-              Goal {s.goal}
-            </span>
-          </div>
-
-          <span className="mt-5 inline-flex items-center gap-1 text-sm font-semibold text-brand-300 transition-colors group-hover:text-brand-200 group-hover:gap-1.5">
-            View deal room
-            <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1 group-hover:-translate-y-0.5" />
-          </span>
-        </div>
-      </motion.article>
-    </BorderGlow>
+        </a>
+      </BorderGlow>
+    </motion.div>
   );
 }
 

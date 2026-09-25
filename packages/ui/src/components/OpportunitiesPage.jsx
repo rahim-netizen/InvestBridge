@@ -4,22 +4,19 @@
   CheckCircle2,
   Clock,
   FileText,
-  MapPin,
-  MessageCircle,
   PenLine,
   Sparkles,
   Star,
   TrendingUp,
-  Users,
   DollarSign,
   Target,
   Briefcase,
   Globe,
-  Rocket,
+  Upload,
   Plus,
   X,
+  Trash2,
   UserRound,
-  Image as ImageIcon,
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useState, useEffect } from "react";
@@ -27,7 +24,8 @@ import PageBackground, { AURORA_BG } from "./PageBackground.jsx";
 import PageDecor from "./PageDecor.jsx";
 import GradientText from "./GradientText.jsx";
 import { createOpportunity, deleteOpportunity, getMyOpportunities } from "../api/opportunities";
-import { fadeUp, fadeUpBlur, stagger, useTilt } from "../lib/motion.jsx";
+import { getConnectionsForOpportunity } from "../api/connected";
+import { fadeUp, fadeUpBlur, stagger } from "../lib/motion.jsx";
 import {
   FilterChip,
   FilterPopover,
@@ -76,117 +74,180 @@ function resizeImage(file, maxDim = 1024, quality = 0.8) {
   });
 }
 
+const OPEN_FOR_DAYS = [7, 14, 30, 60];
+
+const EMPTY_FORM = {
+  title: "",
+  company: "",
+  sector: "",
+  location: "",
+  fundingGoal: "",
+  description: "",
+  days: 30,
+  image: null,
+};
+
+const formInputClassName =
+  "h-11 w-full rounded-xl border border-white/[0.12] bg-[rgba(5,9,15,0.5)] px-3.5 text-sm text-white outline-none transition placeholder:text-white/35 focus:border-brand-500 focus:shadow-[0_0_0_3px_rgba(16,185,129,0.18)] focus-visible:border-brand-500 focus-visible:shadow-[0_0_0_3px_rgba(16,185,129,0.18)]";
+const formLabelClassName = "flex flex-col gap-1.5 text-[13px] font-semibold text-white/85";
+
+// One numbered block of the form: outlined number + title/hint on the left,
+// fields on the right. Stacks on small screens.
+function FormSection({ n, title, hint, last = false, children }) {
+  return (
+    <div
+      className={`grid gap-5 md:grid-cols-[200px_minmax(0,1fr)] md:gap-8 ${
+        last ? "" : "border-b border-white/[0.08] pb-7"
+      }`}
+    >
+      <div>
+        <span className="text-[34px] font-extrabold leading-none text-transparent [-webkit-text-stroke:1px_rgba(110,231,183,0.5)]">
+          {n}
+        </span>
+        <p className="mt-2.5 text-base font-semibold text-white">{title}</p>
+        <p className="mt-1 text-[13px] leading-normal text-white/55">{hint}</p>
+      </div>
+      {children}
+    </div>
+  );
+}
+
+const STATUS_STYLES = {
+  Live: "bg-emerald-500/15 text-emerald-300",
+  Funded: "bg-amber-400/15 text-amber-300",
+  Suspended: "bg-rose-500/15 text-rose-300",
+};
+
+function timeAgo(value) {
+  if (!value) return "just now";
+  const seconds = Math.max(0, (Date.now() - new Date(value).getTime()) / 1000);
+  if (seconds < 60) return "just now";
+  const units = [
+    [60 * 60 * 24 * 30, "mo"],
+    [60 * 60 * 24, "d"],
+    [60 * 60, "h"],
+    [60, "m"],
+  ];
+  const [size, label] = units.find(([unitSize]) => seconds >= unitSize);
+  return `${Math.floor(seconds / size)}${label} ago`;
+}
+
+// Normalises an API opportunity into the shape the owner card renders.
+function toCard(opp) {
+  const funded = Boolean(opp.investor_id);
+  const suspended = String(opp.status || "").toLowerCase() === "suspended";
+  return {
+    id: opp.id,
+    title: opp.title,
+    company: opp.company,
+    sector: opp.sector,
+    location: opp.location || "TBD",
+    fundingGoal: opp.funding_goal || "$0",
+    description: opp.description || "",
+    timeline: opp.timeline || "TBD",
+    image: opp.image || null,
+    status: suspended ? "Suspended" : funded ? "Funded" : "Live",
+    pct: funded ? 100 : 0,
+    updated: opp.updated_at && opp.updated_at !== opp.created_at
+      ? `Updated ${timeAgo(opp.updated_at)}`
+      : `Posted ${timeAgo(opp.created_at)}`,
+    investors: null,
+  };
+}
+
+// What the owner should do next, derived from the listing's real state.
+function nextStepFor(opp) {
+  if (opp.status === "Suspended") {
+    return { text: "This listing was suspended by an admin.", action: "Contact support", route: "/support" };
+  }
+  if (opp.status === "Funded") {
+    return { text: "An investor has been accepted — coordinate next steps in chat.", action: "Open chat", route: "/connect" };
+  }
+  if (opp.investors > 0) {
+    return {
+      text: `${opp.investors} investor${opp.investors === 1 ? " is" : "s are"} interested — review and accept one.`,
+      action: "Review investors",
+      route: "/dashboard",
+    };
+  }
+  return { text: "Your listing is live in Deals. No investors yet.", action: "View in deals", route: "/deals" };
+}
+
+function CardStat({ label, value }) {
+  return (
+    <div className="min-w-0">
+      <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/50">{label}</p>
+      <p className="mt-2 truncate text-[17px] font-semibold text-white" title={String(value)}>{value}</p>
+    </div>
+  );
+}
+
 function OpportunityCard({ opp, navigate, onDelete }) {
-  const tilt = useTilt(4);
+  const deg = `${Math.max(0, Math.min(100, opp.pct)) * 3.6}deg`;
+  const step = nextStepFor(opp);
 
   return (
-    <motion.article
-      ref={tilt.ref}
-      onMouseMove={tilt.onMouseMove}
-      onMouseLeave={tilt.onMouseLeave}
-      style={tilt.style}
-      className="glass-panel-strong holo-card rounded-[2rem] p-6 relative"
-      variants={fadeUp}
-      whileHover={{ y: -3, transition: { duration: 0.25 } }}
-    >
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex-1">
-          <div className="flex items-center gap-2 mb-2">
-            <span className="rounded-full bg-brand-50 px-2.5 py-1 text-xs font-semibold text-brand-700 dark:bg-brand-400/10 dark:text-brand-300">
-              {opp.sector}
-            </span>
-          </div>
-          {opp.image && (
-            <img
-              src={opp.image}
-              alt={opp.title}
-              className="mt-3 h-48 w-full rounded-2xl object-cover"
-            />
-          )}
-          <h3 className="font-display text-xl font-bold text-ink-900 dark:text-ink-50">
-            {opp.title}
-          </h3>
-          <p className="mt-1 text-sm text-ink-500 dark:text-ink-400">
-            by {opp.company}
-          </p>
-        </div>
-        <div className="text-right shrink-0">
-          <p className="font-display text-2xl font-bold text-brand-600">
-            {opp.pct}%
-          </p>
-          <p className="text-xs text-ink-500 dark:text-ink-400">funded</p>
-        </div>
-      </div>
-
-      <p className="mt-4 text-sm leading-relaxed text-ink-600 dark:text-ink-300">
-        {opp.description}
-      </p>
-
-      <div className="mt-4 grid grid-cols-2 gap-3">
-        <div className="rounded-2xl bg-white/50 p-3 dark:bg-ink-950/40">
-          <p className="text-xs font-semibold uppercase tracking-wider text-brand-700 dark:text-brand-300">
-            Funding goal
-          </p>
-          <p className="mt-1 font-display text-lg font-bold text-ink-900 dark:text-ink-50">
-            {opp.fundingGoal}
-          </p>
-          <p className="text-xs text-ink-500 dark:text-ink-400">
-            {opp.raised} raised
-          </p>
-        </div>
-        <div className="rounded-2xl bg-white/50 p-3 dark:bg-ink-950/40">
-          <p className="text-xs font-semibold uppercase tracking-wider text-brand-700 dark:text-brand-300">
-            Timeline
-          </p>
-          <p className="mt-1 font-display text-lg font-bold text-ink-900 dark:text-ink-50">
-            {opp.timeline}
-          </p>
-        </div>
-      </div>
-
-      <div className="mt-4 flex items-center gap-4 text-xs text-ink-500 dark:text-ink-400">
-        <span className="flex items-center gap-1">
-          <MapPin className="h-3.5 w-3.5" />
-          {opp.location}
-        </span>
-      </div>
-
-      <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-ink-100 dark:bg-ink-800">
-        <motion.div
-          className="h-full rounded-full bg-gradient-to-r from-brand-500 to-brand-700"
-          initial={{ width: 0 }}
-          animate={{ width: `${opp.pct}%` }}
-          transition={{ duration: 1, ease: "easeOut", delay: 0.2 }}
-        />
-      </div>
-
-      <div className="mt-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => navigate("/connect")}
-            className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-700 transition-colors hover:text-brand-800 dark:text-brand-400"
-          >
-            <MessageCircle className="h-4 w-4" />
-            Chat
-          </button>
-          <button
-            type="button"
-            className="inline-flex items-center gap-1.5 text-sm font-semibold text-ink-500 transition-colors hover:text-brand-700 dark:text-ink-400"
-          >
-            <Users className="h-4 w-4" />
-            View investors
-          </button>
-        </div>
+    <motion.div variants={fadeUp} className="h-full">
+      <article className="group relative flex h-full flex-col overflow-hidden rounded-[24px] border border-white/10 bg-[rgba(5,9,15,0.55)] backdrop-blur transition-colors duration-300 hover:border-brand-500/45">
         <button
           type="button"
           onClick={onDelete}
-          className="text-xs font-semibold text-rose-500 transition-colors hover:text-rose-700"
+          aria-label={`Remove ${opp.title}`}
+          className="absolute right-4 top-4 grid h-8 w-8 place-items-center rounded-full text-white/40 opacity-0 transition hover:bg-rose-500/15 hover:text-rose-300 focus-visible:opacity-100 group-hover:opacity-100"
         >
-          Remove
+          <Trash2 className="h-4 w-4" />
         </button>
-      </div>
-    </motion.article>
+
+        {/* Ring + title */}
+        <div className="grid grid-cols-[88px_minmax(0,1fr)] items-center gap-5 px-6 pb-6 pt-7 sm:grid-cols-[112px_minmax(0,1fr)] sm:gap-7 sm:px-[30px] sm:pt-[30px]">
+          <div
+            className="relative aspect-square w-full rounded-full"
+            style={{ background: `conic-gradient(#10b981 0deg, #fbbf24 ${deg}, rgba(255,255,255,0.08) ${deg} 360deg)` }}
+          >
+            <div className="absolute inset-2 flex flex-col items-center justify-center rounded-full bg-[#07100e]">
+              <span className="text-xl font-semibold text-white sm:text-2xl">{opp.pct}%</span>
+              <span className="text-[11px] text-white/55">funded</span>
+            </div>
+          </div>
+          <div className="min-w-0 pr-6">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${STATUS_STYLES[opp.status] || STATUS_STYLES.Live}`}>
+                {opp.status}
+              </span>
+              <span className="rounded-full border border-white/[0.14] px-2.5 py-0.5 text-[11px] font-semibold text-white/80">
+                {opp.sector}
+              </span>
+            </div>
+            <h3 className="mt-3.5 text-[22px] font-semibold leading-tight text-white">{opp.title}</h3>
+            <p className="mt-2 text-[13px] text-white/55">
+              {opp.location} · {opp.updated}
+            </p>
+          </div>
+        </div>
+
+        {/* Stats */}
+        <div className="mx-6 mb-6 grid grid-cols-2 gap-4 border-t border-white/[0.08] pt-5 sm:mx-[30px] sm:grid-cols-4">
+          <CardStat label="Goal" value={opp.fundingGoal} />
+          <CardStat label="Timeline" value={opp.timeline} />
+          <CardStat label="Investors" value={opp.investors ?? "—"} />
+          <CardStat label="Company" value={opp.company} />
+        </div>
+
+        {/* Next step */}
+        <div className="mt-auto flex items-center gap-3.5 border-t border-brand-500/[0.18] bg-brand-500/[0.07] px-6 py-4 sm:px-[26px]">
+          <span className="h-2 w-2 shrink-0 rounded-full bg-amber-400 shadow-[0_0_0_4px_rgba(251,191,36,0.15)]" />
+          <span className="min-w-0 flex-1 text-[13px] font-medium leading-normal text-white/85">{step.text}</span>
+          <button
+            type="button"
+            onClick={() => navigate(step.route)}
+            className="inline-flex shrink-0 items-center gap-1 text-[13px] font-semibold text-brand-300 transition-colors hover:text-brand-200"
+          >
+            {step.action}
+            <ArrowUpRight className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      </article>
+    </motion.div>
   );
 }
 
@@ -194,17 +255,9 @@ export default function OpportunitiesPage({ navigate }) {
    const [user, setUser] = useState(() => getStoredUser());
    const [opportunities, setOpportunities] = useState([]);
    const [showForm, setShowForm] = useState(false);
-   const [form, setForm] = useState({
-    title: "",
-    company: "",
-    sector: "",
-    location: "",
-    fundingGoal: "",
-    description: "",
-    timeline: "",
-    image: null,
-  });
+   const [form, setForm] = useState(EMPTY_FORM);
   const [formStatus, setFormStatus] = useState("");
+  const [formError, setFormError] = useState("");
   const [sectorFilter, setSectorFilter] = useState("All");
    const [searchQuery, setSearchQuery] = useState("");
    const [isLoading, setIsLoading] = useState(false);
@@ -221,21 +274,20 @@ export default function OpportunitiesPage({ navigate }) {
         const data = await getMyOpportunities();
         if (!active) return;
         const list = Array.isArray(data.opportunities) ? data.opportunities : [];
-        setOpportunities(
-          list.map((opp) => ({
-            id: opp.id,
-            title: opp.title,
-            company: opp.company,
-            sector: opp.sector,
-            location: opp.location || "TBD",
-            fundingGoal: opp.funding_goal || "$0",
-            raised: "$0",
-            pct: 0,
-            description: opp.description || "",
-            timeline: opp.timeline || "TBD",
-            image: opp.image || null,
-          })),
-        );
+        setOpportunities(list.map(toCard));
+
+        // Fill in how many investors have connected to each listing.
+        list.forEach((opp) => {
+          getConnectionsForOpportunity(opp.id)
+            .then((result) => {
+              if (!active) return;
+              const count = (result.connections || []).length;
+              setOpportunities((prev) =>
+                prev.map((o) => (o.id === opp.id ? { ...o, investors: count } : o)),
+              );
+            })
+            .catch(() => {});
+        });
       } catch {
         // keep empty state on error
       }
@@ -273,64 +325,48 @@ export default function OpportunitiesPage({ navigate }) {
   const handleSubmit = async (event) => {
     event.preventDefault();
     setFormStatus("");
-     setIsLoading(true);
+    setFormError("");
 
-     if (!form.title.trim() || !form.company.trim()) {
-      setFormStatus("Please fill in the title and company fields.");
-      setIsLoading(false);
+    const goalAmount = Number(String(form.fundingGoal).replace(/[^0-9.]/g, "")) || 0;
+    const missing = [
+      !form.title.trim() && "Title",
+      !form.company.trim() && "Company",
+      !form.sector && "Sector",
+      !goalAmount && "Funding goal",
+    ].filter(Boolean);
+    if (missing.length) {
+      setFormError(`Please add: ${missing.join(", ")}.`);
       return;
     }
 
+    setIsLoading(true);
     try {
       const result = await createOpportunity({
-        title: form.title,
-        company: form.company,
-        sector: form.sector || "Other",
-        location: form.location || "TBD",
-        funding_goal: form.fundingGoal || "$0",
+        title: form.title.trim(),
+        company: form.company.trim(),
+        sector: form.sector,
+        location: form.location.trim() || "TBD",
+        funding_goal: `$${goalAmount.toLocaleString("en-US")}`,
         description: form.description || "",
-        timeline: form.timeline || "TBD",
+        timeline: `${form.days} days`,
         image: form.image || null,
       });
 
       if (result.opportunity) {
         setOpportunities((prev) => [
-          {
-            id: result.opportunity.id,
-            title: result.opportunity.title,
-            company: result.opportunity.company,
-            sector: result.opportunity.sector,
-            location: result.opportunity.location || "TBD",
-            fundingGoal: result.opportunity.funding_goal || "$0",
-            raised: "$0",
-            pct: 0,
-            description: result.opportunity.description || "",
-            timeline: result.opportunity.timeline || "TBD",
-            nextMilestone: "",
-            businessModel: "",
-            targetAudience: "",
-          },
+          { ...toCard(result.opportunity), investors: 0 },
           ...prev,
         ]);
       }
 
       window.dispatchEvent(new CustomEvent("opportunity-changed"));
       setFormStatus("Opportunity posted successfully!");
-      setForm({
-        title: "",
-        company: "",
-        sector: "",
-        location: "",
-        fundingGoal: "",
-        description: "",
-        timeline: "",
-        image: null,
-      });
+      setForm(EMPTY_FORM);
       setShowForm(false);
 
       setTimeout(() => setFormStatus(""), 4000);
     } catch (err) {
-      setFormStatus(err.message || "Failed to post opportunity.");
+      setFormError(err.message || "Failed to post opportunity.");
     } finally {
       setIsLoading(false);
     }
@@ -346,11 +382,6 @@ export default function OpportunitiesPage({ navigate }) {
       // keep local state on error
     }
   };
-
-  const inputClassName =
-    "w-full rounded-2xl border border-white/20 bg-white/35 px-4 py-3 text-sm text-ink-900 outline-none placeholder:text-ink-400 backdrop-blur-sm dark:border-white/10 dark:bg-ink-950/35 dark:text-ink-50 dark:placeholder:text-ink-500";
-  const fieldLabelClassName =
-    "mb-2 block text-sm font-medium text-ink-700 dark:text-ink-300";
 
   if (!user) {
     return (
@@ -508,145 +539,192 @@ export default function OpportunitiesPage({ navigate }) {
         </AnimatePresence>
 
         {showForm && (
-          <motion.div
-            className="glass-panel-strong holo-card rounded-[2rem] p-8 mb-8"
+          <motion.form
+            onSubmit={handleSubmit}
+            noValidate
+            className="mb-8 flex flex-col gap-7 rounded-[28px] border border-brand-500/25 bg-gradient-to-b from-brand-500/[0.08] to-[rgba(5,9,15,0.4)] p-5 backdrop-blur sm:p-8"
             initial={{ opacity: 0, y: -12, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={{ duration: 0.3, ease: "easeOut" }}
           >
-            <h2 className="font-display text-xl font-bold text-ink-900 dark:text-ink-50">
-              New opportunity
-            </h2>
-            <p className="mt-1 text-sm text-ink-500 dark:text-ink-400">
-              Fill in the details below to publish your opportunity.
-            </p>
-
-            <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
-              <div className="flex flex-col items-center">
-                <label className="group relative cursor-pointer">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageChange}
-                    className="sr-only"
-                  />
-                  <div className="flex h-48 w-48 items-center justify-center overflow-hidden rounded-3xl border-2 border-dashed border-ink-300 bg-ink-50 transition group-hover:border-brand-400 group-hover:bg-brand-50 dark:border-ink-600 dark:bg-ink-800 dark:group-hover:border-brand-500 dark:group-hover:bg-brand-900/20">
-                    {form.image ? (
-                      <img
-                        src={form.image}
-                        alt="Opportunity preview"
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      <div className="flex flex-col items-center gap-1 text-ink-400 dark:text-ink-500">
-                        <ImageIcon className="h-8 w-8" />
-                        <span className="text-xs font-medium">Opportunity image</span>
-                      </div>
-                    )}
-                  </div>
-                </label>
-                <p className="mt-2 text-xs text-ink-500 dark:text-ink-400">
-                  Upload a cover image (optional)
+            {/* Cover banner — doubles as the image picker */}
+            <label
+              className="group relative flex min-h-[150px] cursor-pointer flex-wrap items-end gap-4 overflow-hidden rounded-[20px] border border-dashed border-brand-500/40 bg-[radial-gradient(70%_120%_at_15%_0%,rgba(16,185,129,0.22)_0%,rgba(16,185,129,0)_70%),rgba(5,9,15,0.4)] px-5 py-5 transition-colors hover:border-brand-500/70 sm:px-[26px] sm:py-[22px]"
+            >
+              {form.image && (
+                <>
+                  <img src={form.image} alt="" className="absolute inset-0 h-full w-full object-cover" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[rgba(5,9,15,0.85)] to-[rgba(5,9,15,0.1)]" />
+                </>
+              )}
+              <div className="relative">
+                <h2 className="text-[26px] font-semibold text-white">New opportunity</h2>
+                <p className="mt-1.5 text-[13px] text-white/60">
+                  {form.image
+                    ? "Click to change the cover image."
+                    : "This banner is your cover image. Add a photo here (optional)."}
                 </p>
               </div>
+              <span className="relative ml-auto inline-flex items-center gap-1.5 rounded-full border border-white/[0.18] bg-[rgba(5,9,15,0.6)] px-3.5 py-2 text-[13px] font-semibold text-white">
+                <Upload className="h-3.5 w-3.5" />
+                {form.image ? "Replace cover" : "Upload cover"}
+              </span>
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                onChange={handleImageChange}
+                className="sr-only"
+              />
+            </label>
 
-              <div className="grid gap-4 md:grid-cols-2">
-                <label className="block">
-                  <span className={fieldLabelClassName}>Title *</span>
-                  <input
-                    type="text"
-                    name="title"
-                    value={form.title}
-                    onChange={handleFormChange}
-                    required
-                    placeholder="e.g., AI-Powered Diagnostic Platform"
-                    className={inputClassName}
-                  />
-                </label>
-                <label className="block">
-                  <span className={fieldLabelClassName}>Company *</span>
-                  <input
-                    type="text"
-                    name="company"
-                    value={form.company}
-                    onChange={handleFormChange}
-                    required
-                    placeholder="e.g., NovaVet AI"
-                    className={inputClassName}
-                  />
-                </label>
+            <FormSection n="01" title="The basics" hint="How investors will find you.">
+              <div className="flex flex-col gap-3.5">
+                <div className="grid gap-3.5 sm:grid-cols-2">
+                  <label className={formLabelClassName}>
+                    Title *
+                    <input
+                      name="title"
+                      value={form.title}
+                      onChange={handleFormChange}
+                      placeholder="e.g. AI diagnostic platform"
+                      className={formInputClassName}
+                    />
+                  </label>
+                  <label className={formLabelClassName}>
+                    Company *
+                    <input
+                      name="company"
+                      value={form.company}
+                      onChange={handleFormChange}
+                      placeholder="e.g. NovaVet AI"
+                      className={formInputClassName}
+                    />
+                  </label>
+                </div>
+                <div className="grid gap-3.5 sm:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+                  <div className="flex flex-col gap-2">
+                    <span className="text-[13px] font-semibold text-white/85">Sector *</span>
+                    <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Sector">
+                      {sectors.filter((s) => s !== "All").map((s) => {
+                        const active = form.sector === s;
+                        return (
+                          <button
+                            key={s}
+                            type="button"
+                            role="radio"
+                            aria-checked={active}
+                            onClick={() => setForm((current) => ({ ...current, sector: s }))}
+                            className={`rounded-full border px-3 py-[7px] text-xs font-semibold transition-colors ${
+                              active
+                                ? "border-brand-500 bg-brand-500/[0.18] text-brand-300"
+                                : "border-white/[0.14] text-white/80 hover:border-white/30"
+                            }`}
+                          >
+                            {s}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  <label className={formLabelClassName}>
+                    Location
+                    <input
+                      name="location"
+                      value={form.location}
+                      onChange={handleFormChange}
+                      placeholder="e.g. Dhaka, BD"
+                      className={formInputClassName}
+                    />
+                  </label>
+                </div>
               </div>
+            </FormSection>
 
-              <div className="grid gap-4 md:grid-cols-3">
-                <label className="block">
-                  <span className={fieldLabelClassName}>Sector *</span>
-                  <select
-                    name="sector"
-                    value={form.sector}
-                    onChange={handleFormChange}
-                    required
-                    className={inputClassName}
+            <FormSection n="02" title="The raise" hint="How much, and how long it's open.">
+              <div className="grid gap-3.5 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
+                <label className={formLabelClassName}>
+                  Funding goal *
+                  <span className="flex h-11 items-center overflow-hidden rounded-xl border border-white/[0.12] bg-[rgba(5,9,15,0.5)] transition focus-within:border-brand-500 focus-within:shadow-[0_0_0_3px_rgba(16,185,129,0.18)]">
+                    <span className="flex h-full items-center border-r border-white/[0.08] px-3 text-sm font-semibold text-white/50">
+                      USD $
+                    </span>
+                    <input
+                      name="fundingGoal"
+                      value={form.fundingGoal}
+                      onChange={handleFormChange}
+                      inputMode="decimal"
+                      placeholder="250,000"
+                      className="h-full min-w-0 flex-1 border-none bg-transparent px-3 text-sm font-normal text-white outline-none placeholder:text-white/35 focus-visible:shadow-none"
+                    />
+                  </span>
+                </label>
+                <div className="flex flex-col gap-1.5">
+                  <span className="text-[13px] font-semibold text-white/85">Open for</span>
+                  <div
+                    role="radiogroup"
+                    aria-label="Open for"
+                    className="grid h-11 grid-cols-4 gap-1 rounded-xl border border-white/[0.12] bg-[rgba(5,9,15,0.5)] p-1"
                   >
-                    <option value="">Select a sector</option>
-                    {sectors.filter((s) => s !== "All").map((s) => (
-                      <option key={s} value={s}>{s}</option>
-                    ))}
-                  </select>
-                </label>
-                <label className="block">
-                  <span className={fieldLabelClassName}>Location</span>
-                  <input
-                    type="text"
-                    name="location"
-                    value={form.location}
-                    onChange={handleFormChange}
-                    placeholder="e.g., San Francisco, US"
-                    className={inputClassName}
-                  />
-                </label>
-                <label className="block">
-                  <span className={fieldLabelClassName}>Funding goal</span>
-                  <input
-                    type="text"
-                    name="fundingGoal"
-                    value={form.fundingGoal}
-                    onChange={handleFormChange}
-                    placeholder="e.g., $1.5M"
-                    className={inputClassName}
-                  />
-                </label>
+                    {OPEN_FOR_DAYS.map((n) => {
+                      const active = form.days === n;
+                      return (
+                        <button
+                          key={n}
+                          type="button"
+                          role="radio"
+                          aria-checked={active}
+                          onClick={() => setForm((current) => ({ ...current, days: n }))}
+                          className={`rounded-lg text-[13px] font-semibold transition-colors ${
+                            active ? "bg-brand-500/[0.22] text-brand-300" : "text-white/70 hover:text-white"
+                          }`}
+                        >
+                          {n} days
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
+            </FormSection>
 
-              <label className="block">
-                <span className={fieldLabelClassName}>Description</span>
+            <FormSection n="03" title="The story" hint="Two or three sentences work best." last>
+              <label className={formLabelClassName}>
+                Description
                 <textarea
                   name="description"
                   value={form.description}
                   onChange={handleFormChange}
-                  rows="3"
-                  placeholder="Describe the opportunity, what problem it solves, and why it matters..."
-                  className={inputClassName}
+                  rows={4}
+                  placeholder="What problem does it solve, who has it, and what traction do you have?"
+                  className={`${formInputClassName} h-auto resize-y py-3 leading-relaxed`}
                 />
               </label>
+            </FormSection>
 
-              <label className="block">
-                <span className={fieldLabelClassName}>Timeline</span>
-                <input
-                  type="text"
-                  name="timeline"
-                  value={form.timeline}
-                  onChange={handleFormChange}
-                  placeholder="e.g., 14 days"
-                  className={inputClassName}
-                />
-              </label>
-
-              <button type="submit" className="btn-primary">
-                <Rocket className="h-4 w-4" />
-                Publish opportunity
+            {/* Footer */}
+            <div className="flex flex-wrap items-center gap-3 border-t border-white/[0.08] pt-5">
+              <span className={`text-[13px] ${formError ? "text-red-400" : "text-white/55"}`}>
+                {formError || "Fields marked * are required."}
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowForm(false);
+                  setFormError("");
+                }}
+                className="ml-auto rounded-full border border-white/[0.14] px-5 py-3 text-sm font-semibold text-white/85 transition-colors hover:border-white/30 hover:text-white"
+              >
+                Cancel
               </button>
-            </form>
-          </motion.div>
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="rounded-full bg-brand-500 px-[22px] py-3 text-sm font-semibold text-[#05090f] transition-colors hover:bg-brand-400 disabled:opacity-60"
+              >
+                {isLoading ? "Publishing…" : "Publish opportunity"}
+              </button>
+            </div>
+          </motion.form>
         )}
 
         <motion.div

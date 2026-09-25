@@ -1,18 +1,15 @@
 ﻿import {
   Sparkles,
-  MapPin,
-  Clock,
+  Star,
   ArrowUpRight,
-  Trash2,
   X,
-  DollarSign,
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useCallback, useEffect, useState } from "react";
 import PageBackground, { AURORA_BG } from "./PageBackground.jsx";
 import PageDecor from "./PageDecor.jsx";
 import GradientText from "./GradientText.jsx";
-import { deleteOpportunity, getAllOpportunities } from "../api/opportunities";
+import { getAllOpportunities } from "../api/opportunities";
 import {
   connectOpportunity,
   disconnectOpportunity,
@@ -24,7 +21,6 @@ import {
   modalOverlay,
   modalPanel,
   stagger,
-  useTilt,
 } from "../lib/motion.jsx";
 import {
   FilterChip,
@@ -67,90 +63,93 @@ const sortOptions = [
 const DEFAULT_DEAL_IMAGE =
   "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='200' viewBox='0 0 400 200'><rect width='400' height='200' fill='%23e5e7eb'/><text x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%239ca3af' font-family='sans-serif' font-size='16'>No image</text></svg>";
 
-function DealCard({ deal, user, saved, onOpen, onDelete }) {
-  const tilt = useTilt(5);
+const initialsOf = (name = "") =>
+  name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0].toUpperCase())
+    .join("") || "?";
+
+function DealStat({ label, value }) {
+  return (
+    <div className="min-w-0">
+      <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/50">{label}</p>
+      <p className="mt-1 truncate text-base font-semibold text-white" title={String(value)}>{value}</p>
+    </div>
+  );
+}
+
+// Split card: media on the left, details on the right; stacks on phones.
+function DealCard({ deal, saved, saving, onOpen, onToggleSave }) {
+  const [imageFailed, setImageFailed] = useState(false);
+  const hasImage = deal.image && !imageFailed;
 
   return (
     <motion.article
-      ref={tilt.ref}
-      onMouseMove={tilt.onMouseMove}
-      onMouseLeave={tilt.onMouseLeave}
-      style={tilt.style}
-      className="glass-panel-strong holo-card group cursor-pointer overflow-hidden rounded-[2rem] transition-shadow duration-300 hover:shadow-lift"
       variants={fadeUp}
-      whileHover={{ y: -4, transition: { duration: 0.25 } }}
       onClick={onOpen}
+      className="group grid cursor-pointer overflow-hidden rounded-[24px] border border-white/10 bg-[rgba(5,9,15,0.55)] backdrop-blur transition-colors duration-300 hover:border-brand-500/50 sm:grid-cols-[190px_minmax(0,1fr)]"
     >
-      <div className="relative h-48 overflow-hidden bg-ink-100 dark:bg-ink-800">
-        <img
-          src={deal.image || DEFAULT_DEAL_IMAGE}
-          alt={deal.name}
-          loading="lazy"
-          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-ink-950/40 to-transparent" />
-        <div className="absolute left-4 top-4 flex flex-col gap-2">
-          <span className="rounded-full bg-white/90 px-2.5 py-1 text-xs font-semibold text-ink-800 backdrop-blur">
+      {/* Media */}
+      <div className="relative min-h-[160px] bg-[radial-gradient(90%_80%_at_30%_10%,rgba(16,185,129,0.35)_0%,rgba(16,185,129,0)_70%),#0a1f19] sm:min-h-[250px]">
+        {hasImage ? (
+          <img
+            src={deal.image}
+            alt=""
+            loading="lazy"
+            onError={() => setImageFailed(true)}
+            className="absolute inset-0 h-full w-full object-cover opacity-85 mix-blend-lighten"
+          />
+        ) : (
+          <span
+            aria-hidden
+            className="absolute inset-0 flex items-center justify-center font-display text-[64px] font-extrabold leading-none text-transparent [-webkit-text-stroke:1px_rgba(110,231,183,0.4)]"
+          >
+            {initialsOf(deal.name)}
+          </span>
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-[rgba(5,9,15,0.85)] to-transparent sm:bg-gradient-to-r sm:from-transparent sm:from-[55%] sm:to-[rgba(5,9,15,0.85)]" />
+      </div>
+
+      {/* Body */}
+      <div className="flex min-w-0 flex-col px-6 py-6 sm:px-[26px]">
+        <div className="flex items-center gap-2">
+          <span className="rounded-full border border-white/[0.14] px-2.5 py-0.5 text-[11px] font-semibold text-white/80">
             {deal.sector}
           </span>
-          {saved && (
-            <span className="rounded-full bg-brand-600 px-2.5 py-1 text-xs font-semibold text-white backdrop-blur">
-              Saved
-            </span>
-          )}
+          <span className="truncate text-xs text-white/50">{deal.location}</span>
+          <div className="ml-auto flex shrink-0 items-center">
+            <button
+              type="button"
+              title={saved ? "Saved" : "Save"}
+              aria-pressed={saved}
+              disabled={saving}
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleSave();
+              }}
+              className="grid h-[30px] w-[30px] place-items-center rounded-full text-amber-400 transition hover:bg-amber-400/10 disabled:opacity-50"
+            >
+              <Star className={`h-4 w-4 ${saved ? "fill-amber-400" : ""}`} />
+            </button>
+          </div>
         </div>
-      </div>
-      <div className="p-6">
-        <h3 className="font-display text-xl font-bold text-ink-900 dark:text-ink-50">
-          {deal.name}
-        </h3>
-        <p className="mt-1 text-sm text-ink-500 dark:text-ink-400">
-          by {deal.company}
-        </p>
-        <p className="mt-3 text-sm leading-relaxed text-ink-600 dark:text-ink-400">
+
+        <h3 className="mt-3.5 text-xl font-semibold leading-tight text-white">{deal.name}</h3>
+        <p className="mt-1 text-xs text-white/55">by {deal.company}</p>
+        <p className="mt-3 line-clamp-3 text-sm leading-relaxed text-white/70 [text-wrap:pretty]">
           {deal.blurb}
         </p>
-        <div className="mt-3 flex items-center gap-4 text-xs text-ink-500 dark:text-ink-400">
-          <span className="flex items-center gap-1">
-            <MapPin className="h-3.5 w-3.5" />
-            {deal.location}
-          </span>
-          <span className="flex items-center gap-1">
-            <Clock className="h-3.5 w-3.5" />
-            {deal.timeline}
-          </span>
-          <span className="flex items-center gap-1">
-            <DollarSign className="h-3.5 w-3.5" />
-            {deal.goal}
+
+        <div className="mt-auto flex items-end gap-[22px] pt-[18px]">
+          <DealStat label="Goal" value={deal.goal} />
+          <DealStat label="Timeline" value={deal.timeline} />
+          <span className="ml-auto inline-flex shrink-0 items-center gap-1 whitespace-nowrap text-[13px] font-semibold text-brand-300 transition-colors group-hover:text-brand-200">
+            View deal room
+            <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
           </span>
         </div>
-      </div>
-      <div className="flex items-center justify-between border-t border-white/30 px-6 py-3 dark:border-white/10">
-        <a
-          href="#"
-          onClick={(e) => {
-            e.stopPropagation();
-            e.preventDefault();
-            onOpen();
-          }}
-          className="inline-flex items-center gap-1 text-sm font-semibold text-brand-700 transition-colors hover:text-brand-800 dark:text-brand-300 dark:hover:text-brand-200"
-        >
-          View deal room
-          <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1 group-hover:-translate-y-0.5" />
-        </a>
-        {deal.postedBy === user?.email && (
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete();
-            }}
-            className="inline-flex items-center gap-1 text-xs font-semibold text-rose-500 transition-colors hover:text-rose-700"
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-            Remove
-          </button>
-        )}
       </div>
     </motion.article>
   );
@@ -283,19 +282,6 @@ export default function DealsPage({ navigate }) {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("Remove this opportunity?")) return;
-    try {
-      await deleteOpportunity(id);
-      const updated = deals.filter((d) => d.id !== id);
-      setDeals(updated);
-      if (selectedDeal?.id === id) {
-        setSelectedDeal(null);
-      }
-    } catch {
-      // keep state on error
-    }
-  };
 
   const parseGoal = (goalStr) => {
     if (!goalStr || goalStr === "$0") return 0;
@@ -542,7 +528,7 @@ export default function DealsPage({ navigate }) {
         </motion.div>
 
          <motion.div
-           className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3"
+           className="grid gap-[22px] lg:grid-cols-2"
            variants={stagger}
            initial="hidden"
            animate="visible"
@@ -563,13 +549,15 @@ export default function DealsPage({ navigate }) {
               <DealCard
                 key={deal.id}
                 deal={deal}
-                user={user}
                 saved={Boolean(connectedMap[deal.id])}
+                saving={connectingId === deal.id}
                 onOpen={() => {
                   setSelectedDeal(deal);
                   setConnectStatus("");
                 }}
-                onDelete={() => handleDelete(deal.id)}
+                onToggleSave={() =>
+                  connectedMap[deal.id] ? handleDisconnect(deal) : handleConnect(deal)
+                }
               />
             ))
           )}

@@ -5,7 +5,6 @@
   Briefcase,
   CheckCircle2,
   AlertTriangle,
-  MapPin,
   PenLine,
   Plus,
   Rocket,
@@ -13,7 +12,6 @@
   Trash2,
   UserRound,
   X,
-  Clock,
   CreditCard,
   MessageCircle,
   Image as ImageIcon,
@@ -42,7 +40,6 @@ import {
   modalOverlay,
   modalPanel,
   stagger,
-  useTilt,
 } from "../lib/motion.jsx";
 import { FilterChip, IconSearchToggle } from "./FilterControls.jsx";
 
@@ -58,9 +55,6 @@ const getStoredUser = () => {
     return null;
   }
 };
-
-const DEFAULT_DEAL_IMAGE =
-  "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='200' viewBox='0 0 400 200'><rect width='400' height='200' fill='%23e5e7eb'/><text x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%239ca3af' font-family='sans-serif' font-size='16'>No image</text></svg>";
 
 const STATUS_OPTIONS = ["Active", "Pending", "Completed", "Progress"];
 
@@ -97,70 +91,88 @@ const STATUS_STYLES = {
   Progress: "bg-sky-100 text-sky-700",
 };
 
+// Status pill colours for the dark split cards.
+const CARD_STATUS_STYLES = {
+  Active: "bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/25",
+  Pending: "bg-amber-400/15 text-amber-300 hover:bg-amber-400/25",
+  Completed: "bg-brand-500/15 text-brand-300 hover:bg-brand-500/25",
+  Progress: "bg-sky-500/15 text-sky-300 hover:bg-sky-500/25",
+};
+
+const cardStatusClass = (status) =>
+  CARD_STATUS_STYLES[STATUS_OPTIONS.includes(status) ? status : "Active"];
+
+const initialsOf = (name = "") =>
+  name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0].toUpperCase())
+    .join("") || "?";
+
+function CardStat({ label, value }) {
+  return (
+    <div className="min-w-0">
+      <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/50">{label}</p>
+      <p className="mt-1 truncate text-base font-semibold text-white" title={String(value)}>{value}</p>
+    </div>
+  );
+}
+
+// Split card matching the Deals page: media left, details right; stacks on phones.
 function DashboardCard({ opp, actions }) {
-  const tilt = useTilt(5);
+  const [imageFailed, setImageFailed] = useState(false);
+  const hasImage = opp.image && !imageFailed;
 
   return (
     <motion.article
-      ref={tilt.ref}
-      onMouseMove={tilt.onMouseMove}
-      onMouseLeave={tilt.onMouseLeave}
-      style={tilt.style}
-      className="glass-panel-strong holo-card group overflow-hidden rounded-[2rem] transition-shadow duration-300 hover:shadow-lift"
       variants={fadeUp}
-      whileHover={{ y: -4, transition: { duration: 0.25 } }}
+      className="group grid overflow-hidden rounded-[24px] border border-white/10 bg-[rgba(5,9,15,0.55)] backdrop-blur transition-colors duration-300 hover:border-brand-500/50 sm:grid-cols-[190px_minmax(0,1fr)]"
     >
-      <div className="relative h-40 overflow-hidden bg-ink-100 dark:bg-ink-800">
-        <img
-          src={opp.image || DEFAULT_DEAL_IMAGE}
-          alt={opp.title}
-          loading="lazy"
-          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-ink-950/40 to-transparent" />
-        <div className="absolute left-4 top-4">
-          <span className="rounded-full bg-white/90 px-2.5 py-1 text-xs font-semibold text-ink-800 backdrop-blur">
-            {opp.sector}
+      {/* Media */}
+      <div className="relative min-h-[160px] bg-[radial-gradient(90%_80%_at_30%_10%,rgba(16,185,129,0.35)_0%,rgba(16,185,129,0)_70%),#0a1f19] sm:min-h-[250px]">
+        {hasImage ? (
+          <img
+            src={opp.image}
+            alt=""
+            loading="lazy"
+            onError={() => setImageFailed(true)}
+            className="absolute inset-0 h-full w-full object-cover opacity-85 mix-blend-lighten"
+          />
+        ) : (
+          <span
+            aria-hidden
+            className="absolute inset-0 flex items-center justify-center font-display text-[64px] font-extrabold leading-none text-transparent [-webkit-text-stroke:1px_rgba(110,231,183,0.4)]"
+          >
+            {initialsOf(opp.title)}
           </span>
-        </div>
-        <div className="absolute bottom-4 left-4 flex items-center gap-2 text-white">
-          <span className="grid h-9 w-9 place-items-center rounded-lg bg-white/20 font-display text-sm font-bold backdrop-blur">
-            {opp.company?.slice(0, 2).toUpperCase() || "OP"}
-          </span>
-          <span className="font-display text-lg font-bold">{opp.company}</span>
-        </div>
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-[rgba(5,9,15,0.85)] to-transparent sm:bg-gradient-to-r sm:from-transparent sm:from-[55%] sm:to-[rgba(5,9,15,0.85)]" />
       </div>
 
-      <div className="p-5">
-        <h3 className="font-display text-lg font-bold text-ink-900 dark:text-ink-50">
-          {opp.title}
-        </h3>
-        <p className="mt-2 text-sm leading-relaxed text-ink-600 dark:text-ink-400">
+      {/* Body */}
+      <div className="flex min-w-0 flex-col px-6 py-6 sm:px-[26px]">
+        <div className="flex items-center gap-2">
+          <span className="rounded-full border border-white/[0.14] px-2.5 py-0.5 text-[11px] font-semibold text-white/80">
+            {opp.sector}
+          </span>
+          <span className="truncate text-xs text-white/50">{opp.location || "TBD"}</span>
+        </div>
+
+        <h3 className="mt-3.5 text-xl font-semibold leading-tight text-white">{opp.title}</h3>
+        <p className="mt-1 text-xs text-white/55">by {opp.company}</p>
+        <p className="mt-3 line-clamp-3 text-sm leading-relaxed text-white/70 [text-wrap:pretty]">
           {opp.blurb || "No description provided."}
         </p>
-        <div className="mt-3 flex items-center gap-4 text-xs text-ink-500 dark:text-ink-400">
-          <span className="flex items-center gap-1">
-            <MapPin className="h-3.5 w-3.5" />
-            {opp.location || "TBD"}
-          </span>
-          <span className="flex items-center gap-1">
-            <Clock className="h-3.5 w-3.5" />
-            {opp.timeline || "TBD"}
-          </span>
+
+        <div className="mt-auto flex items-end gap-[22px] pt-[18px]">
+          <CardStat label="Goal" value={opp.goal} />
+          <CardStat label="Timeline" value={opp.timeline || "TBD"} />
         </div>
 
-        <div className="mt-5 rounded-2xl border border-brand-100 bg-brand-50/60 p-3 dark:border-brand-900/50 dark:bg-brand-950/25">
-          <div className="flex items-center justify-between text-xs">
-            <span className="font-semibold text-ink-700 dark:text-ink-300">
-              Funding goal
-            </span>
-            <span className="font-display font-bold text-brand-700 dark:text-brand-300">
-              {opp.goal}
-            </span>
-          </div>
+        <div className="mt-4 flex items-center justify-between gap-3 border-t border-white/[0.08] pt-3.5">
+          {actions}
         </div>
-
-        <div className="mt-4 flex items-center justify-between">{actions}</div>
       </div>
     </motion.article>
   );
@@ -926,7 +938,7 @@ export default function UserDashboard({ navigate }) {
               animate="visible"
             >
               <motion.div
-                className="rounded-3xl border border-white/30 bg-white/70 p-5 shadow-soft backdrop-blur-xl dark:border-white/10 dark:bg-ink-950/55"
+                className="rounded-[24px] border border-white/10 bg-[rgba(5,9,15,0.55)] p-5 backdrop-blur transition-colors duration-300 hover:border-brand-500/50 sm:px-[26px]"
                 variants={fadeUp}
               >
                 <p className="text-xs font-semibold uppercase tracking-wider text-brand-700 dark:text-brand-300">
@@ -937,7 +949,7 @@ export default function UserDashboard({ navigate }) {
                 </p>
               </motion.div>
               <motion.div
-                className="rounded-3xl border border-white/30 bg-white/70 p-5 shadow-soft backdrop-blur-xl dark:border-white/10 dark:bg-ink-950/55"
+                className="rounded-[24px] border border-white/10 bg-[rgba(5,9,15,0.55)] p-5 backdrop-blur transition-colors duration-300 hover:border-brand-500/50 sm:px-[26px]"
                 variants={fadeUp}
               >
                 <p className="text-xs font-semibold uppercase tracking-wider text-brand-700 dark:text-brand-300">
@@ -959,7 +971,7 @@ export default function UserDashboard({ navigate }) {
                 </p>
               </motion.div>
               <motion.div
-                className="rounded-3xl border border-white/30 bg-white/70 p-5 shadow-soft backdrop-blur-xl dark:border-white/10 dark:bg-ink-950/55"
+                className="rounded-[24px] border border-white/10 bg-[rgba(5,9,15,0.55)] p-5 backdrop-blur transition-colors duration-300 hover:border-brand-500/50 sm:px-[26px]"
                 variants={fadeUp}
               >
                 <p className="text-xs font-semibold uppercase tracking-wider text-brand-700 dark:text-brand-300">
@@ -1010,7 +1022,7 @@ export default function UserDashboard({ navigate }) {
               </div>
             ) : (
               <motion.div
-                className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3"
+                className="grid gap-[22px] lg:grid-cols-2"
                 variants={stagger}
                 initial="hidden"
                 animate="visible"
@@ -1025,7 +1037,7 @@ export default function UserDashboard({ navigate }) {
                           <button
                             type="button"
                             onClick={() => openEdit(opp)}
-                            className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-700 transition-colors hover:text-brand-800 dark:text-brand-400"
+                            className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-brand-300 transition-colors hover:text-brand-200"
                           >
                             <PenLine className="h-4 w-4" />
                             Edit
@@ -1035,14 +1047,14 @@ export default function UserDashboard({ navigate }) {
                           <button
                             type="button"
                             onClick={() => openStatusModal(opp, true)}
-                            className={`rounded-full px-2.5 py-1 text-xs font-semibold ${STATUS_STYLES[STATUS_OPTIONS.includes(opp.status) ? opp.status : "Active"]}`}
+                            className={`rounded-full px-2.5 py-1 text-[11px] font-semibold transition-colors ${cardStatusClass(opp.status)}`}
                           >
                             Status: {opp.status || "Active"}
                           </button>
                           <button
                             type="button"
                             onClick={() => confirmDelete(opp.id, "own")}
-                            className="text-xs font-semibold text-rose-500 transition-colors hover:text-rose-700"
+                            className="inline-flex items-center gap-1 text-xs font-semibold text-rose-400 transition-colors hover:text-rose-300"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
                             Remove
@@ -1096,7 +1108,7 @@ export default function UserDashboard({ navigate }) {
             </div>
           ) : (
             <motion.div
-              className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3"
+              className="grid gap-[22px] lg:grid-cols-2"
               variants={stagger}
               initial="hidden"
               whileInView="visible"
@@ -1108,15 +1120,15 @@ export default function UserDashboard({ navigate }) {
                   opp={opp}
                   actions={
                     <>
-                      <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-700 dark:text-brand-400">
-                        <Bookmark className="h-3.5 w-3.5" />
+                      <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-300">
+                        <Bookmark className="h-3.5 w-3.5 fill-amber-300" />
                         Saved
                       </span>
                       <div className="flex items-center gap-3">
                         <button
                           type="button"
                           onClick={() => openStatusModal(opp, false)}
-                          className={`rounded-full px-2.5 py-1 text-xs font-semibold ${STATUS_STYLES[STATUS_OPTIONS.includes(opp.status) ? opp.status : "Active"]}`}
+                          className={`rounded-full px-2.5 py-1 text-[11px] font-semibold transition-colors ${cardStatusClass(opp.status)}`}
                         >
                           Status: {opp.status || "Active"}
                         </button>
@@ -1125,7 +1137,7 @@ export default function UserDashboard({ navigate }) {
                           onClick={() =>
                             confirmDelete(opp.connectionId, "connected")
                           }
-                          className="text-xs font-semibold text-rose-500 transition-colors hover:text-rose-700"
+                          className="inline-flex items-center gap-1 text-xs font-semibold text-rose-400 transition-colors hover:text-rose-300"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
                           Remove
