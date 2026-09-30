@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
     #[Fillable([
     'user_id',
     'investor_id',
+    'invested_amount',
     'title',
     'company',
     'sector',

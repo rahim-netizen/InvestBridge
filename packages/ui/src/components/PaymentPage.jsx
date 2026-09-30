@@ -5,10 +5,8 @@
   CreditCard,
   Lock,
   MapPin,
-  Plus,
   ShieldCheck,
   Sparkles,
-  Trash2,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
@@ -16,7 +14,7 @@ import { useLocation, useParams } from "react-router-dom";
 import PageBackground, { AURORA_BG } from "./PageBackground.jsx";
 import PageDecor from "./PageDecor.jsx";
 import GradientText from "./GradientText.jsx";
-import { getAllOpportunities, initiateInvestment, getCheckpoints } from "../api/opportunities";
+import { getAllOpportunities, getMyTransactions, initiateInvestment } from "../api/opportunities";
 import { fadeUpBlur } from "../lib/motion.jsx";
 
 const DEFAULT_DEAL_IMAGE =
@@ -47,12 +45,12 @@ const mapOpportunityToDeal = (opp) => ({
   timeline: opp.timeline || "TBD",
   image: opp.image || null,
   postedBy: opp.user?.email || null,
+  investorId: opp.investor_id ?? null,
+  investedAmount: Number(opp.invested_amount) || 0,
 });
 
 const inputWrapperClassName =
   "surface-rim flex items-center gap-3 rounded-2xl px-4 py-3";
-const inputClassName =
-  "w-full rounded-2xl border border-white/20 bg-white/35 px-4 py-3 text-sm text-ink-900 outline-none placeholder:text-ink-400 backdrop-blur-sm dark:border-white/10 dark:bg-ink-950/35 dark:text-ink-50 dark:placeholder:text-ink-500";
 const fieldLabelClassName =
   "mb-2 block text-sm font-medium text-ink-700 dark:text-ink-300";
 
@@ -64,53 +62,99 @@ export default function PaymentPage({ navigate }) {
   const [loading, setLoading] = useState(!location.state?.deal);
   const [notFound, setNotFound] = useState(false);
 
-  const [checkpoints, setCheckpoints] = useState([
-    { title: "", description: "", amount: "" },
-  ]);
+  const [amount, setAmount] = useState("");
   const [errors, setErrors] = useState({});
   const [status, setStatus] = useState("idle"); // idle | processing | success
   const [paymentReturn, setPaymentReturn] = useState(null);
-  const [savedCheckpoints, setSavedCheckpoints] = useState([]);
-  const [showProgress, setShowProgress] = useState(false);
 
-  const totalAmount = checkpoints.reduce(
-    (sum, cp) => sum + (parseFloat(cp.amount) || 0),
+  const totalAmount = parseFloat(amount) || 0;
+
+  const goalAmount = (() => {
+    if (!deal?.goal) return 0;
+    const num = parseFloat(String(deal.goal).replace(/[^0-9.]/g, ""));
+    if (Number.isNaN(num)) return 0;
+    const suffix = String(deal.goal).replace(/[0-9.,$]/g, "").trim().toUpperCase();
+    if (suffix.includes("B")) return num * 1000000000;
+    if (suffix.includes("M")) return num * 1000000;
+    if (suffix.includes("K")) return num * 1000;
+    return num;
+  })();
+
+  // Mirrors the backend gate: a round takes money while it is open, which is
+  // "Active" or "Progress". There is no separate accept step any more.
+  const canPay = ["active", "progress"].includes(
+    (deal?.status || "").toLowerCase(),
+  );
+
+  // An investor may only fund what is still outstanding on the round.
+  const remainingAmount = Math.max(
     0,
+    goalAmount - (Number(deal?.investedAmount) || 0),
   );
 
-  const canPay = (deal?.status || "").toLowerCase() === "progress";
-
-  const hasInvested = Boolean(user) && savedCheckpoints.some(
-    (cp) => String(cp.investor_id) === String(user.id),
-  );
+  // Investment is no longer gated on being the accepted investor, so the
+  // backend's own "one validated payment per investor" rule is what decides
+  // whether this visitor has already paid in. Derived from the investor's own
+  // transaction history for this round.
+  const [alreadyInvested, setAlreadyInvested] = useState(false);
+  const hasInvested = alreadyInvested;
 
   useEffect(() => {
-    if (deal) return;
-
+    if (!user) {
+      setAlreadyInvested(false);
+      return;
+    }
     let cancelled = false;
-    (async () => {
-      try {
-        const data = await getAllOpportunities();
+    getMyTransactions(id)
+      .then((data) => {
+        if (cancelled) return;
+        setAlreadyInvested(
+          (data.transactions || []).some((t) => t.status === "validated"),
+        );
+      })
+      .catch(() => {
+        if (!cancelled) setAlreadyInvested(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [id, user]);
+
+  // Always resolve the deal from the API, even when the page was reached
+  // through navigation state that only carried display fields, so the raised
+  // total and investment state reflect what the backend has stored.
+  useEffect(() => {
+    let cancelled = false;
+    getAllOpportunities()
+      .then((data) => {
         const match = (data.opportunities || []).find(
           (opp) => String(opp.id) === String(id),
         );
         if (cancelled) return;
         if (match) {
-          setDeal(mapOpportunityToDeal(match));
-        } else {
+          const fresh = mapOpportunityToDeal(match);
+          setDeal((current) => {
+            if (!current) return fresh;
+            const same = Object.keys(fresh).every(
+              (key) => current[key] === fresh[key],
+            );
+            return same ? current : { ...current, ...fresh };
+          });
+        } else if (!deal) {
           setNotFound(true);
         }
-      } catch {
-        if (!cancelled) setNotFound(true);
-      } finally {
+      })
+      .catch(() => {
+        if (!cancelled && !deal) setNotFound(true);
+      })
+      .finally(() => {
         if (!cancelled) setLoading(false);
-      }
-    })();
-
+      });
     return () => {
       cancelled = true;
     };
-  }, [deal, id]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -123,50 +167,19 @@ export default function PaymentPage({ navigate }) {
     }
   }, [location.search]);
 
-  useEffect(() => {
-    if (!deal) return;
-    getCheckpoints(deal.id)
-      .then((data) => setSavedCheckpoints(data.checkpoints || []))
-      .catch(() => setSavedCheckpoints([]));
-  }, [deal]);
-
-  const handleCheckpointChange = (index, field, rawValue) => {
-    const value =
-      field === "amount" ? rawValue.replace(/[^0-9.]/g, "") : rawValue;
-    setCheckpoints((current) =>
-      current.map((cp, i) =>
-        i === index ? { ...cp, [field]: value } : cp,
-      ),
-    );
-  };
-
-  const addCheckpoint = () => {
-    setCheckpoints((current) =>
-      current.length >= 5
-        ? current
-        : [...current, { title: "", description: "", amount: "" }],
-    );
-  };
-
-  const removeCheckpoint = (index) => {
-    setCheckpoints((current) =>
-      current.length > 1 ? current.filter((_, i) => i !== index) : current,
-    );
+  const handleAmountChange = (rawValue) => {
+    setAmount(rawValue.replace(/[^0-9.]/g, ""));
   };
 
   const validate = () => {
     const nextErrors = {};
-    checkpoints.forEach((cp, i) => {
-      if (!cp.title.trim()) {
-        nextErrors[`title-${i}`] = "Checkpoint title is required.";
-      }
-      const amountValue = parseFloat(cp.amount);
-      if (!cp.amount || Number.isNaN(amountValue) || amountValue <= 0) {
-        nextErrors[`amount-${i}`] = "Enter an amount greater than $0.";
-      }
-    });
-    if (totalAmount <= 0) {
-      nextErrors.total = "Add at least one checkpoint with an amount.";
+    const amountValue = parseFloat(amount);
+    if (!amount || Number.isNaN(amountValue) || amountValue <= 0) {
+      nextErrors.amount = "Enter an amount greater than $0.";
+    } else if (remainingAmount <= 0) {
+      nextErrors.amount = "This opportunity has already reached its funding goal.";
+    } else if (amountValue > remainingAmount) {
+      nextErrors.amount = `The amount cannot exceed the remaining funding of $${remainingAmount.toLocaleString()}.`;
     }
     setErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;
@@ -177,7 +190,7 @@ export default function PaymentPage({ navigate }) {
     if (!canPay) {
       setErrors((current) => ({
         ...current,
-        total: "Investment is only allowed for opportunities that are in progress.",
+        amount: "Investment is only allowed for opportunities that are in progress.",
       }));
       return;
     }
@@ -185,7 +198,7 @@ export default function PaymentPage({ navigate }) {
 
     setStatus("processing");
     try {
-      const data = await initiateInvestment(deal.id, checkpoints);
+      const data = await initiateInvestment(deal.id, totalAmount);
       if (data.gateway_url) {
         // Send the current tab to the SSLCommerz gateway. After payment it
         // redirects back to the SPA, which shows the result modal in-page.
@@ -196,7 +209,7 @@ export default function PaymentPage({ navigate }) {
     } catch (error) {
       setErrors((current) => ({
         ...current,
-        total: error.message || "Failed to start payment.",
+        amount: error.message || "Failed to start payment.",
       }));
       setStatus("idle");
     }
@@ -279,7 +292,11 @@ export default function PaymentPage({ navigate }) {
             Payment successful
           </h2>
           <p className="mt-2 text-sm text-ink-600 dark:text-ink-300">
-            You invested in{" "}
+            You invested{" "}
+            <span className="font-semibold text-ink-900 dark:text-ink-50">
+              {totalAmount ? `$${totalAmount.toLocaleString()}` : ""}
+            </span>{" "}
+            in{" "}
             <span className="font-semibold text-ink-900 dark:text-ink-50">
               {deal.name}
             </span>{" "}
@@ -289,33 +306,6 @@ export default function PaymentPage({ navigate }) {
             <p className="mt-1 text-xs text-ink-400 dark:text-ink-500">
               Transaction: {paymentReturn.tranId}
             </p>
-          )}
-
-          {savedCheckpoints.length > 0 && (
-            <div className="mt-5 overflow-hidden rounded-2xl border border-ink-100 text-left dark:border-ink-800">
-              <table className="w-full text-left text-sm">
-                <thead className="bg-ink-50 text-xs uppercase tracking-wider text-ink-500 dark:bg-ink-900/60 dark:text-ink-400">
-                  <tr>
-                    <th className="px-3 py-2">#</th>
-                    <th className="px-3 py-2">Title</th>
-                    <th className="px-3 py-2 text-right">Amount</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-ink-100 dark:divide-ink-800">
-                  {savedCheckpoints.map((cp, index) => (
-                    <tr key={cp.id || index}>
-                      <td className="px-3 py-2 text-ink-400">{index + 1}</td>
-                      <td className="px-3 py-2 font-medium text-ink-900 dark:text-ink-50">
-                        {cp.title}
-                      </td>
-                      <td className="px-3 py-2 text-right font-semibold text-ink-900 dark:text-ink-50">
-                        ${(parseFloat(cp.amount) || 0).toLocaleString()}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
           )}
 
           <div className="mt-6 flex flex-wrap justify-center gap-3">
@@ -420,8 +410,7 @@ export default function PaymentPage({ navigate }) {
             </GradientText>
           </h1>
           <p className="mt-3 max-w-xl text-lg leading-relaxed text-white/80">
-            Add one or more checkpoints with a title, description, and amount
-            to complete this investment.
+            Enter the amount you want to invest to complete this round.
           </p>
         </motion.div>
 
@@ -442,44 +431,14 @@ export default function PaymentPage({ navigate }) {
                 </div>
               </div>
 
-              <button
-                type="button"
-                onClick={() => setShowProgress((value) => !value)}
-                className="btn-primary mt-6 w-full"
-              >
-                {showProgress ? "Hide progress" : "Progress"}
-              </button>
-
-              {showProgress && savedCheckpoints.length > 0 && (
-                <div className="mt-5 overflow-hidden rounded-2xl border border-ink-100 dark:border-ink-800">
-                  <table className="w-full text-left text-sm">
-                    <thead className="bg-ink-50 text-xs uppercase tracking-wider text-ink-500 dark:bg-ink-900/60 dark:text-ink-400">
-                      <tr>
-                        <th className="px-4 py-3">#</th>
-                        <th className="px-4 py-3">Title</th>
-                        <th className="px-4 py-3">Description</th>
-                        <th className="px-4 py-3 text-right">Amount</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-ink-100 dark:divide-ink-800">
-                      {savedCheckpoints.map((cp, index) => (
-                        <tr key={cp.id || index}>
-                          <td className="px-4 py-3 text-ink-400">{index + 1}</td>
-                          <td className="px-4 py-3 font-medium text-ink-900 dark:text-ink-50">
-                            {cp.title}
-                          </td>
-                          <td className="px-4 py-3 text-ink-600 dark:text-ink-300">
-                            {cp.description || "â€”"}
-                          </td>
-                          <td className="px-4 py-3 text-right font-semibold text-ink-900 dark:text-ink-50">
-                            ${(parseFloat(cp.amount) || 0).toLocaleString()}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+              <div className="mt-6 rounded-2xl bg-brand-50 p-4 dark:bg-brand-400/10">
+                <p className="text-xs font-semibold uppercase tracking-wider text-brand-700 dark:text-brand-300">
+                  Invested in this round
+                </p>
+                <p className="mt-1 font-display text-2xl font-bold text-ink-900 dark:text-ink-50">
+                  ${(parseFloat(deal.investedAmount) || 0).toLocaleString()}
+                </p>
+              </div>
             </div>
           ) : (
           <motion.form
@@ -495,121 +454,68 @@ export default function PaymentPage({ navigate }) {
               </div>
               <div>
                 <h2 className="font-display text-lg font-bold text-ink-900 dark:text-ink-50">
-                  Investment checkpoints
+                  Investment amount
                 </h2>
                 <p className="text-xs text-ink-500 dark:text-ink-400">
-                  Add a title, description, and amount per checkpoint
+                  Enter the amount you want to invest in this opportunity
                 </p>
               </div>
             </div>
 
-            <div className="mt-6 space-y-5">
-              {checkpoints.map((cp, index) => (
-                <div
-                  key={index}
-                  className="rounded-2xl border border-ink-100 bg-ink-50/60 p-4 dark:border-ink-800 dark:bg-ink-900/40"
-                >
-                  <div className="mb-3 flex items-center justify-between">
-                    <span className="text-xs font-semibold uppercase tracking-wider text-ink-500 dark:text-ink-400">
-                      Checkpoint {index + 1}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => removeCheckpoint(index)}
-                      disabled={checkpoints.length === 1}
-                      className="inline-flex items-center gap-1 text-xs font-medium text-rose-600 transition-colors hover:text-rose-700 disabled:cursor-not-allowed disabled:opacity-40 dark:text-rose-400 dark:hover:text-rose-300"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                      Remove
-                    </button>
-                  </div>
-
-                  <div className="space-y-3">
-                    <label className="block">
-                      <span className={fieldLabelClassName}>Title</span>
-                      <input
-                        type="text"
-                        value={cp.title}
-                        onChange={(event) =>
-                          handleCheckpointChange(
-                            index,
-                            "title",
-                            event.target.value,
-                          )
-                        }
-                        placeholder="e.g., Seed round milestone"
-                        className={inputClassName}
-                      />
-                      {errors[`title-${index}`] && (
-                        <p className="mt-1.5 text-xs font-medium text-rose-600 dark:text-rose-400">
-                          {errors[`title-${index}`]}
-                        </p>
-                      )}
-                    </label>
-
-                    <label className="block">
-                      <span className={fieldLabelClassName}>Description</span>
-                      <textarea
-                        rows={3}
-                        value={cp.description}
-                        onChange={(event) =>
-                          handleCheckpointChange(
-                            index,
-                            "description",
-                            event.target.value,
-                          )
-                        }
-                        placeholder="What this checkpoint represents"
-                        className={`${inputClassName} resize-none`}
-                      />
-                    </label>
-
-                    <label className="block">
-                      <span className={fieldLabelClassName}>Amount (USD)</span>
-                      <div className={inputWrapperClassName}>
-                        <span className="text-sm font-semibold text-ink-500">
-                          $
-                        </span>
-                        <input
-                          type="text"
-                          inputMode="decimal"
-                          value={cp.amount}
-                          onChange={(event) =>
-                            handleCheckpointChange(
-                              index,
-                              "amount",
-                              event.target.value,
-                            )
-                          }
-                          placeholder="e.g., 5000"
-                          className="w-full border-none bg-transparent text-sm text-ink-900 outline-none placeholder:text-ink-400 dark:text-ink-50"
-                        />
-                      </div>
-                      {errors[`amount-${index}`] && (
-                        <p className="mt-1.5 text-xs font-medium text-rose-600 dark:text-rose-400">
-                          {errors[`amount-${index}`]}
-                        </p>
-                      )}
-                    </label>
-                  </div>
+            <div className="mt-6">
+              <label className="block">
+                <span className={fieldLabelClassName}>Amount (USD)</span>
+                <div className={inputWrapperClassName}>
+                  <span className="text-sm font-semibold text-ink-500">$</span>
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    value={amount}
+                    onChange={(event) => handleAmountChange(event.target.value)}
+                    placeholder="e.g., 5000"
+                    className="w-full border-none bg-transparent text-sm text-ink-900 outline-none placeholder:text-ink-400 dark:text-ink-50"
+                  />
                 </div>
-              ))}
+                {errors.amount && (
+                  <p className="mt-1.5 text-xs font-medium text-rose-600 dark:text-rose-400">
+                    {errors.amount}
+                  </p>
+                )}
+              </label>
 
-              {errors.total && (
-                <p className="text-xs font-medium text-rose-600 dark:text-rose-400">
-                  {errors.total}
-                </p>
-              )}
+              <div className="mt-4 grid grid-cols-2 gap-3">
+                <div className="rounded-2xl bg-brand-50 p-3 text-center dark:bg-brand-400/10">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-brand-700 dark:text-brand-300">
+                    Already raised
+                  </p>
+                  <p className="mt-1 font-display text-lg font-bold text-ink-900 dark:text-ink-50">
+                    ${(Number(deal.investedAmount) || 0).toLocaleString()}
+                  </p>
+                </div>
+                <div className="rounded-2xl bg-brand-50 p-3 text-center dark:bg-brand-400/10">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-brand-700 dark:text-brand-300">
+                    You can invest
+                  </p>
+                  <p className="mt-1 font-display text-lg font-bold text-ink-900 dark:text-ink-50">
+                    ${remainingAmount.toLocaleString()}
+                  </p>
+                </div>
+              </div>
 
               <button
                 type="button"
-                onClick={addCheckpoint}
-                disabled={checkpoints.length >= 5}
-                className="flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-brand-300 bg-brand-50/50 py-3 text-sm font-semibold text-brand-700 transition-colors hover:bg-brand-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-brand-800 dark:bg-brand-950/30 dark:text-brand-300"
+                onClick={() => setAmount(String(remainingAmount || ""))}
+                disabled={!remainingAmount}
+                className="mt-3 text-xs font-semibold text-brand-700 underline-offset-2 transition-colors hover:underline disabled:cursor-not-allowed disabled:opacity-40 dark:text-brand-300"
               >
-                <Plus className="h-4 w-4" />
-                {checkpoints.length >= 5 ? "Maximum 5 checkpoints" : "Add checkpoint"}
+                Invest the full remaining amount
               </button>
+
+              {remainingAmount <= 0 && (
+                <p className="mt-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-center text-xs font-medium text-amber-700 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-300">
+                  This opportunity has already reached its funding goal.
+                </p>
+              )}
             </div>
 
             <motion.button
@@ -622,7 +528,9 @@ export default function PaymentPage({ navigate }) {
               <ShieldCheck className="h-4 w-4" />
               {status === "processing"
                 ? "Processing..."
-                : `Confirm investment${totalAmount ? ` Â· $${totalAmount.toLocaleString()}` : ""}`}
+                : totalAmount > remainingAmount
+                  ? "Confirm investment"
+                  : `Confirm investment · $${totalAmount.toLocaleString()}`}
             </motion.button>
 
             {!canPay && (

@@ -7,17 +7,19 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 #[Fillable([
-    'tran_id',
     'opportunity_id',
-    'investor_id',
+    'entrepreneur_id',
     'amount',
     'currency',
-    'status',
+    'image',
+    'description',
+    'tran_id',
     'val_id',
+    'status',
 ])]
-class Transaction extends Model
+class EntrepreneurTransaction extends Model
 {
-    protected $table = 'transactions';
+    protected $table = 'entrepreneur_transactions';
 
     protected $casts = [
         'amount' => 'decimal:2',
@@ -30,8 +32,8 @@ class Transaction extends Model
         return $this->belongsTo(Opportunity::class);
     }
 
-    public function investor(): BelongsTo
+    public function entrepreneur(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'investor_id');
+        return $this->belongsTo(User::class, 'entrepreneur_id');
     }
 }

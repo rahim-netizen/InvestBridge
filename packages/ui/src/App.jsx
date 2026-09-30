@@ -8,6 +8,7 @@ import RegisterPage from "./components/RegisterPage.jsx";
 import VerifyEmailPending from "./components/VerifyEmailPending.jsx";
 import ProfileDashboard from "./components/ProfileDashboard.jsx";
 import UserDashboard from "./components/UserDashboard.jsx";
+import StatusPage from "./components/StatusPage.jsx";
 import OpportunitiesPage from "./components/OpportunitiesPage.jsx";
 import DealsPage from "./components/DealsPage.jsx";
 import PaymentPage from "./components/PaymentPage.jsx";
@@ -160,6 +161,14 @@ export default function App() {
            element={
              <PageLayout navigate={navigate} theme={theme} toggleTheme={toggleTheme}>
                <UserDashboard navigate={navigate} />
+             </PageLayout>
+           }
+         />
+         <Route
+           path="/status/:id"
+           element={
+             <PageLayout navigate={navigate} theme={theme} toggleTheme={toggleTheme}>
+               <StatusPage navigate={navigate} />
              </PageLayout>
            }
          />

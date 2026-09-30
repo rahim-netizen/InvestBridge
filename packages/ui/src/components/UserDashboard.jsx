@@ -12,8 +12,6 @@
   Trash2,
   UserRound,
   X,
-  CreditCard,
-  MessageCircle,
   Image as ImageIcon,
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -24,15 +22,12 @@ import PageDecor from "./PageDecor.jsx";
 import GradientText from "./GradientText.jsx";
 import {
   deleteOpportunity,
-  getCheckpoints,
   getMyOpportunities,
   updateOpportunity,
 } from "../api/opportunities";
 import {
   getConnectedOpportunities,
   disconnectOpportunity,
-  getConnectionsForOpportunity,
-  acceptConnection,
 } from "../api/connected";
 import {
   fadeUp,
@@ -84,13 +79,6 @@ function resizeImage(file, maxDim = 1024, quality = 0.8) {
   });
 }
 
-const STATUS_STYLES = {
-  Active: "bg-emerald-100 text-emerald-700",
-  Pending: "bg-amber-100 text-amber-700",
-  Completed: "bg-brand-100 text-brand-700",
-  Progress: "bg-sky-100 text-sky-700",
-};
-
 // Status pill colours for the dark split cards.
 const CARD_STATUS_STYLES = {
   Active: "bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/25",
@@ -101,6 +89,14 @@ const CARD_STATUS_STYLES = {
 
 const cardStatusClass = (status) =>
   CARD_STATUS_STYLES[STATUS_OPTIONS.includes(status) ? status : "Active"];
+
+// Escrow lifecycle for a saved post, matching the badges on the status page.
+const SAVED_PAYOUT_STYLES = {
+  NA: "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300",
+  pending: "bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300",
+  completed:
+    "bg-emerald-100 text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-300",
+};
 
 const initialsOf = (name = "") =>
   name
@@ -178,294 +174,6 @@ function DashboardCard({ opp, actions }) {
   );
 }
 
-function StatusModal({ opp, isOwner, onClose, navigate, onAccepted }) {
-  const [connections, setConnections] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [currentStatus, setCurrentStatus] = useState(opp.status || "Active");
-  const [progressOpen, setProgressOpen] = useState(false);
-  const [progress, setProgress] = useState([]);
-  const [progressLoading, setProgressLoading] = useState(false);
-
-  const openProgress = () => {
-    setProgressLoading(true);
-    getCheckpoints(opp.id)
-      .then((data) => setProgress(data.checkpoints || []))
-      .catch(() => setProgress([]))
-      .finally(() => setProgressLoading(false));
-  };
-
-  useEffect(() => {
-    if (!isOwner) return;
-    let active = true;
-    setLoading(true);
-    getConnectionsForOpportunity(opp.id)
-      .then((data) => {
-        if (active) setConnections(data.connections || []);
-      })
-      .catch(() => {
-        if (active) setConnections([]);
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-    return () => {
-      active = false;
-    };
-  }, [isOwner, opp.id]);
-
-  const handleAccept = async (connectionId) => {
-    try {
-      await acceptConnection(opp.id, connectionId);
-      setCurrentStatus("Active");
-      onAccepted?.(opp.id);
-      setConnections((prev) => {
-        const accepted = prev.find((x) => x.id === connectionId);
-        return accepted ? [{ ...accepted, accepted: true }] : prev;
-      });
-    } catch {
-      // ignore
-    }
-  };
-
-  return (
-    <>
-      <motion.div
-        className="fixed inset-0 z-50 grid place-items-center bg-black/40 px-4"
-        variants={modalOverlay}
-        initial="hidden"
-        animate="visible"
-        exit="exit"
-        onClick={onClose}
-      >
-        <motion.div
-          className="glass-panel-strong holo-card w-full max-w-lg rounded-[2rem] p-6"
-          variants={modalPanel}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <h2 className="font-display text-xl font-bold text-ink-900 dark:text-ink-50">
-                Project status
-              </h2>
-              <p className="mt-1 text-sm text-ink-500 dark:text-ink-400">
-                {opp.title}
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={onClose}
-              className="text-ink-400 hover:text-ink-700 dark:text-ink-500 dark:hover:text-ink-300"
-              aria-label="Close"
-            >
-              <X className="h-5 w-5" />
-            </button>
-          </div>
-
-          <div className="mt-4">
-            <span
-              className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${STATUS_STYLES[STATUS_OPTIONS.includes(opp.status) ? opp.status : "Active"]}`}
-            >
-              Status: {opp.status || "Active"}
-            </span>
-          </div>
-
-          <div className="mt-6">
-            {isOwner ? (
-              <>
-                <h3 className="text-sm font-semibold text-ink-700 dark:text-ink-300">
-                  Investors who connected with this project
-                </h3>
-                {loading ? (
-                  <p className="mt-3 text-sm text-ink-500">Loadingâ€¦</p>
-                ) : connections.length === 0 ? (
-                  <p className="mt-3 text-sm text-ink-500">
-                    No investors have connected with this project yet.
-                  </p>
-                ) : (
-                  <ul className="mt-3 space-y-2">
-                    {connections.map((c) => (
-                      <li
-                        key={c.id}
-                        className="flex items-center justify-between gap-3 rounded-xl border border-white/20 bg-white/40 px-4 py-3 dark:border-white/10 dark:bg-ink-950/40"
-                      >
-                        <div>
-                          <p className="font-semibold text-ink-900 dark:text-ink-50">
-                            {c.name || "Unknown"}
-                          </p>
-                          <p className="text-xs text-ink-500">{c.email}</p>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <span className="text-xs text-ink-400">
-                            {c.connected_at
-                              ? new Date(c.connected_at).toLocaleDateString()
-                              : ""}
-                          </span>
-                          {c.accepted ? (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700">
-                              Accepted
-                            </span>
-                          ) : (
-                            <button
-                              type="button"
-                              onClick={() => handleAccept(c.id)}
-                              className="btn-primary"
-                            >
-                              Accept
-                            </button>
-                          )}
-                          <button
-                            type="button"
-                            onClick={() => navigate("/connect")}
-                            className="btn-ghost"
-                          >
-                            <MessageCircle className="h-4 w-4" />
-                            Chat
-                          </button>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setProgressOpen(true);
-                    openProgress();
-                  }}
-                  className="btn-primary mt-4 w-full"
-                >
-                  <BarChart3 className="h-4 w-4" />
-                  Progress
-                </button>
-              </>
-            ) : (
-              <div className="space-y-4">
-                <div className="rounded-xl border border-white/20 bg-white/40 px-4 py-3 dark:border-white/10 dark:bg-ink-950/40">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-ink-400">
-                    Interested user
-                  </p>
-                  <p className="mt-1 font-semibold text-ink-900 dark:text-ink-50">
-                    {opp.postedByName || "Unknown"}
-                  </p>
-                  <p className="text-xs text-ink-500">{opp.postedBy || ""}</p>
-                </div>
-                <div className="flex flex-col gap-3 sm:flex-row">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onClose();
-                      navigate("/connect");
-                    }}
-                    className="btn-primary flex-1"
-                  >
-                    <MessageCircle className="h-4 w-4" />
-                    Chat
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onClose();
-                      navigate("/payment/" + opp.id, {
-                        state: {
-                          deal: {
-                            id: opp.id,
-                            name: opp.title,
-                            company: opp.company,
-                            sector: opp.sector,
-                            location: opp.location || "TBD",
-                            goal: opp.goal || "$0",
-                            status: opp.status || "Active",
-                            blurb: opp.blurb || "",
-                            timeline: opp.timeline || "TBD",
-                            image: opp.image || null,
-                            postedBy: opp.postedBy || null,
-                          },
-                        },
-                      });
-                    }}
-                    className="btn-ghost flex-1"
-                  >
-                    <CreditCard className="h-4 w-4" />
-                    Payment
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        </motion.div>
-      </motion.div>
-
-      {progressOpen && (
-        <div
-          className="fixed inset-0 z-[60] grid place-items-center bg-black/50 px-4"
-          onClick={() => setProgressOpen(false)}
-        >
-          <div
-            className="glass-panel-strong holo-card w-full max-w-md rounded-[2rem] p-6"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <h2 className="font-display text-xl font-bold text-ink-900 dark:text-ink-50">
-                  Investment progress
-                </h2>
-                <p className="mt-1 text-sm text-ink-500 dark:text-ink-400">
-                  {opp.title}
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setProgressOpen(false)}
-                className="text-ink-400 hover:text-ink-700 dark:text-ink-500 dark:hover:text-ink-300"
-                aria-label="Close"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
-            <div className="mt-5">
-              {progressLoading ? (
-                <p className="text-sm text-ink-500">Loadingâ€¦</p>
-              ) : progress.length === 0 ? (
-                <p className="text-sm text-ink-500">
-                  No checkpoints have been added yet.
-                </p>
-              ) : (
-                <div className="overflow-hidden rounded-2xl border border-ink-100 dark:border-ink-800">
-                  <table className="w-full text-left text-sm">
-                    <thead className="bg-ink-50 text-xs uppercase tracking-wider text-ink-500 dark:bg-ink-900/60 dark:text-ink-400">
-                      <tr>
-                        <th className="px-4 py-3">#</th>
-                        <th className="px-4 py-3">Title</th>
-                        <th className="px-4 py-3 text-right">Amount</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-ink-100 dark:divide-ink-800">
-                      {progress.map((cp, index) => (
-                        <tr key={cp.id || index}>
-                          <td className="px-4 py-3 text-ink-400">
-                            {index + 1}
-                          </td>
-                          <td className="px-4 py-3 font-medium text-ink-900 dark:text-ink-50">
-                            {cp.title}
-                          </td>
-                          <td className="px-4 py-3 text-right font-semibold text-ink-900 dark:text-ink-50">
-                            ${(parseFloat(cp.amount) || 0).toLocaleString()}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-    </>
-  );
-}
 
 function PaymentResultModal({ status, tranId, onClose, navigate }) {
   const success = status === "success";
@@ -562,7 +270,6 @@ export default function UserDashboard({ navigate }) {
   const [editStatus, setEditStatus] = useState("");
   const [editLoading, setEditLoading] = useState(false);
   const [, setProgressVersion] = useState(0);
-  const [statusModal, setStatusModal] = useState(null);
   const location = useLocation();
   const [paymentReturn, setPaymentReturn] = useState(null);
 
@@ -617,6 +324,7 @@ export default function UserDashboard({ navigate }) {
           postedByName: opp.user?.name || opp.user?.email || "Anonymous",
           createdAt: opp.created_at,
           status: opp.status || "Active",
+          investedAmount: Number(opp.invested_amount) || 0,
         }));
         setAllOpportunities(mapped);
       }
@@ -653,6 +361,11 @@ export default function UserDashboard({ navigate }) {
                 postedByName: opp.user?.name || opp.user?.email || "Anonymous",
                 createdAt: opp.created_at,
                 status: opp.status || "Active",
+                investedAmount: Number(opp.invested_amount) || 0,
+                myInvestment: Number(c.investment_amount) || 0,
+                payoutStatus: c.status || "NA",
+                myPayout: Number(c.payout_amount) || 0,
+                myShare: Number(c.investor_share) || 0,
               };
             });
           setConnectedOpportunities(mapped);
@@ -746,16 +459,6 @@ export default function UserDashboard({ navigate }) {
   };
 
   const closeEdit = () => setEditTarget(null);
-
-  const openStatusModal = (opp, isOwner) => setStatusModal({ opp, isOwner });
-
-  const handleAccepted = (opportunityId) => {
-    setAllOpportunities((prev) =>
-      prev.map((o) =>
-        o.id === opportunityId ? { ...o, status: "Progress" } : o,
-      ),
-    );
-  };
 
   const handleEditSubmit = async (event) => {
     event.preventDefault();
@@ -1046,7 +749,7 @@ export default function UserDashboard({ navigate }) {
                         <div className="flex items-center gap-3">
                           <button
                             type="button"
-                            onClick={() => openStatusModal(opp, true)}
+                            onClick={() => navigate("/status/" + opp.id)}
                             className={`rounded-full px-2.5 py-1 text-[11px] font-semibold transition-colors ${cardStatusClass(opp.status)}`}
                           >
                             Status: {opp.status || "Active"}
@@ -1125,9 +828,20 @@ export default function UserDashboard({ navigate }) {
                         Saved
                       </span>
                       <div className="flex items-center gap-3">
+                        {opp.myPayout > 0 ? (
+                          <span
+                            className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${SAVED_PAYOUT_STYLES[opp.payoutStatus] || SAVED_PAYOUT_STYLES.NA}`}
+                            title="Your escrow payout for this post"
+                          >
+                            Payout: $
+                            {opp.myPayout.toLocaleString("en-US", {
+                              maximumFractionDigits: 2,
+                            })}
+                          </span>
+                        ) : null}
                         <button
                           type="button"
-                          onClick={() => openStatusModal(opp, false)}
+                          onClick={() => navigate("/status/" + opp.id)}
                           className={`rounded-full px-2.5 py-1 text-[11px] font-semibold transition-colors ${cardStatusClass(opp.status)}`}
                         >
                           Status: {opp.status || "Active"}
@@ -1408,18 +1122,6 @@ export default function UserDashboard({ navigate }) {
                 </form>
               </motion.div>
             </motion.div>
-          )}
-        </AnimatePresence>
-
-        <AnimatePresence>
-          {statusModal && (
-            <StatusModal
-              opp={statusModal.opp}
-              isOwner={statusModal.isOwner}
-              onClose={() => setStatusModal(null)}
-              navigate={navigate}
-              onAccepted={handleAccepted}
-            />
           )}
         </AnimatePresence>
 

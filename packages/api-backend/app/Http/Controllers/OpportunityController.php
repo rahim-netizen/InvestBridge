@@ -38,6 +38,7 @@ class OpportunityController extends Controller
             'description' => ['nullable', 'string', 'max:2000'],
             'timeline' => ['nullable', 'string', 'max:255'],
             'image' => ['nullable', 'string'],
+            'invested_amount' => ['nullable', 'numeric', 'min:0'],
             'status' => ['nullable', 'string', 'in:Active,Pending,Completed,Progress'],
         ]);
 
@@ -88,6 +89,7 @@ class OpportunityController extends Controller
             'description' => ['nullable', 'string', 'max:2000'],
             'timeline' => ['nullable', 'string', 'max:255'],
             'image' => ['nullable', 'string'],
+            'invested_amount' => ['nullable', 'numeric', 'min:0'],
             'status' => ['nullable', 'string', 'in:Active,Pending,Completed,Progress'],
         ]);
 

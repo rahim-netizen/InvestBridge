@@ -5,6 +5,7 @@ use App\Models\ConnectedOpportunity;
 use App\Models\Complaint;
 use App\Models\Opportunity;
 use App\Models\User;
+use App\Services\EscrowPayoutService;
 use Illuminate\Http\Request;
 
 class AdminController extends Controller
@@ -102,6 +103,40 @@ class AdminController extends Controller
         $opportunity->delete();
 
         return response()->json(['message' => 'Project removed successfully.']);
+    }
+
+    /**
+     * Every saved post, so the admin can see which investors are still waiting
+     * on a payout and which have already been paid out.
+     */
+    public function connections()
+    {
+        $payouts = new EscrowPayoutService();
+
+        $connections = ConnectedOpportunity::with([
+            'user:id,name,email',
+            'opportunity:id,title,company,user_id,funding_goal',
+        ])
+            ->orderByDesc('id')
+            ->get();
+
+        // Decorate with the live escrow figures so the admin sees what each
+        // payout is worth right now without recomputing it in the browser.
+        $connections->each(function ($connection) use ($payouts) {
+            $connection->setAttribute(
+                'payout_amount',
+                $connection->payout_amount !== null
+                    ? (float) $connection->payout_amount
+                    : $payouts->payoutFor($connection),
+            );
+            $connection->setAttribute(
+                'investor_share',
+                round($payouts->investorShare($connection) * 100, 2),
+            );
+            $connection->setAttribute('escrow_pot', $payouts->potFor($connection));
+        });
+
+        return response()->json(['connections' => $connections]);
     }
 
 }

@@ -118,13 +118,13 @@ export async function createCheckpoints(opportunityId, checkpoints) {
   return data;
 }
 
-export async function initiateInvestment(opportunityId, checkpoints) {
+export async function initiateInvestment(opportunityId, amount) {
   const response = await fetch(
     `${API_BASE_URL}/api/opportunities/${opportunityId}/pay`,
     {
       method: "POST",
       headers: getHeaders(),
-      body: JSON.stringify({ checkpoints }),
+      body: JSON.stringify({ amount }),
     },
   );
 
@@ -153,6 +153,42 @@ export async function getCheckpoints(opportunityId) {
 
   if (!response.ok) {
     throw new Error(data.message || "Failed to load checkpoints.");
+  }
+
+  return data;
+}
+
+export async function getMyTransactions(opportunityId) {
+  const response = await fetch(
+    `${API_BASE_URL}/api/opportunities/${opportunityId}/transactions`,
+    {
+      method: "GET",
+      headers: getHeaders(),
+    },
+  );
+
+  const data = await parseJsonResponse(response);
+
+  if (!response.ok) {
+    throw new Error(data.message || "Failed to load your investment history.");
+  }
+
+  return data;
+}
+
+export async function getOpportunityInvestors(opportunityId) {
+  const response = await fetch(
+    `${API_BASE_URL}/api/opportunities/${opportunityId}/investors`,
+    {
+      method: "GET",
+      headers: getHeaders(),
+    },
+  );
+
+  const data = await parseJsonResponse(response);
+
+  if (!response.ok) {
+    throw new Error(data.message || "Failed to load the investors on this post.");
   }
 
   return data;

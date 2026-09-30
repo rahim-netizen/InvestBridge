@@ -2,10 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Checkpoint;
+use App\Models\ConnectedOpportunity;
 use App\Models\Opportunity;
 use App\Models\Transaction;
 use App\Services\SslCommerzService;
+use App\Support\FundingGoal;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
@@ -13,22 +14,91 @@ use Illuminate\Support\Facades\DB;
 
 class PaymentController extends Controller
 {
+    /**
+     * The current investor's own transactions for a single opportunity, newest
+     * first. Scoped to the authenticated user so one investor never sees
+     * another investor's payment records.
+     */
+    public function history(Request $request, $opportunityId)
+    {
+        $user = Auth::user();
+
+        $opportunity = Opportunity::where('id', $opportunityId)->firstOrFail();
+
+        $transactions = Transaction::where('opportunity_id', $opportunity->id)
+            ->where('investor_id', $user->id)
+            ->orderByDesc('id')
+            ->get([
+                'id',
+                'tran_id',
+                'amount',
+                'currency',
+                'status',
+                'created_at',
+                'updated_at',
+            ]);
+
+        return response()->json([
+            'transactions' => $transactions,
+        ]);
+    }
+
+    /**
+     * The investors who have paid into one of the founder's own opportunities.
+     * Restricted to the opportunity's owner so no one else can read the
+     * investor list, and only settled payments are returned.
+     */
+    public function investors(Request $request, $opportunityId)
+    {
+        $user = Auth::user();
+
+        $opportunity = Opportunity::where('id', $opportunityId)
+            ->where('user_id', $user->id)
+            ->firstOrFail();
+
+        $transactions = Transaction::with('investor:id,name,email')
+            ->where('opportunity_id', $opportunity->id)
+            ->where('status', 'validated')
+            ->orderByDesc('id')
+            ->get(['id', 'tran_id', 'investor_id', 'amount', 'currency', 'created_at']);
+
+        $investors = $transactions
+            ->map(function ($transaction) {
+                return [
+                    'transaction_id' => $transaction->id,
+                    'tran_id' => $transaction->tran_id,
+                    'user_id' => $transaction->investor_id,
+                    'name' => $transaction->investor?->name,
+                    'email' => $transaction->investor?->email,
+                    'amount' => $transaction->amount,
+                    'currency' => $transaction->currency,
+                    'invested_at' => $transaction->created_at,
+                ];
+            })
+            ->values();
+
+        return response()->json([
+            'investors' => $investors,
+        ]);
+    }
+
     public function initiate(Request $request, $opportunityId)
     {
         $user = Auth::user();
 
         $validated = $request->validate([
-            'checkpoints' => ['required', 'array', 'min:1', 'max:5'],
-            'checkpoints.*.title' => ['required', 'string', 'max:255'],
-            'checkpoints.*.description' => ['nullable', 'string', 'max:2000'],
-            'checkpoints.*.amount' => ['required', 'numeric', 'min:0.01'],
+            'amount' => ['required', 'numeric', 'min:0.01'],
         ]);
 
         $opportunity = Opportunity::where('id', $opportunityId)->firstOrFail();
 
-        if (strcasecmp((string) $opportunity->status, 'progress') !== 0) {
+        // A round accepts money once it is live. There is no separate accept
+        // step any more, so "Active" is open for investment alongside
+        // "Progress"; "Pending" and "Completed" are not.
+        $status = strtolower((string) $opportunity->status);
+        if (!in_array($status, ['active', 'progress'], true)) {
             return response()->json([
-                'message' => 'Investment is only allowed for opportunities that are in progress.',
+                'message' => 'Investment is only allowed for opportunities that are open for funding.',
             ], 422);
         }
 
@@ -43,23 +113,28 @@ class PaymentController extends Controller
             ], 422);
         }
 
-        $goal = (float) preg_replace('/[^0-9.]/', '', (string) $opportunity->funding_goal);
-        $subtotal = (float) collect($validated['checkpoints'])->sum(
-            fn ($cp) => (float) $cp['amount'],
-        );
+        $amount = round((float) $validated['amount'], 2);
 
-        if (abs($subtotal - $goal) > 0.01) {
+        // An investor may only fund what is still outstanding on the round, so
+        // the cap is the goal minus whatever has already been raised.
+        $goal = $this->parseGoal($opportunity->funding_goal);
+        $remaining = round($goal - (float) $opportunity->invested_amount, 2);
+
+        if ($remaining <= 0) {
             return response()->json([
-                'message' => 'The sum of checkpoint amounts must equal the funding goal of '
-                    . ($goal > 0 ? number_format($goal, 2) : '0') . '.',
+                'message' => 'This opportunity has already reached its funding goal.',
                 'errors' => [
-                    'checkpoints' => [
-                        'The combined checkpoint amount of '
-                        . number_format($subtotal, 2)
-                        . ' does not match the funding goal of '
-                        . number_format($goal, 2)
-                        . '.',
-                    ],
+                    'amount' => 'There is nothing left to invest in this round.',
+                ],
+            ], 422);
+        }
+
+        if ($amount > $remaining) {
+            return response()->json([
+                'message' => 'The amount cannot exceed the remaining funding of '
+                    . number_format($remaining, 2) . '.',
+                'errors' => [
+                    'amount' => 'Enter an amount up to ' . number_format($remaining, 2) . '.',
                 ],
             ], 422);
         }
@@ -71,9 +146,8 @@ class PaymentController extends Controller
             'tran_id' => $tranId,
             'opportunity_id' => $opportunity->id,
             'investor_id' => $user->id,
-            'amount' => $subtotal,
+            'amount' => $amount,
             'currency' => $currency,
-            'checkpoints' => $validated['checkpoints'],
             'status' => 'pending',
         ]);
 
@@ -90,7 +164,7 @@ class PaymentController extends Controller
             '/',
         );
         $response = (new SslCommerzService())->initiate([
-            'total_amount' => number_format($subtotal, 2, '.', ''),
+            'total_amount' => number_format($amount, 2, '.', ''),
             'tran_id' => $tranId,
             'success_url' => $frontendBase . '/api/payment/success',
             'fail_url' => $frontendBase . '/api/payment/fail',
@@ -160,19 +234,29 @@ class PaymentController extends Controller
                 DB::transaction(function () use ($transaction, $valId) {
                     $opportunity = Opportunity::findOrFail($transaction->opportunity_id);
 
-                    foreach ($transaction->checkpoints as $cp) {
-                        Checkpoint::create([
-                            'opportunity_id' => $opportunity->id,
-                            'investor_id' => $transaction->investor_id,
-                            'entrepreneur_id' => $opportunity->user_id,
-                            'title' => $cp['title'],
-                            'description' => $cp['description'] ?? null,
-                            'amount' => $cp['amount'],
-                        ]);
+                    $opportunity->investor_id = $transaction->investor_id;
+                    $opportunity->invested_amount = (float) $opportunity->invested_amount
+                        + (float) $transaction->amount;
+
+                    // The first settled investor moves the round into funding,
+                    // which is what accept used to do for the entrepreneur.
+                    if (strcasecmp((string) $opportunity->status, 'active') === 0) {
+                        $opportunity->status = 'Progress';
                     }
 
-                    $opportunity->investor_id = $transaction->investor_id;
                     $opportunity->save();
+
+                    // Track the same amount against the investor's saved post so
+                    // the dashboard can show what this investor has committed,
+                    // and move the saved post into the pending payout state.
+                    ConnectedOpportunity::where('user_id', $transaction->investor_id)
+                        ->where('opportunity_id', $opportunity->id)
+                        ->update([
+                            'investment_amount' => DB::raw(
+                                'COALESCE(investment_amount, 0) + ' . (float) $transaction->amount
+                            ),
+                            'status' => DB::raw("IF(status = 'NA', 'pending', status)"),
+                        ]);
 
                     $transaction->update([
                         'status' => 'validated',
@@ -203,6 +287,14 @@ class PaymentController extends Controller
             $transaction->update(['status' => 'cancelled']);
         }
         return $this->redirectFrontend($transaction?->opportunity_id, 'cancel');
+    }
+
+    /**
+     * Turn a human funding goal such as "$1.5M" or "250K" into a plain number.
+     */
+    protected function parseGoal($value)
+    {
+        return FundingGoal::parse($value);
     }
 
     protected function redirectFrontend($opportunityId, $status, $tranId = null)
