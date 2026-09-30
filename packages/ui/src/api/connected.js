@@ -83,23 +83,3 @@ export async function getConnectionsForOpportunity(opportunityId) {
 
   return data;
 }
-
-export async function acceptConnection(opportunityId, connectionId) {
-  const response = await fetch(
-    `${API_BASE_URL}/api/opportunities/${opportunityId}/accept`,
-    {
-      method: "POST",
-      headers: getHeaders(),
-      credentials: "include",
-      body: JSON.stringify({ connection_id: connectionId }),
-    },
-  );
-
-  const data = await parseJsonResponse(response);
-
-  if (!response.ok) {
-    throw new Error(data.message || "Failed to accept connection.");
-  }
-
-  return data;
-}

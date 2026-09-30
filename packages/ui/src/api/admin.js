@@ -65,3 +65,14 @@ export function setAdminOpportunityStatus(id, status) {
 export function deleteAdminOpportunity(id) {
   return request(`/opportunities/${id}`, { method: "DELETE" });
 }
+
+export function getAdminConnections() {
+  return request("/connections");
+}
+
+// Starts an escrow payout through SSLCommerz. This returns a gateway URL to
+// send the browser to; the record only becomes "completed" once the gateway
+// confirms the payment on the callback.
+export function payAdminConnection(id) {
+  return request(`/connections/${id}/payout`, { method: "POST" });
+}

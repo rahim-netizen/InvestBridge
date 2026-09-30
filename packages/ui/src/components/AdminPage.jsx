@@ -42,6 +42,8 @@ import {
   sendComplaintFeedback,
   getAdminStats,
   getAdminUsers,
+  getAdminConnections,
+  payAdminConnection,
   setAdminOpportunityStatus,
 } from "../api/admin";
 
@@ -142,6 +144,41 @@ function formatDate(value) {
   } catch {
     return "â€”";
   }
+}
+
+function formatMoney(value) {
+  const amount = Number(value);
+  if (!Number.isFinite(amount)) return "$0";
+  return `$${amount.toLocaleString("en-US", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  })}`;
+}
+
+// connected_opportunities.status is a three-step lifecycle: NA means the
+// investor has not paid yet, pending means the money is collected but not yet
+// sent to the founder, and completed means the admin has paid it out.
+function connectionStatusBadge(status) {
+  const value = status || "NA";
+  if (value === "completed") {
+    return (
+      <span className="inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-800">
+        Completed
+      </span>
+    );
+  }
+  if (value === "pending") {
+    return (
+      <span className="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-800">
+        Pending payout
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">
+      NA
+    </span>
+  );
 }
 
 function ToastStack({ toasts, onDismiss }) {
@@ -360,6 +397,7 @@ const navGroups = [
     items: [
       { key: "users", label: "Users", icon: Users },
       { key: "projects", label: "Projects", icon: TableIcon },
+      { key: "payments", label: "Payments", icon: Link2 },
       { key: "complaints", label: "Complaints", icon: MessageSquareWarning },
     ],
   },
@@ -369,6 +407,7 @@ const sectionMeta = {
   dashboard: { title: "Dashboard", crumb: "Dashboard" },
   users: { title: "Users", crumb: "Management / Users" },
   projects: { title: "Projects", crumb: "Management / Projects" },
+  payments: { title: "Payments", crumb: "Management / Payments" },
   complaints: { title: "Complaints", crumb: "Management / Complaints" },
 };
 
@@ -396,6 +435,7 @@ export default function AdminPage({ navigate }) {
   const [users, setUsers] = useState([]);
   const [projects, setProjects] = useState([]);
   const [complaints, setComplaints] = useState([]);
+  const [connections, setConnections] = useState([]);
   const [feedback, setFeedback] = useState({});
   const [feedbackModal, setFeedbackModal] = useState(null);
   const [feedbackSending, setFeedbackSending] = useState(false);
@@ -403,6 +443,7 @@ export default function AdminPage({ navigate }) {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [userSearch, setUserSearch] = useState("");
   const [projectSearch, setProjectSearch] = useState("");
+  const [connectionSearch, setConnectionSearch] = useState("");
   const [globalSearch, setGlobalSearch] = useState("");
 
   const [toasts, setToasts] = useState([]);
@@ -441,17 +482,19 @@ export default function AdminPage({ navigate }) {
     setLoading(true);
     setLoadError("");
     try {
-      const [statsRes, usersRes, opportunitiesRes, complaintsRes] =
+      const [statsRes, usersRes, opportunitiesRes, complaintsRes, connectionsRes] =
         await Promise.all([
           getAdminStats(),
           getAdminUsers(),
           getAdminOpportunities(),
           getAdminComplaints(),
+          getAdminConnections(),
         ]);
       setStats(statsRes.stats || stats);
       setUsers(usersRes.users || []);
       setProjects(opportunitiesRes.opportunities || []);
       setComplaints(complaintsRes.complaints || []);
+      setConnections(connectionsRes.connections || []);
     } catch (err) {
       if (err.message && err.message.toLowerCase().includes("permission")) {
         navigate("/");
@@ -474,6 +517,29 @@ export default function AdminPage({ navigate }) {
     setMobileNavOpen(false);
   }, [activeTab]);
 
+  // The gateway sends the admin back to /admin?payout=... once they have paid
+  // or bailed out. Report the outcome and reload so the connection's new
+  // status comes from the server rather than being assumed here.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const payoutStatus = params.get("payout");
+    if (!payoutStatus) return;
+
+    if (payoutStatus === "success") {
+      pushToast("Payout completed. Escrow released to the investor.");
+      setActiveTab("payments");
+    } else if (payoutStatus === "cancel") {
+      pushToast("Payout cancelled. Nothing was released.", "error");
+    } else {
+      pushToast("Payout failed. Nothing was released.", "error");
+    }
+
+    // Strip the query so a refresh does not replay the toast.
+    window.history.replaceState({}, "", "/admin");
+    loadAll();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const filteredUsers = useMemo(() => {
     const query = (userSearch || globalSearch).trim().toLowerCase();
     if (!query) return users;
@@ -494,6 +560,35 @@ export default function AdminPage({ navigate }) {
         project.user?.name?.toLowerCase().includes(query),
     );
   }, [projects, projectSearch, globalSearch]);
+
+  const filteredConnections = useMemo(() => {
+    const query = (connectionSearch || globalSearch).trim().toLowerCase();
+    if (!query) return connections;
+    return connections.filter(
+      (connection) =>
+        connection.user?.name?.toLowerCase().includes(query) ||
+        connection.user?.email?.toLowerCase().includes(query) ||
+        connection.opportunity?.title?.toLowerCase().includes(query) ||
+        connection.opportunity?.company?.toLowerCase().includes(query),
+    );
+  }, [connections, connectionSearch, globalSearch]);
+
+  // Every connected_opportunities row the admin still owes money on.
+  const pendingPayoutTotal = useMemo(
+    () =>
+      connections
+        .filter(
+          (connection) =>
+            connection.status !== "completed" &&
+            Number(connection.payout_amount) > 0,
+        )
+        .reduce(
+          (total, connection) =>
+            total + Number(connection.payout_amount || 0),
+          0,
+        ),
+    [connections],
+  );
 
   const requestConfirm = (config) => setConfirmConfig(config);
   const closeConfirm = () => {
@@ -544,6 +639,44 @@ export default function AdminPage({ navigate }) {
             pushToast(`"${project.title}" was removed.`);
           } catch (err) {
             pushToast(err.message || "Failed to remove project.", "error");
+          }
+        }),
+    });
+  };
+
+  const handlePayConnection = (connection) => {
+    const payout = Number(connection.payout_amount) || 0;
+    if (payout <= 0) {
+      pushToast("There is no escrow balance to pay on this record.", "error");
+      return;
+    }
+    requestConfirm({
+      title: "Confirm investor payout?",
+      message: `${formatMoney(payout)} will be released from escrow to ${
+        connection.user?.name || "this investor"
+      } (${formatMoney(connection.investment_amount)} invested, ${
+        connection.investor_share ?? 0
+      }% of the goal).`,
+      confirmLabel: "Pay via SSLCommerz",
+      onConfirm: () =>
+        runConfirmed(async () => {
+          setPendingRowId(connection.id);
+          try {
+            const res = await payAdminConnection(connection.id);
+            const amount = res.amount ?? payout;
+
+            // The payout settles on the gateway, so hand the browser over.
+            // The record flips to "completed" only after the callback lands.
+            pushToast(
+              `Sending ${formatMoney(amount)} to SSLCommerz...`,
+            );
+            if (res.gateway_url) {
+              window.location.href = res.gateway_url;
+            }
+          } catch (err) {
+            pushToast(err.message || "Failed to start the payout.", "error");
+          } finally {
+            setPendingRowId(null);
           }
         }),
     });
@@ -644,9 +777,9 @@ export default function AdminPage({ navigate }) {
       <StatCard
         icon={Link2}
         tone="gold"
-        label="Connections"
+        label="Payments"
         value={stats.connections}
-        onClick={() => setActiveTab("dashboard")}
+        onClick={() => setActiveTab("payments")}
         isInView={statsInView}
       />
       <StatCard
@@ -824,11 +957,12 @@ export default function AdminPage({ navigate }) {
     >
       <div className="overflow-x-auto">
         <table className="w-full border-collapse text-left">
-          <thead>
+<thead>
             <tr className="border-b border-ink-100 text-xs font-bold uppercase tracking-wider text-ink-400">
               <th className="px-4 py-3">Project Name</th>
               <th className="px-4 py-3">Founder</th>
               <th className="px-4 py-3">Funding Goal</th>
+              <th className="px-4 py-3">Invested</th>
               <th className="px-4 py-3">Progress</th>
               <th className="px-4 py-3">Status</th>
               <th className="px-4 py-3 text-right">Actions</th>
@@ -852,6 +986,17 @@ export default function AdminPage({ navigate }) {
                   >
                     <td className="px-4 py-3.5 font-semibold text-ink-900 dark:text-ink-100">
                       {project.title}
+                    </td>
+                    <td className="px-4 py-3.5 text-ink-500">
+                      {project.user?.name || "Unknown"}
+                    </td>
+                    <td className="px-4 py-3.5 font-medium text-ink-900 dark:text-ink-100">
+                      {project.funding_goal || "—"}
+                    </td>
+                    <td className="px-4 py-3.5 font-medium text-ink-900 dark:text-ink-100">
+                      {project.invested_amount
+                        ? `$${Number(project.invested_amount).toLocaleString("en-US", { maximumFractionDigits: 0 })}`
+                        : "$0"}
                     </td>
                     <td className="px-4 py-3.5 text-ink-500">
                       {project.user?.name || "Unknown"}
@@ -944,14 +1089,154 @@ export default function AdminPage({ navigate }) {
                         </button>
                       </div>
                     </td>
-                  </motion.tr>
+                </motion.tr>
                 );
               })}
             </AnimatePresence>
             {filteredProjects.length === 0 && (
               <tr>
-                <td colSpan="6" className="py-8 text-center text-ink-400">
+                <td colSpan="7" className="py-8 text-center text-ink-400">
                   No projects found.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </ContentCard>
+  );
+
+  const renderPaymentsTable = () => (
+    <ContentCard
+      icon={Link2}
+      title={`Payments (${connections.length})`}
+      actions={
+        <div className="flex w-full flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:justify-end">
+          <span className="whitespace-nowrap rounded-xl bg-amber-100 px-3 py-2 text-xs font-semibold text-amber-800">
+            Outstanding: {formatMoney(pendingPayoutTotal)}
+          </span>
+          <div className="relative w-full sm:w-64">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400" />
+            <input
+              type="text"
+              value={connectionSearch}
+              onChange={(event) => setConnectionSearch(event.target.value)}
+              placeholder="Search investor or projectâ€¦"
+              className="w-full rounded-xl border border-ink-100 bg-white/70 py-2 pl-9 pr-3 text-sm text-ink-700 outline-none transition-colors focus:border-brand-300 dark:border-ink-800 dark:bg-ink-950/40"
+            />
+          </div>
+        </div>
+      }
+    >
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse text-left">
+          <thead>
+            <tr className="border-b border-ink-100 text-xs font-bold uppercase tracking-wider text-ink-400">
+              <th className="px-4 py-3">Investor</th>
+              <th className="px-4 py-3">Project</th>
+              <th className="px-4 py-3">Invested</th>
+              <th className="px-4 py-3">Share of Goal</th>
+              <th className="px-4 py-3">Escrow Payout</th>
+              <th className="px-4 py-3">Status</th>
+              <th className="px-4 py-3">Date</th>
+              <th className="px-4 py-3 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-white/5 text-sm">
+            <AnimatePresence initial={false}>
+              {filteredConnections.map((connection) => {
+                // Only a saved post that actually holds money is payable, so
+                // rows the investor has merely bookmarked get no button.
+                const invested = Number(connection.investment_amount) || 0;
+                // The escrow figure the server calculated for this record, or
+                // the amount that was actually settled once already paid.
+                const payout = Number(connection.payout_amount) || 0;
+                const isPayable = payout > 0;
+                return (
+                  <motion.tr
+                    key={connection.id}
+                    layout
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0, x: 40, transition: { duration: 0.2 } }}
+                    className="transition-colors hover:bg-white/5"
+                  >
+                    <td className="px-4 py-3.5">
+                      <p className="font-semibold text-ink-900 dark:text-ink-100">
+                        {connection.user?.name || "Unknown"}
+                    </p>
+                    <p className="text-xs text-ink-500">
+                      {connection.user?.email || "—"}
+                    </p>
+                  </td>
+                  <td className="px-4 py-3.5">
+                    <p className="font-semibold text-ink-900 dark:text-ink-100">
+                      {connection.opportunity?.title || "Deleted project"}
+                    </p>
+                    <p className="text-xs text-ink-500">
+                      {connection.opportunity?.company || "—"}
+                    </p>
+                  </td>
+                  <td className="px-4 py-3.5 font-semibold text-ink-900 dark:text-ink-100">
+                    {formatMoney(invested)}
+                  </td>
+                  <td className="px-4 py-3.5 text-ink-600 dark:text-ink-300">
+                    {Number(connection.investor_share || 0).toFixed(2)}%
+                  </td>
+                  <td className="px-4 py-3.5 font-semibold text-ink-900 dark:text-ink-100">
+                    {formatMoney(payout)}
+                  </td>
+                  <td className="px-4 py-3.5">
+                    {connectionStatusBadge(connection.status)}
+                  </td>
+                  <td className="px-4 py-3.5 text-ink-500">
+                    {formatDate(connection.created_at)}
+                  </td>
+                  <td className="px-4 py-3.5">
+                    <div className="flex items-center justify-end gap-2">
+                      {!isPayable ? (
+                        <span className="text-xs text-ink-400">
+                          No escrow to pay
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => handlePayConnection(connection)}
+                          disabled={
+                            connection.status === "completed" ||
+                            pendingRowId === connection.id
+                          }
+                          className="inline-flex items-center gap-1.5 rounded-lg bg-brand-600 px-3 py-1.5 text-xs font-semibold text-white transition-all hover:bg-brand-700 disabled:cursor-not-allowed disabled:bg-ink-200 disabled:text-ink-400 dark:disabled:bg-ink-800"
+                          title={
+                            connection.status === "completed"
+                              ? "Payout already completed"
+                              : `Release ${formatMoney(
+                                  payout,
+                                )} from escrow to ${
+                                  connection.user?.name || "investor"
+                                }`
+                          }
+                        >
+                          {pendingRowId === connection.id ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <Banknote className="h-3.5 w-3.5" />
+                          )}
+                          {connection.status === "completed"
+                            ? "Paid"
+                            : "Pay investor"}
+                        </button>
+                      )}
+                    </div>
+                  </td>
+                  </motion.tr>
+                );
+              })}
+            </AnimatePresence>
+            {filteredConnections.length === 0 && (
+              <tr>
+                <td colSpan="8" className="py-8 text-center text-ink-400">
+                  No payment records found.
                 </td>
               </tr>
             )}
@@ -1061,6 +1346,7 @@ export default function AdminPage({ navigate }) {
     if (activeTab === "users") return renderUsersTable();
     if (activeTab === "projects") return renderProjectsTable();
     if (activeTab === "complaints") return renderComplaintsTable();
+    if (activeTab === "payments") return renderPaymentsTable();
     return renderDashboard();
   };
 

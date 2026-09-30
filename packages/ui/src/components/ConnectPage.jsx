@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useLocation } from "react-router-dom";
 import PageBackground, { AURORA_BG } from "./PageBackground.jsx";
 import { getChatMessages, sendChatMessage } from "../api/support";
 import { searchUsers } from "../api/users";
@@ -86,6 +87,10 @@ const QUICK_EMOJIS = ["😀", "😂", "😍", "👍", "🙏", "🎉", "🔥", "�
 
 export default function ConnectPage({ navigate }) {
   const [user] = useState(() => getStoredUser());
+  const location = useLocation();
+  // A page elsewhere can deep-link straight into a conversation, e.g. the chat
+  // button beside an investor on the status page.
+  const chatWith = location.state?.chatWith || null;
   const [users, setUsers] = useState([]);
   const [recentChats, setRecentChats] = useState(() => getRecentChats());
   const [activeUser, setActiveUser] = useState(null);
@@ -107,8 +112,7 @@ export default function ConnectPage({ navigate }) {
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
-      searchUsers(searchQuery)
-        .then((found) => {
+      searchUsers(searchQuery)        .then((found) => {
           setUsers(found);
           setSearchError("");
         })
@@ -194,6 +198,21 @@ export default function ConnectPage({ navigate }) {
     setActiveUser(null);
     setShowInfo(false);
   };
+
+  // Open the conversation requested by the page that linked here, then drop the
+  // navigation state so returning to this page doesn't re-open it.
+  useEffect(() => {
+    if (!chatWith?.id) return;
+    setMessages([]);
+    setSendError("");
+    setMessageInput("");
+    setShowEmoji(false);
+    setActiveUser(chatWith);
+    updateRecent(chatWith, null);
+    window.setTimeout(() => inputRef.current?.focus(), 50);
+    navigate(location.pathname, { replace: true, state: null });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chatWith?.id]);
 
   const send = async (text) => {
     const trimmed = text.trim();

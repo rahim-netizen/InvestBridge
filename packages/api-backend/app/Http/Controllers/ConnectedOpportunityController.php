@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\ConnectedOpportunity;
 use App\Models\Opportunity;
+use App\Services\EscrowPayoutService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -13,10 +14,30 @@ class ConnectedOpportunityController extends Controller
     {
         $user = Auth::user();
 
-        $connections = ConnectedOpportunity::with('opportunity.user')
+        $connections = ConnectedOpportunity::with([
+            'opportunity.user.profile',
+        ])
             ->where('user_id', $user->id)
             ->orderByDesc('created_at')
             ->get();
+
+        $payouts = new EscrowPayoutService();
+
+        // Attach the escrow figures so the investor can see what their slice of
+        // the founder's escrow pot is worth and how far the payout has got,
+        // without having to recompute the split in the browser.
+        $connections->each(function ($connection) use ($payouts) {
+            $connection->setAttribute(
+                'payout_amount',
+                $connection->payout_amount !== null
+                    ? (float) $connection->payout_amount
+                    : $payouts->payoutFor($connection),
+            );
+            $connection->setAttribute(
+                'investor_share',
+                round($payouts->investorShare($connection) * 100, 2),
+            );
+        });
 
         return response()->json([
             'connections' => $connections,
@@ -86,47 +107,12 @@ class ConnectedOpportunityController extends Controller
                     'name' => $connection->user?->name,
                     'email' => $connection->user?->email,
                     'connected_at' => $connection->created_at,
-                    // Flag the investor who was accepted for this opportunity so
-                    // the UI shows "Accepted" (no Accept button) while still
-                    // showing the investor and the Chat button.
-                    'accepted' => $connection->user_id === $opportunity->investor_id,
+                    // What this investor has committed to the round, and where
+                    // their escrow payout stands.
+                    'investment_amount' => $connection->investment_amount,
+                    'status' => $connection->status,
                 ];
             }),
-        ]);
-    }
-
-    public function acceptConnection(Request $request, $id)
-    {
-        $user = Auth::user();
-
-        $opportunity = Opportunity::where('user_id', $user->id)
-            ->where('id', $id)
-            ->firstOrFail();
-
-        $validated = $request->validate([
-            'connection_id' => ['required', 'integer'],
-        ]);
-
-        $accepted = ConnectedOpportunity::where('opportunity_id', $opportunity->id)
-            ->where('id', $validated['connection_id'])
-            ->firstOrFail();
-
-        ConnectedOpportunity::where('opportunity_id', $opportunity->id)
-            ->where('id', '!=', $accepted->id)
-            ->delete();
-
-        // Record the accepted investor on the opportunity and move it from
-        // "Active" to "Progress" so it is no longer an open discovery deal.
-        $opportunity->update([
-            'investor_id' => $accepted->user_id,
-            'status' => 'Progress',
-        ]);
-
-        return response()->json([
-            'message' => 'Connection accepted.',
-            'accepted_id' => $accepted->id,
-            'investor_id' => $accepted->user_id,
-            'status' => $opportunity->status,
         ]);
     }
 }

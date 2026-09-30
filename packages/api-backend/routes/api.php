@@ -42,11 +42,15 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('/connected-opportunities', [\App\Http\Controllers\ConnectedOpportunityController::class, 'store']);
         Route::delete('/connected-opportunities/{id}', [\App\Http\Controllers\ConnectedOpportunityController::class, 'destroy']);
         Route::get('/opportunities/{id}/connections', [\App\Http\Controllers\ConnectedOpportunityController::class, 'connectionsByOpportunity']);
-        Route::post('/opportunities/{id}/accept', [\App\Http\Controllers\ConnectedOpportunityController::class, 'acceptConnection']);
 
         Route::get('/opportunities/{id}/checkpoints', [\App\Http\Controllers\CheckpointController::class, 'index']);
         Route::post('/opportunities/{id}/checkpoints', [\App\Http\Controllers\CheckpointController::class, 'store']);
         Route::post('/opportunities/{id}/pay', [\App\Http\Controllers\PaymentController::class, 'initiate']);
+        Route::get('/opportunities/{id}/transactions', [\App\Http\Controllers\PaymentController::class, 'history']);
+        Route::get('/opportunities/{id}/investors', [\App\Http\Controllers\PaymentController::class, 'investors']);
+
+        Route::get('/opportunities/{id}/entrepreneur-transaction', [\App\Http\Controllers\EntrepreneurTransactionController::class, 'show']);
+        Route::post('/opportunities/{id}/entrepreneur-transaction', [\App\Http\Controllers\EntrepreneurTransactionController::class, 'store']);
         Route::get('/complaints', [SupportController::class, 'complaints']);
         Route::post('/complaints', [SupportController::class, 'createComplaint']);
         Route::get('/users/search', [SupportController::class, 'searchUsers']);
@@ -63,11 +67,24 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/opportunities', [\App\Http\Controllers\AdminController::class, 'opportunities']);
         Route::patch('/opportunities/{id}/status', [\App\Http\Controllers\AdminController::class, 'updateOpportunityStatus']);
         Route::delete('/opportunities/{id}', [\App\Http\Controllers\AdminController::class, 'destroyOpportunity']);
+        Route::get('/connections', [\App\Http\Controllers\AdminController::class, 'connections']);
+        Route::post('/connections/{id}/payout', [\App\Http\Controllers\PayoutController::class, 'initiate']);
     });
 });
+
+// The gateway redirects the admin's browser straight back here after paying, so
+// these must stay outside auth:sanctum like the other gateway return routes.
+// Security comes from the signed val_id the gateway issues, not the session.
+Route::match(['GET', 'POST'], '/payout/success', [\App\Http\Controllers\PayoutController::class, 'success'])->name('payout.success');
+Route::match(['GET', 'POST'], '/payout/fail', [\App\Http\Controllers\PayoutController::class, 'fail'])->name('payout.fail');
+Route::match(['GET', 'POST'], '/payout/cancel', [\App\Http\Controllers\PayoutController::class, 'cancel'])->name('payout.cancel');
 
 Route::post('/chatbot/message', [\App\Http\Controllers\ChatbotController::class, 'message']);
 
 Route::match(['GET', 'POST'], '/payment/success', [\App\Http\Controllers\PaymentController::class, 'success'])->name('payment.success');
 Route::match(['GET', 'POST'], '/payment/fail', [\App\Http\Controllers\PaymentController::class, 'fail'])->name('payment.fail');
 Route::match(['GET', 'POST'], '/payment/cancel', [\App\Http\Controllers\PaymentController::class, 'cancel'])->name('payment.cancel');
+
+Route::match(['GET', 'POST'], '/entrepreneur-payment/success', [\App\Http\Controllers\EntrepreneurTransactionController::class, 'success'])->name('entrepreneur-payment.success');
+Route::match(['GET', 'POST'], '/entrepreneur-payment/fail', [\App\Http\Controllers\EntrepreneurTransactionController::class, 'fail'])->name('entrepreneur-payment.fail');
+Route::match(['GET', 'POST'], '/entrepreneur-payment/cancel', [\App\Http\Controllers\EntrepreneurTransactionController::class, 'cancel'])->name('entrepreneur-payment.cancel');

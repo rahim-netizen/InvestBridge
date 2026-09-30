@@ -63,6 +63,27 @@ const sortOptions = [
 const DEFAULT_DEAL_IMAGE =
   "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='200' viewBox='0 0 400 200'><rect width='400' height='200' fill='%23e5e7eb'/><text x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%239ca3af' font-family='sans-serif' font-size='16'>No image</text></svg>";
 
+// Turns a human funding goal such as "$1.5M", "250K" or "500000" into a plain
+// number so it can be compared against what has already been raised.
+const parseGoal = (goalStr) => {
+  if (!goalStr || goalStr === "$0") return 0;
+  const num = parseFloat(String(goalStr).replace(/[^0-9.]/g, ""));
+  if (Number.isNaN(num)) return 0;
+  const suffix = String(goalStr).replace(/[0-9.]/g, "").trim().toUpperCase();
+  if (suffix.includes("B")) return num * 1000000000;
+  if (suffix.includes("M")) return num * 1000000;
+  if (suffix.includes("K")) return num * 1000;
+  return num;
+};
+
+// A round is closed once the raised total has reached its goal, so it should
+// no longer be offered as an open discovery deal.
+const isFullyFunded = (opp) => {
+  const goal = parseGoal(opp.funding_goal);
+  if (goal <= 0) return false;
+  return Number(opp.invested_amount || 0) >= goal;
+};
+
 const initialsOf = (name = "") =>
   name
     .split(/\s+/)
@@ -173,10 +194,10 @@ export default function DealsPage({ navigate }) {
     try {
       const data = await getAllOpportunities();
       if (data.opportunities && data.opportunities.length > 0) {
-        // Hide opportunities whose investor has already been accepted, since
-        // they are no longer open discovery deals.
+        // A round stays in discovery while it can still take money, so it only
+        // drops off once the raised total has reached the funding goal.
         const mapped = data.opportunities
-          .filter((opp) => !opp.investor_id)
+          .filter((opp) => !isFullyFunded(opp))
           .map((opp) => ({
             id: opp.id,
             name: opp.title,
@@ -188,7 +209,7 @@ export default function DealsPage({ navigate }) {
             timeline: opp.timeline || "TBD",
             image: opp.image || null,
             postedBy: opp.user?.email || null,
-            investorId: opp.investor_id ?? null,
+            investedAmount: Number(opp.invested_amount) || 0,
             createdAt: opp.created_at || null,
           }));
         setDeals(mapped);
@@ -282,16 +303,6 @@ export default function DealsPage({ navigate }) {
     }
   };
 
-
-  const parseGoal = (goalStr) => {
-    if (!goalStr || goalStr === "$0") return 0;
-    const num = parseFloat(String(goalStr).replace(/[^0-9.]/g, ""));
-    if (Number.isNaN(num)) return 0;
-    const suffix = String(goalStr).replace(/[0-9.]/g, "").trim().toUpperCase();
-    if (suffix.includes("M")) return num * 1000000;
-    if (suffix.includes("K")) return num * 1000;
-    return num;
-  };
 
   const matchesSizeBand = (goalStr, band) => {
     if (band === "All") return true;

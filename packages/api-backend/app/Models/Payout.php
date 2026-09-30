@@ -7,17 +7,17 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 #[Fillable([
-    'tran_id',
-    'opportunity_id',
+    'connected_opportunity_id',
     'investor_id',
     'amount',
     'currency',
-    'status',
+    'tran_id',
     'val_id',
+    'status',
 ])]
-class Transaction extends Model
+class Payout extends Model
 {
-    protected $table = 'transactions';
+    protected $table = 'payouts';
 
     protected $casts = [
         'amount' => 'decimal:2',
@@ -25,9 +25,9 @@ class Transaction extends Model
         'updated_at' => 'datetime',
     ];
 
-    public function opportunity(): BelongsTo
+    public function connection(): BelongsTo
     {
-        return $this->belongsTo(Opportunity::class);
+        return $this->belongsTo(ConnectedOpportunity::class, 'connected_opportunity_id');
     }
 
     public function investor(): BelongsTo

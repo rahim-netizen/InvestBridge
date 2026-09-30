@@ -136,6 +136,7 @@ function timeAgo(value) {
 function toCard(opp) {
   const funded = Boolean(opp.investor_id);
   const suspended = String(opp.status || "").toLowerCase() === "suspended";
+  const investedAmount = Number(opp.invested_amount) || 0;
   return {
     id: opp.id,
     title: opp.title,
@@ -148,6 +149,7 @@ function toCard(opp) {
     image: opp.image || null,
     status: suspended ? "Suspended" : funded ? "Funded" : "Live",
     pct: funded ? 100 : 0,
+    investedAmount,
     updated: opp.updated_at && opp.updated_at !== opp.created_at
       ? `Updated ${timeAgo(opp.updated_at)}`
       : `Posted ${timeAgo(opp.created_at)}`,
@@ -226,8 +228,9 @@ function OpportunityCard({ opp, navigate, onDelete }) {
         </div>
 
         {/* Stats */}
-        <div className="mx-6 mb-6 grid grid-cols-2 gap-4 border-t border-white/[0.08] pt-5 sm:mx-[30px] sm:grid-cols-4">
+        <div className="mx-6 mb-6 grid grid-cols-2 gap-4 border-t border-white/[0.08] pt-5 sm:mx-[30px] sm:grid-cols-5">
           <CardStat label="Goal" value={opp.fundingGoal} />
+          <CardStat label="Invested" value={opp.investedAmount ? `$${opp.investedAmount.toLocaleString("en-US", { maximumFractionDigits: 0 })}` : "$0"} />
           <CardStat label="Timeline" value={opp.timeline} />
           <CardStat label="Investors" value={opp.investors ?? "—"} />
           <CardStat label="Company" value={opp.company} />
