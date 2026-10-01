@@ -63,7 +63,7 @@ class PayoutController extends Controller
         $payeeEmail = $connection->user?->email ?: 'investor@example.com';
 
         $frontendBase = rtrim(
-            env('FRONTEND_URL', Config::get('app.url', 'http://localhost:5173')),
+            config('app.frontend_url'),
             '/',
         );
 
@@ -203,7 +203,7 @@ class PayoutController extends Controller
     protected function redirectAdmin($status, $tranId = null)
     {
         $base = rtrim(
-            env('FRONTEND_URL', Config::get('app.url', 'http://localhost:5173')),
+            config('app.frontend_url'),
             '/',
         );
 

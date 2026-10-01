@@ -20,7 +20,7 @@ export const AURORA_BG =
 // dark luxury abstract background.
 export default function PageBackground({
   image = true,
-  src = "/homepage-bg.jpg",
+  src = `${import.meta.env.BASE_URL}homepage-bg.jpg`,
   gradient,
 }) {
   return (

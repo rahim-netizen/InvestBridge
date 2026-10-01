@@ -15,7 +15,7 @@ class VerifyEmailController extends Controller
      */
     public function __invoke(Request $request, $id, $hash)
     {
-        $frontendUrl = env('FRONTEND_URL', 'http://localhost:5173');
+        $frontendUrl = config('app.frontend_url');
         $user = User::find($id);
 
         if (!$user) {

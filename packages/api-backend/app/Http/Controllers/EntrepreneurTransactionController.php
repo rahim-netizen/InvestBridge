@@ -129,7 +129,7 @@ class EntrepreneurTransactionController extends Controller
         $customerEmail = $user->email ?: 'customer@example.com';
 
         $frontendBase = rtrim(
-            env('FRONTEND_URL', Config::get('app.url', 'http://localhost:5173')),
+            config('app.frontend_url'),
             '/',
         );
 
@@ -254,7 +254,7 @@ class EntrepreneurTransactionController extends Controller
     protected function redirectFrontend($opportunityId, $status, $tranId = null)
     {
         $base = rtrim(
-            env('FRONTEND_URL', Config::get('app.url', 'http://localhost:5173')),
+            config('app.frontend_url'),
             '/',
         );
 
