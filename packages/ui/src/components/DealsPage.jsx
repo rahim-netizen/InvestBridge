@@ -5,7 +5,7 @@
   X,
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import PageBackground, { AURORA_BG } from "./PageBackground.jsx";
 import PageDecor from "./PageDecor.jsx";
 import GradientText from "./GradientText.jsx";
@@ -18,8 +18,6 @@ import {
 import {
   fadeUp,
   fadeUpBlur,
-  modalOverlay,
-  modalPanel,
   stagger,
 } from "../lib/motion.jsx";
 import {
@@ -28,6 +26,7 @@ import {
   IconSearchToggle,
   PopoverSelect,
 } from "./FilterControls.jsx";
+import { FormSection, panelClassName } from "./OpportunityFormParts.jsx";
 
 const getStoredUser = () => {
   if (typeof window === "undefined") {
@@ -186,6 +185,7 @@ export default function DealsPage({ navigate }) {
   const [savedOnly, setSavedOnly] = useState(false);
   const [goalSort, setGoalSort] = useState("None");
   const [selectedDeal, setSelectedDeal] = useState(null);
+  const dealPanelRef = useRef(null);
   const [connectedMap, setConnectedMap] = useState({});
   const [connectingId, setConnectingId] = useState(null);
   const [connectStatus, setConnectStatus] = useState("");
@@ -538,6 +538,141 @@ export default function DealsPage({ navigate }) {
           )}
         </motion.div>
 
+        <AnimatePresence>
+          {selectedDeal && (
+            <motion.article
+              key={selectedDeal.id}
+              ref={dealPanelRef}
+              className={`${panelClassName} scroll-mt-24`}
+              initial={{ opacity: 0, y: -12, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -12, scale: 0.98 }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
+            >
+              {/* Cover banner */}
+              <div className="relative flex min-h-[240px] flex-wrap items-end gap-4 overflow-hidden rounded-[20px] border border-brand-500/25 px-5 py-5 sm:min-h-[300px] sm:px-[26px] sm:py-[22px]">
+                <img
+                  src={selectedDeal.image || DEFAULT_DEAL_IMAGE}
+                  alt=""
+                  className="absolute inset-0 h-full w-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-[rgba(5,9,15,0.9)] to-[rgba(5,9,15,0.1)]" />
+                <button
+                  type="button"
+                  onClick={() => setSelectedDeal(null)}
+                  className="absolute right-4 top-4 grid h-9 w-9 place-items-center rounded-full border border-white/[0.18] bg-[rgba(5,9,15,0.6)] text-white/80 transition-colors hover:text-white"
+                  aria-label="Close"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+                <div className="relative min-w-0">
+                  <p className="text-[13px] font-semibold text-brand-300">
+                    {selectedDeal.company}
+                  </p>
+                  <h2 className="mt-1 text-[26px] font-semibold leading-tight text-white sm:text-[32px]">
+                    {selectedDeal.name}
+                  </h2>
+                </div>
+              </div>
+
+              <FormSection n="01" title="The basics" hint="Who is raising, and where.">
+                <dl className="grid gap-3.5 sm:grid-cols-3">
+                  {[
+                    ["Sector", selectedDeal.sector],
+                    ["Location", selectedDeal.location],
+                    ["Company", selectedDeal.company],
+                  ].map(([label, value]) => (
+                    <div
+                      key={label}
+                      className="rounded-xl border border-white/[0.12] bg-[rgba(5,9,15,0.5)] px-3.5 py-3"
+                    >
+                      <dt className="text-[12px] font-semibold uppercase tracking-wider text-white/50">
+                        {label}
+                      </dt>
+                      <dd className="mt-1 truncate text-sm font-semibold text-white">
+                        {value || "TBD"}
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+              </FormSection>
+
+              <FormSection n="02" title="The raise" hint="How much, and how long it's open.">
+                <dl className="grid gap-3.5 sm:grid-cols-2">
+                  {[
+                    ["Funding goal", selectedDeal.goal],
+                    ["Timeline", selectedDeal.timeline],
+                  ].map(([label, value]) => (
+                    <div
+                      key={label}
+                      className="rounded-xl border border-brand-500/25 bg-brand-500/[0.08] px-4 py-4"
+                    >
+                      <dt className="text-[12px] font-semibold uppercase tracking-wider text-brand-300">
+                        {label}
+                      </dt>
+                      <dd className="mt-1.5 font-display text-2xl font-bold text-white">
+                        {value || "TBD"}
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+              </FormSection>
+
+              <FormSection n="03" title="The story" hint="What the founders are building." last>
+                <p className="whitespace-pre-line text-[15px] leading-relaxed text-white/80">
+                  {selectedDeal.blurb || "No description provided."}
+                </p>
+              </FormSection>
+
+              {/* Footer */}
+              <div className="flex flex-wrap items-center gap-3 border-t border-white/[0.08] pt-5">
+                <span className="text-[13px] text-brand-300">{connectStatus}</span>
+                <button
+                  type="button"
+                  onClick={() => setSelectedDeal(null)}
+                  className="ml-auto rounded-full border border-white/[0.14] px-5 py-3 text-sm font-semibold text-white/85 transition-colors hover:border-white/30 hover:text-white"
+                >
+                  Close
+                </button>
+                {!user ? (
+                  <button
+                    type="button"
+                    onClick={() => navigate("/login")}
+                    className="rounded-full bg-brand-500 px-[22px] py-3 text-sm font-semibold text-[#05090f] transition-colors hover:bg-brand-400"
+                  >
+                    Sign in to invest
+                  </button>
+                ) : selectedDeal.postedBy === user.email ? (
+                  <button
+                    type="button"
+                    disabled
+                    className="cursor-not-allowed rounded-full border border-white/[0.14] px-[22px] py-3 text-sm font-semibold text-white/60"
+                  >
+                    Your post
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    disabled={connectingId === selectedDeal.id}
+                    onClick={() =>
+                      connectedMap[selectedDeal.id]
+                        ? handleDisconnect(selectedDeal)
+                        : handleConnect(selectedDeal)
+                    }
+                    className="rounded-full bg-brand-500 px-[22px] py-3 text-sm font-semibold text-[#05090f] transition-colors hover:bg-brand-400 disabled:opacity-60"
+                  >
+                    {connectingId === selectedDeal.id
+                      ? "Please wait..."
+                      : connectedMap[selectedDeal.id]
+                      ? "Remove from dashboard"
+                      : "Save to dashboard"}
+                  </button>
+                )}
+              </div>
+            </motion.article>
+          )}
+        </AnimatePresence>
+
          <motion.div
            className="grid gap-[22px] lg:grid-cols-2"
            variants={stagger}
@@ -565,6 +700,9 @@ export default function DealsPage({ navigate }) {
                 onOpen={() => {
                   setSelectedDeal(deal);
                   setConnectStatus("");
+                  requestAnimationFrame(() =>
+                    dealPanelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }),
+                  );
                 }}
                 onToggleSave={() =>
                   connectedMap[deal.id] ? handleDisconnect(deal) : handleConnect(deal)
@@ -573,131 +711,6 @@ export default function DealsPage({ navigate }) {
             ))
           )}
         </motion.div>
-
-        <AnimatePresence>
-          {selectedDeal && (
-            <motion.div
-              className="fixed inset-0 z-50 flex items-center justify-center bg-ink-950/50 backdrop-blur-sm p-4"
-              variants={modalOverlay}
-              initial="hidden"
-              animate="visible"
-              exit="exit"
-              onClick={() => setSelectedDeal(null)}
-            >
-              <motion.div
-                className="glass-panel-strong holo-card rounded-[2rem] p-8 max-w-lg w-full max-h-[85vh] overflow-y-auto dark:bg-ink-950/90"
-                variants={modalPanel}
-                onClick={(e) => e.stopPropagation()}
-              >
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="font-display text-2xl font-bold text-ink-900 dark:text-ink-50">
-                  {selectedDeal.name}
-                </h2>
-                <button
-                  type="button"
-                  onClick={() => setSelectedDeal(null)}
-                  className="grid h-8 w-8 place-items-center rounded-full border border-white/30 bg-white/50 text-ink-500 transition hover:bg-white/80 dark:border-white/10 dark:bg-ink-950/40 dark:text-ink-300"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-
-              <div className="rounded-2xl overflow-hidden mb-6 h-48 bg-ink-100 dark:bg-ink-800">
-                <img
-                  src={selectedDeal.image || DEFAULT_DEAL_IMAGE}
-                  alt={selectedDeal.name}
-                  className="h-full w-full object-cover"
-                />
-              </div>
-
-              <div className="flex flex-wrap gap-2 mb-4">
-                <span className="rounded-full bg-brand-50 px-3 py-1 text-xs font-semibold text-brand-700 dark:bg-brand-400/10 dark:text-brand-300">
-                  {selectedDeal.sector}
-                </span>
-                <span className="rounded-full bg-ink-100 px-3 py-1 text-xs font-semibold text-ink-600 dark:bg-ink-800 dark:text-ink-300">
-                  {selectedDeal.location}
-                </span>
-                <span className="rounded-full bg-ink-100 px-3 py-1 text-xs font-semibold text-ink-600 dark:bg-ink-800 dark:text-ink-300">
-                  {selectedDeal.company}
-                </span>
-              </div>
-
-              <p className="text-ink-600 dark:text-ink-300 mb-6">
-                {selectedDeal.blurb}
-              </p>
-
-              <div className="grid grid-cols-2 gap-4 mb-6">
-                <div className="rounded-2xl bg-brand-50 p-4 text-center dark:bg-brand-400/10">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-brand-700 dark:text-brand-300">
-                    Funding goal
-                  </p>
-                  <p className="mt-2 font-display text-2xl font-bold text-ink-900 dark:text-ink-50">
-                    {selectedDeal.goal}
-                  </p>
-                </div>
-                <div className="rounded-2xl bg-brand-50 p-4 text-center dark:bg-brand-400/10">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-brand-700 dark:text-brand-300">
-                    Timeline
-                  </p>
-                  <p className="mt-2 font-display text-2xl font-bold text-ink-900 dark:text-ink-50">
-                    {selectedDeal.timeline}
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex flex-col gap-3">
-                {!user ? (
-                  <button
-                    type="button"
-                    onClick={() => navigate("/login")}
-                    className="btn-primary w-full"
-                  >
-                    Sign in to invest
-                  </button>
-                ) : selectedDeal.postedBy === user.email ? (
-                  <button
-                    type="button"
-                    disabled
-                    className="btn-ghost w-full cursor-not-allowed opacity-60"
-                  >
-                    Your post
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    disabled={connectingId === selectedDeal?.id}
-                    onClick={() =>
-                      connectedMap[selectedDeal.id]
-                        ? handleDisconnect(selectedDeal)
-                        : handleConnect(selectedDeal)
-                    }
-                    className="btn-ghost w-full"
-                  >
-                    {connectingId === selectedDeal?.id
-                      ? "Please wait..."
-                      : connectedMap[selectedDeal.id]
-                      ? "Remove from dashboard"
-                      : "Save to dashboard"}
-                  </button>
-                )}
-                <button
-                  type="button"
-                  onClick={() => setSelectedDeal(null)}
-                  className="btn-ghost w-full"
-                >
-                  Close
-                </button>
-              </div>
-
-              {connectStatus && (
-                <p className="mt-3 text-center text-sm font-semibold text-brand-700 dark:text-brand-300">
-                  {connectStatus}
-                </p>
-              )}
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
       </div>
     </section>
   );

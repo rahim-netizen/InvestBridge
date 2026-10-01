@@ -7,15 +7,14 @@
   AlertTriangle,
   PenLine,
   Plus,
-  Rocket,
   Search,
   Trash2,
+  Upload,
   UserRound,
   X,
-  Image as ImageIcon,
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 import PageBackground, { AURORA_BG } from "./PageBackground.jsx";
 import PageDecor from "./PageDecor.jsx";
@@ -37,6 +36,13 @@ import {
   stagger,
 } from "../lib/motion.jsx";
 import { FilterChip, IconSearchToggle } from "./FilterControls.jsx";
+import {
+  FormSection,
+  OPEN_FOR_DAYS,
+  formInputClassName,
+  formLabelClassName,
+  panelClassName,
+} from "./OpportunityFormParts.jsx";
 
 const getStoredUser = () => {
   if (typeof window === "undefined") {
@@ -269,6 +275,7 @@ export default function UserDashboard({ navigate }) {
   });
   const [editStatus, setEditStatus] = useState("");
   const [editLoading, setEditLoading] = useState(false);
+  const editPanelRef = useRef(null);
   const [, setProgressVersion] = useState(0);
   const location = useLocation();
   const [paymentReturn, setPaymentReturn] = useState(null);
@@ -434,12 +441,16 @@ export default function UserDashboard({ navigate }) {
       company: opp.company || "",
       sector: opp.sector || "",
       location: opp.location || "",
-      fundingGoal: opp.goal || "",
+      fundingGoal: String(opp.goal || "").replace(/^\$\s*/, ""),
       description: opp.blurb || "",
       timeline: opp.timeline || "",
       image: opp.image || null,
     });
     setEditStatus("");
+    // The panel renders inline above the project grid; bring it into view.
+    requestAnimationFrame(() =>
+      editPanelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }),
+    );
   };
 
   const handleEditChange = (event) => {
@@ -472,13 +483,24 @@ export default function UserDashboard({ navigate }) {
       return;
     }
 
+    // Same "$250,000" format the Post opportunity form uses; free text such
+    // as "1.5M" is kept as typed, just with the currency sign.
+    const rawGoal = String(editForm.fundingGoal).trim();
+    const goalAmount = /^[\d,.\s]+$/.test(rawGoal)
+      ? Number(rawGoal.replace(/[^0-9.]/g, "")) || 0
+      : null;
+    const fundingGoal =
+      goalAmount !== null
+        ? `$${goalAmount.toLocaleString("en-US")}`
+        : `$${rawGoal.replace(/^\$\s*/, "")}`;
+
     try {
       await updateOpportunity(editTarget.id, {
         title: editForm.title,
         company: editForm.company,
         sector: editForm.sector || "Others",
         location: editForm.location || "TBD",
-        funding_goal: editForm.fundingGoal || "$0",
+        funding_goal: fundingGoal,
         description: editForm.description || "",
         timeline: editForm.timeline || "TBD",
         image: editForm.image || null,
@@ -492,7 +514,7 @@ export default function UserDashboard({ navigate }) {
               company: editForm.company,
               sector: editForm.sector,
               location: editForm.location,
-              goal: editForm.fundingGoal,
+              goal: fundingGoal,
               blurb: editForm.description,
               timeline: editForm.timeline,
               image: editForm.image,
@@ -509,11 +531,6 @@ export default function UserDashboard({ navigate }) {
       setEditLoading(false);
     }
   };
-
-  const inputClassName =
-    "w-full rounded-2xl border border-white/20 bg-white/35 px-4 py-3 text-sm text-ink-900 outline-none placeholder:text-ink-400 backdrop-blur-sm dark:border-white/10 dark:bg-ink-950/35 dark:text-ink-50 dark:placeholder:text-ink-500";
-  const fieldLabelClassName =
-    "mb-2 block text-sm font-medium text-ink-700 dark:text-ink-300";
 
   if (!user) {
     return (
@@ -715,6 +732,203 @@ export default function UserDashboard({ navigate }) {
                 </AnimatePresence>
               </motion.div>
             )}
+
+            <AnimatePresence>
+              {editTarget && (
+                <motion.form
+                  key={editTarget.id}
+                  ref={editPanelRef}
+                  onSubmit={handleEditSubmit}
+                  noValidate
+                  className={`${panelClassName} scroll-mt-24`}
+                  initial={{ opacity: 0, y: -12, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -12, scale: 0.98 }}
+                  transition={{ duration: 0.3, ease: "easeOut" }}
+                >
+                  {/* Cover banner — doubles as the image picker */}
+                  <label className="group relative flex min-h-[190px] cursor-pointer flex-wrap items-end gap-4 overflow-hidden rounded-[20px] border border-dashed border-brand-500/40 bg-[radial-gradient(70%_120%_at_15%_0%,rgba(16,185,129,0.22)_0%,rgba(16,185,129,0)_70%),rgba(5,9,15,0.4)] px-5 py-5 transition-colors hover:border-brand-500/70 sm:px-[26px] sm:py-[22px]">
+                    {editForm.image && (
+                      <>
+                        <img src={editForm.image} alt="" className="absolute inset-0 h-full w-full object-cover" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-[rgba(5,9,15,0.85)] to-[rgba(5,9,15,0.1)]" />
+                      </>
+                    )}
+                    <div className="relative">
+                      <h2 className="text-[26px] font-semibold text-white">Edit opportunity</h2>
+                      <p className="mt-1.5 text-[13px] text-white/60">
+                        {editForm.image
+                          ? "Click to change the cover image."
+                          : "This banner is your cover image. Add a photo here (optional)."}
+                      </p>
+                    </div>
+                    <span className="relative ml-auto inline-flex items-center gap-1.5 rounded-full border border-white/[0.18] bg-[rgba(5,9,15,0.6)] px-3.5 py-2 text-[13px] font-semibold text-white">
+                      <Upload className="h-3.5 w-3.5" />
+                      {editForm.image ? "Replace cover" : "Upload cover"}
+                    </span>
+                    <input
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp"
+                      onChange={handleEditImageChange}
+                      className="sr-only"
+                    />
+                  </label>
+
+                  <FormSection n="01" title="The basics" hint="How investors will find you.">
+                    <div className="flex flex-col gap-3.5">
+                      <div className="grid gap-3.5 sm:grid-cols-2">
+                        <label className={formLabelClassName}>
+                          Title *
+                          <input
+                            name="title"
+                            value={editForm.title}
+                            onChange={handleEditChange}
+                            placeholder="e.g. AI diagnostic platform"
+                            className={formInputClassName}
+                          />
+                        </label>
+                        <label className={formLabelClassName}>
+                          Company *
+                          <input
+                            name="company"
+                            value={editForm.company}
+                            onChange={handleEditChange}
+                            placeholder="e.g. NovaVet AI"
+                            className={formInputClassName}
+                          />
+                        </label>
+                      </div>
+                      <div className="grid gap-3.5 sm:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+                        <div className="flex flex-col gap-2">
+                          <span className="text-[13px] font-semibold text-white/85">Sector *</span>
+                          <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Sector">
+                            {sectors.filter((s) => s !== "All").map((s) => {
+                              const active = editForm.sector === s;
+                              return (
+                                <button
+                                  key={s}
+                                  type="button"
+                                  role="radio"
+                                  aria-checked={active}
+                                  onClick={() => setEditForm((current) => ({ ...current, sector: s }))}
+                                  className={`rounded-full border px-3 py-[7px] text-xs font-semibold transition-colors ${
+                                    active
+                                      ? "border-brand-500 bg-brand-500/[0.18] text-brand-300"
+                                      : "border-white/[0.14] text-white/80 hover:border-white/30"
+                                  }`}
+                                >
+                                  {s}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                        <label className={formLabelClassName}>
+                          Location
+                          <input
+                            name="location"
+                            value={editForm.location}
+                            onChange={handleEditChange}
+                            placeholder="e.g. Dhaka, BD"
+                            className={formInputClassName}
+                          />
+                        </label>
+                      </div>
+                    </div>
+                  </FormSection>
+
+                  <FormSection n="02" title="The raise" hint="How much, and how long it's open.">
+                    <div className="grid gap-3.5 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
+                      <label className={formLabelClassName}>
+                        Funding goal
+                        <span className="flex h-11 items-center overflow-hidden rounded-xl border border-white/[0.12] bg-[rgba(5,9,15,0.5)] transition focus-within:border-brand-500 focus-within:shadow-[0_0_0_3px_rgba(16,185,129,0.18)]">
+                          <span className="flex h-full items-center border-r border-white/[0.08] px-3 text-sm font-semibold text-white/50">
+                            USD $
+                          </span>
+                          <input
+                            name="fundingGoal"
+                            value={editForm.fundingGoal}
+                            onChange={handleEditChange}
+                            inputMode="decimal"
+                            placeholder="250,000"
+                            className="h-full min-w-0 flex-1 border-none bg-transparent px-3 text-sm font-normal text-white outline-none placeholder:text-white/35 focus-visible:shadow-none"
+                          />
+                        </span>
+                      </label>
+                      <div className="flex flex-col gap-1.5">
+                        <span className="text-[13px] font-semibold text-white/85">Open for</span>
+                        <div
+                          role="radiogroup"
+                          aria-label="Open for"
+                          className="grid h-11 grid-cols-4 gap-1 rounded-xl border border-white/[0.12] bg-[rgba(5,9,15,0.5)] p-1"
+                        >
+                          {OPEN_FOR_DAYS.map((n) => {
+                            const active = parseInt(editForm.timeline, 10) === n;
+                            return (
+                              <button
+                                key={n}
+                                type="button"
+                                role="radio"
+                                aria-checked={active}
+                                onClick={() => setEditForm((current) => ({ ...current, timeline: `${n} days` }))}
+                                className={`rounded-lg text-[13px] font-semibold transition-colors ${
+                                  active ? "bg-brand-500/[0.22] text-brand-300" : "text-white/70 hover:text-white"
+                                }`}
+                              >
+                                {n} days
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  </FormSection>
+
+                  <FormSection n="03" title="The story" hint="Two or three sentences work best." last>
+                    <label className={formLabelClassName}>
+                      Description
+                      <textarea
+                        name="description"
+                        value={editForm.description}
+                        onChange={handleEditChange}
+                        rows={4}
+                        placeholder="What problem does it solve, who has it, and what traction do you have?"
+                        className={`${formInputClassName} h-auto resize-y py-3 leading-relaxed`}
+                      />
+                    </label>
+                  </FormSection>
+
+                  {/* Footer */}
+                  <div className="flex flex-wrap items-center gap-3 border-t border-white/[0.08] pt-5">
+                    <span
+                      className={`text-[13px] ${
+                        !editStatus
+                          ? "text-white/55"
+                          : editStatus.includes("successfully")
+                            ? "text-brand-300"
+                            : "text-red-400"
+                      }`}
+                    >
+                      {editStatus || "Fields marked * are required."}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={closeEdit}
+                      className="ml-auto rounded-full border border-white/[0.14] px-5 py-3 text-sm font-semibold text-white/85 transition-colors hover:border-white/30 hover:text-white"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={editLoading}
+                      className="rounded-full bg-brand-500 px-[22px] py-3 text-sm font-semibold text-[#05090f] transition-colors hover:bg-brand-400 disabled:opacity-60"
+                    >
+                      {editLoading ? "Saving…" : "Save changes"}
+                    </button>
+                  </div>
+                </motion.form>
+              )}
+            </AnimatePresence>
 
             {filteredProjects.length === 0 ? (
               <div className="glass-panel-strong holo-card rounded-[2rem] p-8 text-center">
@@ -929,197 +1143,6 @@ export default function UserDashboard({ navigate }) {
                       : "Remove project"}
                   </button>
                 </div>
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        <AnimatePresence>
-          {editTarget && (
-            <motion.div
-              className="fixed inset-0 z-50 grid place-items-center bg-black/30 px-4"
-              variants={modalOverlay}
-              initial="hidden"
-              animate="visible"
-              exit="exit"
-              onClick={closeEdit}
-            >
-              <motion.div
-                className="glass-panel-strong holo-card w-full max-w-lg rounded-[2rem] p-8"
-                variants={modalPanel}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <h2 className="font-display text-xl font-bold text-ink-900 dark:text-ink-50">
-                      Edit opportunity
-                    </h2>
-                    <p className="mt-1 text-sm text-ink-500 dark:text-ink-400">
-                      Update the details below and save your changes.
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={closeEdit}
-                    className="text-ink-400 hover:text-ink-700 dark:text-ink-500 dark:hover:text-ink-300"
-                    aria-label="Close"
-                  >
-                    <X className="h-5 w-5" />
-                  </button>
-                </div>
-
-                {editStatus && (
-                  <p
-                    className={`mt-4 text-sm ${editStatus.includes("successfully") ? "text-brand-700 dark:text-brand-300" : "text-rose-600 dark:text-rose-400"}`}
-                  >
-                    {editStatus}
-                  </p>
-                )}
-
-                <form className="mt-6 space-y-4" onSubmit={handleEditSubmit}>
-                  <div className="flex flex-col items-center">
-                    <label className="group relative cursor-pointer">
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleEditImageChange}
-                        className="sr-only"
-                      />
-                      <div className="flex h-48 w-48 items-center justify-center overflow-hidden rounded-3xl border-2 border-dashed border-ink-300 bg-ink-50 transition group-hover:border-brand-400 group-hover:bg-brand-50 dark:border-ink-600 dark:bg-ink-800 dark:group-hover:border-brand-500 dark:group-hover:bg-brand-900/20">
-                        {editForm.image ? (
-                          <img
-                            src={editForm.image}
-                            alt="Opportunity preview"
-                            className="h-full w-full object-cover"
-                          />
-                        ) : (
-                          <div className="flex flex-col items-center gap-1 text-ink-400 dark:text-ink-500">
-                            <ImageIcon className="h-8 w-8" />
-                            <span className="text-xs font-medium">
-                              Opportunity image
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    </label>
-                    <p className="mt-2 text-xs text-ink-500 dark:text-ink-400">
-                      Upload a cover image (optional)
-                    </p>
-                  </div>
-
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <label className="block">
-                      <span className={fieldLabelClassName}>Title *</span>
-                      <input
-                        type="text"
-                        name="title"
-                        value={editForm.title}
-                        onChange={handleEditChange}
-                        required
-                        placeholder="e.g., AI-Powered Diagnostic Platform"
-                        className={inputClassName}
-                      />
-                    </label>
-                    <label className="block">
-                      <span className={fieldLabelClassName}>Company *</span>
-                      <input
-                        type="text"
-                        name="company"
-                        value={editForm.company}
-                        onChange={handleEditChange}
-                        required
-                        placeholder="e.g., NovaVet AI"
-                        className={inputClassName}
-                      />
-                    </label>
-                  </div>
-
-                  <div className="grid gap-4 md:grid-cols-3">
-                    <label className="block">
-                      <span className={fieldLabelClassName}>Sector *</span>
-                      <select
-                        name="sector"
-                        value={editForm.sector}
-                        onChange={handleEditChange}
-                        required
-                        className={inputClassName}
-                      >
-                        <option value="">Select a sector</option>
-                        {sectors
-                          .filter((s) => s !== "All")
-                          .map((s) => (
-                            <option key={s} value={s}>
-                              {s}
-                            </option>
-                          ))}
-                      </select>
-                    </label>
-                    <label className="block">
-                      <span className={fieldLabelClassName}>Location</span>
-                      <input
-                        type="text"
-                        name="location"
-                        value={editForm.location}
-                        onChange={handleEditChange}
-                        placeholder="e.g., San Francisco, US"
-                        className={inputClassName}
-                      />
-                    </label>
-                    <label className="block">
-                      <span className={fieldLabelClassName}>Funding goal</span>
-                      <input
-                        type="text"
-                        name="fundingGoal"
-                        value={editForm.fundingGoal}
-                        onChange={handleEditChange}
-                        placeholder="e.g., $1.5M"
-                        className={inputClassName}
-                      />
-                    </label>
-                  </div>
-
-                  <label className="block">
-                    <span className={fieldLabelClassName}>Description</span>
-                    <textarea
-                      name="description"
-                      value={editForm.description}
-                      onChange={handleEditChange}
-                      rows="3"
-                      placeholder="Describe the opportunity, what problem it solves, and why it matters..."
-                      className={inputClassName}
-                    />
-                  </label>
-
-                  <label className="block">
-                    <span className={fieldLabelClassName}>Timeline</span>
-                    <input
-                      type="text"
-                      name="timeline"
-                      value={editForm.timeline}
-                      onChange={handleEditChange}
-                      placeholder="e.g., 14 days"
-                      className={inputClassName}
-                    />
-                  </label>
-
-                  <div className="flex items-center justify-end gap-3">
-                    <button
-                      type="button"
-                      onClick={closeEdit}
-                      className="btn-ghost"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      className="btn-primary"
-                      disabled={editLoading}
-                    >
-                      <Rocket className="h-4 w-4" />
-                      {editLoading ? "Saving..." : "Save changes"}
-                    </button>
-                  </div>
-                </form>
               </motion.div>
             </motion.div>
           )}
