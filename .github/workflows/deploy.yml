@@ -70,18 +70,29 @@ jobs:
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
         run: |
+          if [ -z "$SSH_PRIVATE_KEY" ]; then
+            echo "::error::SSH_PRIVATE_KEY secret is empty or missing (Settings > Secrets and variables > Actions)"
+            exit 1
+          fi
           mkdir -p ~/.ssh
           printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
-          ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts
+          if ! ssh-keygen -y -f ~/.ssh/deploy_key > /dev/null; then
+            echo "::error::SSH_PRIVATE_KEY is not a valid private key - paste the whole file incl. BEGIN/END lines"
+            exit 1
+          fi
+          # Pinned server host key (verified fingerprint
+          # SHA256:Cym4zPlGHAzM3Wwr/dQ7VgcHbfYaHh/nWg0sQpqieC4) instead of a
+          # live ssh-keyscan, which can time out from GitHub's runners.
+          echo "$DEPLOY_HOST ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICThfk3Q+A778ErCHs9ONqm4eMXaaGhhllW+7oydVqae" >> ~/.ssh/known_hosts
 
       - name: Copy the release with scp
-        run: scp -i ~/.ssh/deploy_key release.tar.gz "$DEPLOY_USER@$DEPLOY_HOST:~/release.tar.gz"
+        run: scp -o ConnectTimeout=30 -i ~/.ssh/deploy_key release.tar.gz "$DEPLOY_USER@$DEPLOY_HOST:~/release.tar.gz"
 
       # ---------- On the server (one ssh command) ----------
       - name: Unpack, migrate and optimize on the server
         run: |
-          ssh -i ~/.ssh/deploy_key "$DEPLOY_USER@$DEPLOY_HOST" 'bash -s' <<'EOF'
+          ssh -o ConnectTimeout=30 -i ~/.ssh/deploy_key "$DEPLOY_USER@$DEPLOY_HOST" 'bash -s' <<'EOF'
           set -euo pipefail
           cd ~/laravel
           test -f .env || { echo ".env is missing in ~/laravel - create it on the server first"; exit 1; }
