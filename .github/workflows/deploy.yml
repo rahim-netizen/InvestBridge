@@ -1,0 +1,106 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  DEPLOY_USER: s20230204054
+  DEPLOY_HOST: 187.52.122.100
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Get the code
+        uses: actions/checkout@v4
+
+      - name: Use PHP 8.4, same as the server
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+
+      # ---------- On GitHub (the runner) ----------
+
+      # Production install: no dev packages, optimized autoloader, no prompts.
+      # Creates packages/api-backend/vendor/.
+      - name: Install PHP packages
+        working-directory: packages/api-backend
+        run: composer install --no-dev --optimize-autoloader --no-interaction --no-progress --prefer-dist
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: npm
+          cache-dependency-path: packages/ui/package-lock.json
+
+      # vite.config.js builds straight into packages/api-backend/public/app/.
+      - name: Build the React app
+        working-directory: packages/ui
+        run: |
+          npm ci
+          npm run build
+          if [ ! -f ../api-backend/public/app/index.html ]; then
+            echo "::error::public/app/index.html was not created - check vite.config.js"
+            exit 1
+          fi
+
+      # One archive of the Laravel app with vendor/ and public/app/, and
+      # without .git, node_modules or any .env file.
+      - name: Pack the release
+        working-directory: packages/api-backend
+        run: |
+          tar --exclude='.git' --exclude='node_modules' \
+              --exclude='.env' --exclude='.env.*' \
+              --exclude='./storage/logs/*.log' \
+              -czf "$GITHUB_WORKSPACE/release.tar.gz" .
+          tar -tzf "$GITHUB_WORKSPACE/release.tar.gz" > "$RUNNER_TEMP/files.txt"
+          grep -qx './vendor/autoload.php' "$RUNNER_TEMP/files.txt"
+          grep -qx './public/app/index.html' "$RUNNER_TEMP/files.txt"
+          if grep -Eq '(^|/)\.env$|node_modules/|(^|/)\.git/' "$RUNNER_TEMP/files.txt"; then
+            echo "::error::archive contains .env, node_modules or .git"
+            exit 1
+          fi
+          ls -lh "$GITHUB_WORKSPACE/release.tar.gz"
+
+      - name: Load the deploy key
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts
+
+      - name: Copy the release with scp
+        run: scp -i ~/.ssh/deploy_key release.tar.gz "$DEPLOY_USER@$DEPLOY_HOST:~/release.tar.gz"
+
+      # ---------- On the server (one ssh command) ----------
+      - name: Unpack, migrate and optimize on the server
+        run: |
+          ssh -i ~/.ssh/deploy_key "$DEPLOY_USER@$DEPLOY_HOST" 'bash -s' <<'EOF'
+          set -euo pipefail
+          cd ~/laravel
+          test -f .env || { echo ".env is missing in ~/laravel - create it on the server first"; exit 1; }
+
+          # Unpack over the existing folder; the archive has no .env, so it survives.
+          # Drop the old build first so stale JS/CSS bundles do not pile up.
+          rm -rf public/app
+          tar -xzf ~/release.tar.gz -C ~/laravel
+
+          # Laravel's writable folders.
+          mkdir -p storage/logs bootstrap/cache storage/framework/{cache/data,sessions,views}
+          chmod -R u+rwX storage bootstrap/cache
+
+          php artisan migrate --force
+
+          # Cache config/routes/views here, never on GitHub: cached config
+          # remembers the machine it was built on.
+          php artisan optimize
+
+          rm -f ~/release.tar.gz
+          echo "Deployed at $(date)"
+          EOF

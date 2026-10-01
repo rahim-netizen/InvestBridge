@@ -160,7 +160,7 @@ class PaymentController extends Controller
         // uses) and route them through the Vite /api proxy so they are always
         // reachable, rather than relying on APP_URL/route() host resolution.
         $frontendBase = rtrim(
-            env('FRONTEND_URL', Config::get('app.url', 'http://localhost:5173')),
+            config('app.frontend_url'),
             '/',
         );
         $response = (new SslCommerzService())->initiate([
@@ -300,7 +300,7 @@ class PaymentController extends Controller
     protected function redirectFrontend($opportunityId, $status, $tranId = null)
     {
         $base = rtrim(
-            env('FRONTEND_URL', Config::get('app.url', 'http://localhost:5173')),
+            config('app.frontend_url'),
             '/',
         );
         // Return to the user dashboard, which renders the result modal in-page.

@@ -47,7 +47,7 @@ export default function VerifyEmailPending({ navigate }) {
       <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden opacity-95 dark:opacity-85">
         {!bgImageError ? (
           <img
-            src="/investBridge.png"
+            src={`${import.meta.env.BASE_URL}investBridge.png`}
             alt=""
             aria-hidden="true"
             className="h-full w-full object-cover object-[center_34%]"

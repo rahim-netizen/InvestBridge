@@ -334,7 +334,7 @@ function Hero() {
           }}
         >
           <img
-            src="/hero-calculator.png"
+            src={`${import.meta.env.BASE_URL}hero-calculator.png`}
             alt=""
             className="absolute inset-0 h-full w-full object-cover opacity-90 mix-blend-lighten"
           />
@@ -374,7 +374,7 @@ function Hero() {
           }}
         >
           <img
-            src="/hero-globe.jpg"
+            src={`${import.meta.env.BASE_URL}hero-globe.jpg`}
             alt=""
             className="absolute inset-0 h-full w-full object-cover opacity-90 mix-blend-lighten"
           />
@@ -459,7 +459,7 @@ function Hero() {
             style={{ scale: globeScale, transformOrigin: "80% 50%" }}
           >
             <img
-              src="/hero-globe.jpg"
+              src={`${import.meta.env.BASE_URL}hero-globe.jpg`}
               alt=""
               className="h-full w-full object-cover opacity-90"
             />
