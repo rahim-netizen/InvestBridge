@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\ConnectedOpportunity;
+use App\Models\Opportunity;
 use App\Models\Payout;
 use App\Services\EscrowPayoutService;
 use App\Services\SslCommerzService;
@@ -10,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Escrow payouts to investors.
@@ -166,13 +168,59 @@ class PayoutController extends Controller
                             'paid_at' => now(),
                         ]);
                     }
+
+                    if ($connection) {
+                        $this->completeRoundIfFullyPaid($connection->opportunity_id);
+                    }
                 });
             }
         } catch (\Throwable $e) {
-            // Never leave the admin on the API route.
+            // Never leave the admin stranded on the API route, but do not let a
+            // settlement failure disappear silently.
+            Log::error('Payout settlement failed', [
+                'tran_id' => $payout->tran_id,
+                'connected_opportunity_id' => $payout->connected_opportunity_id,
+                'exception' => $e->getMessage(),
+            ]);
         }
 
         return $this->redirectAdmin('success', $payout->tran_id);
+    }
+
+    /**
+     * Once every funded investor on a round has been paid out, close the round.
+     *
+     * Runs inside the payout transaction so the round is never left
+     * "Progress" with nothing left to pay, and never marked "Completed" while
+     * an investor is still owed money.
+     */
+    protected function completeRoundIfFullyPaid($opportunityId): void
+    {
+        if (! $opportunityId) {
+            Log::warning('Skipping round completion: connection has no opportunity', [
+                'opportunity_id' => $opportunityId,
+            ]);
+
+            return;
+        }
+
+        $opportunity = Opportunity::find($opportunityId);
+
+        if (! $opportunity) {
+            return;
+        }
+
+        if (! (new EscrowPayoutService())->allInvestorsPaid($opportunityId)) {
+            return;
+        }
+
+        // Leave an already-closed or suspended round alone; this only advances
+        // a round that was still open for funding.
+        if (in_array($opportunity->status, ['Completed', 'completed'], true)) {
+            return;
+        }
+
+        $opportunity->update(['status' => 'Completed']);
     }
 
     public function fail(Request $request)

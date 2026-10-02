@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ConnectedOpportunity;
 use App\Models\EntrepreneurTransaction;
 use App\Models\Opportunity;
 use App\Services\CloudinaryService;
@@ -95,15 +96,47 @@ class EntrepreneurTransactionController extends Controller
         $currency = Config::get('services.sslcommerz.currency', 'BDT');
 
         if (! $wantsToPay) {
-            $transaction = EntrepreneurTransaction::create([
-                'opportunity_id' => $opportunity->id,
-                'entrepreneur_id' => $user->id,
-                'amount' => 0,
-                'currency' => $currency,
-                'image' => $image,
-                'description' => $validated['description'],
-                'status' => 'waived',
-            ]);
+            $transaction = DB::transaction(function () use (
+                $opportunity,
+                $user,
+                $currency,
+                $image,
+                $validated
+            ) {
+                $transaction = EntrepreneurTransaction::create([
+                    'opportunity_id' => $opportunity->id,
+                    'entrepreneur_id' => $user->id,
+                    'amount' => 0,
+                    'currency' => $currency,
+                    'image' => $image,
+                    'description' => $validated['description'],
+                    'status' => 'waived',
+                ]);
+
+                // A founder who submits without paying has settled the round:
+                // there is no escrow pot, so there is nothing left to fund or
+                // pay out. Closing the post here is what unlocks investor
+                // ratings, which are only available on completed posts.
+                $opportunity->update(['status' => 'Completed']);
+
+                // With no escrow to release, every funded investor on this round
+                // is settled too, so their saved posts are marked completed
+                // rather than left sitting at "pending payout" forever.
+                //
+                // Only rows with a real commitment are touched: someone who
+                // merely saved the post never paid in, so their row keeps its
+                // own state.
+                ConnectedOpportunity::where('opportunity_id', $opportunity->id)
+                    ->where('investment_amount', '>', 0)
+                    ->where('status', '!=', 'completed')
+                    ->update([
+                        'status' => 'completed',
+                        'payout_amount' => 0,
+                        'paid_at' => now(),
+                    ]);
+
+                return $transaction;
+            });
 
             return response()->json([
                 'transaction' => $transaction,

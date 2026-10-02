@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Support\Facades\Event;
+use App\Listeners\SyncUserPostCount;
 
     #[Fillable([
     'user_id',
@@ -36,5 +38,17 @@ class Opportunity extends Model
     public function investor()
     {
         return $this->belongsTo(User::class, 'investor_id');
+    }
+
+    /**
+     * Keep the founder's cached post count correct whenever a post is added or
+     * removed, whichever controller does it.
+     */
+    protected static function booted(): void
+    {
+        $listener = new SyncUserPostCount();
+
+        static::created(fn (Opportunity $opportunity) => $listener->handleCreated($opportunity));
+        static::deleted(fn (Opportunity $opportunity) => $listener->handleDeleted($opportunity));
     }
 }

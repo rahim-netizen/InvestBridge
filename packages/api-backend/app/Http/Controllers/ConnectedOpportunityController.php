@@ -37,6 +37,14 @@ class ConnectedOpportunityController extends Controller
                 'investor_share',
                 round($payouts->investorShare($connection) * 100, 2),
             );
+            // When the founder funded nothing there is no escrow to release,
+            // so hand over their submission (image + description) instead.
+            $connection->setAttribute(
+                'submission',
+                $payouts->potFor($connection) <= 0
+                    ? $payouts->submissionFor($connection)
+                    : null,
+            );
         });
 
         return response()->json([

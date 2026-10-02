@@ -7,23 +7,27 @@ import {
   CalendarClock,
   CheckCircle2,
   CreditCard,
+  FileText,
   Globe2,
   Landmark,
   Layers,
+  Loader2,
   Mail,
   MessageCircle,
   Receipt,
+  Star,
   Target,
   TrendingUp,
   UserRound,
   Users2,
 } from "lucide-react";
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import PageBackground, { AURORA_BG } from "./PageBackground.jsx";
 import PageDecor from "./PageDecor.jsx";
 import EntrepreneurSubmitModal from "./EntrepreneurSubmitModal.jsx";
 import GradientText from "./GradientText.jsx";
+import { getOpportunityRating, rateFounder } from "../api/opportunities";
 import { fadeUp, fadeUpBlur, stagger } from "../lib/motion.jsx";
 
 const STATUS_STYLES = {
@@ -163,6 +167,8 @@ function Status({
   const myShare = Number(opp.myShare) || 0;
   const paidAt = opp.paidAt || null;
   const entrepreneur = opp.entrepreneur || null;
+  // The founder's own submission, present only when they funded no escrow.
+  const submission = opp.submission || null;
   const progressPercent = goal > 0 ? Math.min(100, Math.round((invested / goal) * 100)) : 0;
 
   const milestones = [
@@ -206,6 +212,62 @@ function Status({
   );
 
   const [submitOpen, setSubmitOpen] = useState(false);
+
+  // Rating is only available to an investor on a completed post, so the state
+  // is fetched rather than inferred from the post's status.
+  const [ratingState, setRatingState] = useState({
+    can_rate: false,
+    is_investor: false,
+    already_rated: false,
+    my_rating: null,
+    entrepreneur_rating: 0,
+    rating_count: 0,
+  });
+  const [ratingError, setRatingError] = useState("");
+  const [ratingSubmitting, setRatingSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (isOwner || !opp.id) return;
+
+    let cancelled = false;
+
+    getOpportunityRating(opp.id)
+      .then((data) => {
+        if (!cancelled) setRatingState(data);
+      })
+      .catch(() => {
+        // Leave the defaults in place; the panel simply shows no rating.
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [opp.id, isOwner, status]);
+
+  const onRate = async (value) => {
+    setRatingSubmitting(true);
+    setRatingError("");
+
+    try {
+      const data = await rateFounder(opp.id, value);
+      setRatingState((current) => ({
+        ...current,
+        can_rate: false,
+        already_rated: true,
+        my_rating: value,
+        entrepreneur_rating: data.entrepreneur_rating ?? current.entrepreneur_rating,
+        rating_count: current.rating_count + 1,
+      }));
+    } catch (err) {
+      setRatingError(err.message || "Could not submit your rating.");
+      // Re-read the server state, since the refusal may mean it was already rated.
+      getOpportunityRating(opp.id)
+        .then((data) => setRatingState(data))
+        .catch(() => {});
+    } finally {
+      setRatingSubmitting(false);
+    }
+  };
 
   const openChatWith = (person) =>
     navigate("/connect", {
@@ -433,6 +495,41 @@ function Status({
                   </p>
                 </div>
               ) : null}
+
+              {submission ? (
+                <div className="mt-6 rounded-2xl border border-white/10 bg-white/[0.04] p-5">
+                  <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-brand-300">
+                    <FileText className="h-4 w-4" />
+                    From the entrepreneur
+                  </div>
+                  <p className="mt-2 text-sm text-white/55">
+                    This founder did not fund an escrow balance, so there is no
+                    payout to release. What they submitted with the post is
+                    below.
+                  </p>
+
+                  {submission.image ? (
+                    <img
+                      src={submission.image}
+                      alt="Submitted by the entrepreneur"
+                      className="mt-4 max-h-96 w-full rounded-2xl object-cover"
+                    />
+                  ) : null}
+
+                  {submission.description ? (
+                    <p className="mt-4 whitespace-pre-line text-base leading-relaxed text-white/75">
+                      {submission.description}
+                    </p>
+                  ) : null}
+
+                  {submission.submitted_at ? (
+                    <p className="mt-3 text-xs text-white/40">
+                      Submitted{" "}
+                      {new Date(submission.submitted_at).toLocaleDateString()}
+                    </p>
+                  ) : null}
+                </div>
+              ) : null}
             </motion.section>
 
             {!isOwner ? (
@@ -546,6 +643,57 @@ function Status({
                     </div>
                   </div>
                 ) : null}
+
+                <div className="mt-6 rounded-2xl border border-white/10 bg-white/[0.04] p-5">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-semibold text-white">
+                        Rate {entrepreneur.name}
+                      </p>
+                      <p className="mt-0.5 text-xs text-white/50">
+                        {ratingState.already_rated
+                          ? `You rated this founder ${ratingState.my_rating} out of 5. Ratings are one per post.`
+                          : ratingState.is_investor && status === "Completed"
+                            ? "This round is complete, so you can rate how it went."
+                            : "Ratings open once this round is completed and you have invested in it."}
+                      </p>
+                    </div>
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-semibold text-white/80">
+                      <Star className="h-3.5 w-3.5 fill-gold-300 text-gold-300" />
+                      {(Number(ratingState.entrepreneur_rating) || 0).toFixed(2)}
+                      <span className="font-normal text-white/45">
+                        ({ratingState.rating_count || 0})
+                      </span>
+                    </span>
+                  </div>
+
+                  {ratingState.can_rate ? (
+                    <div className="mt-4 flex flex-wrap items-center gap-2">
+                      {[1, 2, 3, 4, 5].map((value) => (
+                        <button
+                          key={value}
+                          type="button"
+                          disabled={ratingSubmitting}
+                          onClick={() => onRate(value)}
+                          className="grid h-10 w-10 place-items-center rounded-xl border border-white/15 bg-white/5 text-white/70 transition-colors hover:border-gold-300/60 hover:text-gold-300 disabled:cursor-not-allowed disabled:opacity-50"
+                          title={`${value} out of 5`}
+                          aria-label={`Rate ${value} out of 5`}
+                        >
+                          <Star className="h-4 w-4" />
+                        </button>
+                      ))}
+                      {ratingSubmitting ? (
+                        <Loader2 className="h-4 w-4 animate-spin text-white/60" />
+                      ) : null}
+                    </div>
+                  ) : null}
+
+                  {ratingError ? (
+                    <p className="mt-3 text-xs font-medium text-rose-300">
+                      {ratingError}
+                    </p>
+                  ) : null}
+                </div>
               </motion.section>
             ) : null}
 
