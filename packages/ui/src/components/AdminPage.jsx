@@ -49,26 +49,30 @@ import {
 
 /* ---------- primitives ---------------------------------------------------- */
 
-// A colored stat card in the SB-Admin style: solid gradient body with an icon
-// tile and value, and a "view details" footer that jumps to the matching tab.
+// Stat card on the same dark glass surface as the dashboard's cards; the tone
+// only tints the icon tile and the glow. The footer jumps to the matching tab.
 function StatCard({ icon: Icon, label, value, tone, onClick, isInView }) {
   const display = useCountUp(String(value), isInView);
   const tones = {
     brand: {
-      body: "from-brand-500 to-brand-700",
-      footer: "bg-brand-800/70",
+      icon: "bg-brand-500/15 text-brand-300 ring-brand-500/30",
+      glow: "rgba(16,185,129,0.28)",
+      hover: "hover:border-brand-500/50",
     },
     sky: {
-      body: "from-sky-500 to-sky-700",
-      footer: "bg-sky-800/70",
+      icon: "bg-sky-500/15 text-sky-300 ring-sky-500/30",
+      glow: "rgba(14,165,233,0.26)",
+      hover: "hover:border-sky-500/50",
     },
     gold: {
-      body: "from-amber-500 to-amber-600",
-      footer: "bg-amber-700/70",
+      icon: "bg-amber-500/15 text-amber-300 ring-amber-500/30",
+      glow: "rgba(245,158,11,0.24)",
+      hover: "hover:border-amber-500/50",
     },
     rose: {
-      body: "from-rose-500 to-rose-600",
-      footer: "bg-rose-700/70",
+      icon: "bg-rose-500/15 text-rose-300 ring-rose-500/30",
+      glow: "rgba(244,63,94,0.24)",
+      hover: "hover:border-rose-500/50",
     },
   }[tone];
 
@@ -78,16 +82,21 @@ function StatCard({ icon: Icon, label, value, tone, onClick, isInView }) {
       onClick={onClick}
       variants={fadeUp}
       whileHover={{ y: -3 }}
-      className={`group flex flex-col overflow-hidden rounded-2xl text-left text-white shadow-[0_18px_40px_rgba(2,6,23,0.35)] ring-1 ring-white/10 transition-shadow hover:shadow-[0_24px_60px_rgba(2,6,23,0.5)]`}
+      className={`group flex flex-col overflow-hidden rounded-[24px] border border-white/10 bg-[rgba(5,9,15,0.55)] text-left text-white backdrop-blur transition-colors duration-300 ${tones.hover}`}
     >
       <div
-        className={`flex items-center gap-4 bg-gradient-to-br ${tones.body} p-5`}
+        className="flex items-center gap-4 p-5"
+        style={{
+          backgroundImage: `radial-gradient(90% 80% at 0% 0%, ${tones.glow} 0%, transparent 70%)`,
+        }}
       >
-        <div className="grid h-12 w-12 place-items-center rounded-2xl bg-white/15 ring-1 ring-white/30 backdrop-blur-sm">
+        <div
+          className={`grid h-12 w-12 place-items-center rounded-2xl ring-1 ${tones.icon}`}
+        >
           <Icon className="h-6 w-6" />
         </div>
         <div>
-          <p className="text-xs font-semibold uppercase tracking-widest text-white/75">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/50">
             {label}
           </p>
           <p className="mt-0.5 font-display text-2xl font-extrabold leading-tight">
@@ -96,7 +105,7 @@ function StatCard({ icon: Icon, label, value, tone, onClick, isInView }) {
         </div>
       </div>
       <div
-        className={`flex items-center justify-between px-5 py-2.5 text-xs font-semibold text-white/85 ${tones.footer}`}
+        className="flex items-center justify-between border-t border-white/[0.08] px-5 py-2.5 text-xs font-semibold text-white/60 transition-colors group-hover:text-white/85"
       >
         View details
         <ChevronRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
@@ -115,9 +124,9 @@ function ContentCard({ icon: Icon, title, actions, children }) {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -8 }}
       transition={{ duration: 0.2 }}
-      className="glass-panel overflow-hidden rounded-2xl"
+      className="overflow-hidden rounded-[24px] border border-white/10 bg-[rgba(5,9,15,0.55)] backdrop-blur"
     >
-      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 bg-white/60 px-5 py-3.5 dark:bg-ink-950/60">
+      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-white/[0.08] px-5 py-3.5">
         <div className="flex items-center gap-2 text-sm font-semibold text-ink-800 dark:text-ink-100">
           {Icon && (
             <Icon className="h-4 w-4 text-brand-600 dark:text-brand-400" />
@@ -1321,7 +1330,7 @@ export default function AdminPage({ navigate }) {
   const renderActiveContent = () => {
     if (loading) {
       return (
-        <div className="glass-panel flex flex-col items-center justify-center gap-3 rounded-2xl py-16 text-ink-400">
+        <div className="flex flex-col items-center justify-center gap-3 rounded-[24px] border border-white/10 bg-[rgba(5,9,15,0.55)] py-16 backdrop-blur text-ink-400">
           <Loader2 className="h-6 w-6 animate-spin" />
           <p className="text-sm font-medium">Loading admin dataâ€¦</p>
         </div>
@@ -1329,7 +1338,7 @@ export default function AdminPage({ navigate }) {
     }
     if (loadError) {
       return (
-        <div className="glass-panel flex flex-col items-center justify-center gap-3 rounded-2xl py-16 text-center">
+        <div className="flex flex-col items-center justify-center gap-3 rounded-[24px] border border-white/10 bg-[rgba(5,9,15,0.55)] py-16 backdrop-blur text-center">
           <AlertTriangle className="h-6 w-6 text-rose-500" />
           <p className="text-sm font-medium text-ink-600">{loadError}</p>
           <button type="button" onClick={loadAll} className="btn-ghost">
