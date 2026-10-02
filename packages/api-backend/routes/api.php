@@ -9,6 +9,15 @@ use App\Http\Controllers\Auth\EmailVerificationNotificationController;
 use App\Http\Controllers\Auth\VerifyEmailController;
 use App\Http\Controllers\SupportController;
 
+Route::get('/auth/google/config', [\App\Http\Controllers\Auth\GoogleAuthController::class, 'config']);
+// The redirect and callback are the only routes that need a session, and it is
+// there purely to hold the CSRF `state` value across the Google round trip.
+Route::middleware('web')->group(function () {
+    Route::get('/auth/google/redirect', [\App\Http\Controllers\Auth\GoogleAuthController::class, 'redirect']);
+    Route::get('/auth/google/callback', [\App\Http\Controllers\Auth\GoogleAuthController::class, 'callback']);
+});
+Route::post('/auth/google/handoff', [\App\Http\Controllers\Auth\GoogleAuthController::class, 'handoff']);
+
 Route::post('/register', [RegisteredUserController::class, 'store']);
 Route::post('/login', [AuthenticatedSessionController::class, 'store']);
 Route::post('/email/resend-verification', [EmailVerificationNotificationController::class, 'store']);
@@ -42,6 +51,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('/connected-opportunities', [\App\Http\Controllers\ConnectedOpportunityController::class, 'store']);
         Route::delete('/connected-opportunities/{id}', [\App\Http\Controllers\ConnectedOpportunityController::class, 'destroy']);
         Route::get('/opportunities/{id}/connections', [\App\Http\Controllers\ConnectedOpportunityController::class, 'connectionsByOpportunity']);
+        Route::get('/opportunities/{id}/rating', [\App\Http\Controllers\RatingController::class, 'show']);
+        Route::post('/opportunities/{id}/rating', [\App\Http\Controllers\RatingController::class, 'store']);
 
         Route::get('/opportunities/{id}/checkpoints', [\App\Http\Controllers\CheckpointController::class, 'index']);
         Route::post('/opportunities/{id}/checkpoints', [\App\Http\Controllers\CheckpointController::class, 'store']);

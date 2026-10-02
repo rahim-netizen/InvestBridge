@@ -261,9 +261,63 @@ export async function apiLogout() {
 }
 
 /**
- * Retrieve current user using Bearer token
+ * Check whether "Continue with Gmail" is available on the backend. The button
+ * is hidden when Google credentials are not configured, so the user is never
+ * offered a flow that cannot finish.
  */
-export async function getCurrentUser() {
+export async function isGoogleAuthEnabled() {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/auth/google/config`, {
+      method: "GET",
+      headers: { Accept: "application/json" },
+    });
+
+    if (!response.ok) return false;
+
+    const data = await parseJsonResponse(response);
+    return Boolean(data.enabled);
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Begin Google sign-in by sending the browser to the backend, which owns the
+ * client secret and the CSRF state, then to Google.
+ */
+export function apiGoogleSignIn() {
+  window.location.href = `${API_BASE_URL}/api/auth/google/redirect`;
+}
+
+/**
+ * Exchange the one-time handoff code for a Sanctum token and store the session
+ * exactly like apiLogin/apiRegister do.
+ */
+export async function apiGoogleHandoff(code) {
+  const response = await fetch(`${API_BASE_URL}/api/auth/google/handoff`, {
+    method: "POST",
+    headers: getHeaders(),
+    body: JSON.stringify({ code }),
+  });
+
+  const data = await parseJsonResponse(response);
+
+  if (!response.ok) {
+    clearAuthSession();
+    const errorMessage = data.message || "Google sign-in failed. Please try again.";
+    throw new Error(errorMessage);
+  }
+
+  if (data.access_token && data.user) {
+    setAuthSession({ token: data.access_token, user: data.user });
+  }
+
+  return data;
+}
+
+/**
+ * Retrieve current user using Bearer token
+ */export async function getCurrentUser() {
   const token = getAuthToken();
   if (!token) return null;
 

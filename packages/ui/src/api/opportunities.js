@@ -176,8 +176,51 @@ export async function getMyTransactions(opportunityId) {
   return data;
 }
 
-export async function getOpportunityInvestors(opportunityId) {
+/**
+ * Rating state for the current investor on a post: whether they may rate the
+ * founder, and what the founder's average is.
+ */
+export async function getOpportunityRating(opportunityId) {
   const response = await fetch(
+    `${API_BASE_URL}/api/opportunities/${opportunityId}/rating`,
+    {
+      method: "GET",
+      headers: getHeaders(),
+    },
+  );
+
+  const data = await parseJsonResponse(response);
+
+  if (!response.ok) {
+    throw new Error(data.message || "Failed to load the rating for this post.");
+  }
+
+  return data;
+}
+
+/**
+ * Rate the founder of a completed post. One rating per investor per post.
+ */
+export async function rateFounder(opportunityId, rating) {
+  const response = await fetch(
+    `${API_BASE_URL}/api/opportunities/${opportunityId}/rating`,
+    {
+      method: "POST",
+      headers: getHeaders(),
+      body: JSON.stringify({ rating }),
+    },
+  );
+
+  const data = await parseJsonResponse(response);
+
+  if (!response.ok) {
+    throw new Error(data.message || "Could not submit your rating.");
+  }
+
+  return data;
+}
+
+export async function getOpportunityInvestors(opportunityId) {  const response = await fetch(
     `${API_BASE_URL}/api/opportunities/${opportunityId}/investors`,
     {
       method: "GET",

@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 import { User, Mail, Lock, Eye, EyeOff, Check, Loader2 } from "lucide-react";
 import { apiRegister } from "../api/auth";
+import GoogleAuthButton from "./GoogleAuthButton.jsx";
 import "./AuthCard.css";
 
 export default function RegisterPage({ navigate }) {
@@ -100,7 +101,7 @@ export default function RegisterPage({ navigate }) {
       <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden opacity-95 dark:opacity-85">
         {!bgImageError ? (
           <img
-            src={`${import.meta.env.BASE_URL}investBridge.png`}
+            src="/investBridge.png"
             alt=""
             aria-hidden="true"
             className="h-full w-full object-cover object-[center_34%]"
@@ -230,6 +231,8 @@ export default function RegisterPage({ navigate }) {
               )}
             </button>
           </form>
+
+          <GoogleAuthButton label="Continue with Gmail" />
 
           {error && <p className="ib-error-msg">{error}</p>}
 

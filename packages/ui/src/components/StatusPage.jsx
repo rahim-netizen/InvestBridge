@@ -89,6 +89,8 @@ export default function StatusPage({ navigate }) {
           myPayout: Number(savedMatch?.payout_amount) || 0,
           myShare: Number(savedMatch?.investor_share) || 0,
           paidAt: savedMatch?.paid_at || null,
+          // Present only when the founder paid nothing into escrow.
+          submission: savedMatch?.submission || null,
           // The entrepreneur's own record for this post.
           entrepreneur: {
             name: posterName,

@@ -6,6 +6,7 @@ import AdminPage from "./components/AdminPage";
 import LoginPage from "./components/LoginPage.jsx";
 import RegisterPage from "./components/RegisterPage.jsx";
 import VerifyEmailPending from "./components/VerifyEmailPending.jsx";
+import GoogleAuthCallback from "./components/GoogleAuthCallback.jsx";
 import ProfileDashboard from "./components/ProfileDashboard.jsx";
 import UserDashboard from "./components/UserDashboard.jsx";
 import StatusPage from "./components/StatusPage.jsx";
@@ -137,6 +138,14 @@ export default function App() {
           element={
             <PageLayout navigate={navigate} theme={theme} toggleTheme={toggleTheme}>
               <RegisterPage navigate={navigate} />
+            </PageLayout>
+          }
+        />
+        <Route
+          path="/google-auth-callback"
+          element={
+            <PageLayout navigate={navigate} theme={theme} toggleTheme={toggleTheme}>
+              <GoogleAuthCallback navigate={navigate} />
             </PageLayout>
           }
         />

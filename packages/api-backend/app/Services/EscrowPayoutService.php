@@ -33,6 +33,35 @@ class EscrowPayoutService
     }
 
     /**
+     * The founder's submission for a round: the image and description they
+     * supplied, with or without a payment attached.
+     *
+     * When the founder paid nothing the escrow pot is empty and there is no
+     * money to release, so this submission is what the investor gets to see
+     * instead of a payout.
+     */
+    public function submissionFor(ConnectedOpportunity $connection): ?array
+    {
+        $submission = EntrepreneurTransaction::where(
+            'opportunity_id',
+            $connection->opportunity_id,
+        )
+            ->latest('id')
+            ->first();
+
+        if (! $submission) {
+            return null;
+        }
+
+        return [
+            'image' => $submission->image,
+            'description' => $submission->description,
+            'status' => $submission->status,
+            'submitted_at' => $submission->created_at,
+        ];
+    }
+
+    /**
      * The slice of the funding goal this investor covered, as a 0-1 fraction.
      */
     public function investorShare(ConnectedOpportunity $connection): float
@@ -66,5 +95,29 @@ class EscrowPayoutService
         }
 
         return round($pot * $share, 2);
+    }
+
+    /**
+     * Whether every investor who actually put money into a round has been paid.
+     *
+     * Only connections with a non-zero commitment count. A post that someone
+     * merely saved was never funded, so it must not keep the round open.
+     */
+    public function allInvestorsPaid(int $opportunityId): bool
+    {
+        $funded = ConnectedOpportunity::where('opportunity_id', $opportunityId)
+            ->where('investment_amount', '>', 0)
+            ->count();
+
+        if ($funded === 0) {
+            return false;
+        }
+
+        $unpaid = ConnectedOpportunity::where('opportunity_id', $opportunityId)
+            ->where('investment_amount', '>', 0)
+            ->where('status', '!=', 'completed')
+            ->count();
+
+        return $unpaid === 0;
     }
 }

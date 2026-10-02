@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 import { Mail, Lock, Eye, EyeOff, Check, Loader2 } from "lucide-react";
 import { apiLogin } from "../api/auth";
+import GoogleAuthButton from "./GoogleAuthButton.jsx";
 import "./AuthCard.css";
 
 export default function LoginPage({ navigate }) {
@@ -226,6 +227,8 @@ export default function LoginPage({ navigate }) {
             )}
           </button>
         </form>
+
+        <GoogleAuthButton label="Continue with Gmail" />
 
         {error && <p className="ib-error-msg">{error}</p>}
 
