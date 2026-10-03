@@ -6,6 +6,12 @@
   html {
     scroll-behavior: smooth;
   }
+  /* Decorative glows sit partly off-screen; never let them widen the page.
+     `clip` (unlike `hidden`) keeps position: sticky working. */
+  html,
+  body {
+    overflow-x: clip;
+  }
   body {
     @apply bg-ink-50 text-ink-900 font-sans antialiased;
   }
