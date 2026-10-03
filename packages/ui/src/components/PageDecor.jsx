@@ -225,7 +225,7 @@ export default function PageDecor() {
       </div>
 
       {/* Soft mesh glows for depth. */}
-      <div className="pointer-events-none absolute inset-0 -z-10">
+      <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
         <div className="absolute left-[-8rem] top-[6rem] h-[26rem] w-[26rem] rounded-full bg-emerald-500/25 blur-[120px]" />
         <div className="absolute right-[-6rem] top-[18rem] h-[22rem] w-[22rem] rounded-full bg-gold-300/18 blur-[110px]" />
         <div className="absolute left-1/2 bottom-[-8rem] h-[30rem] w-[36rem] -translate-x-1/2 rounded-full bg-emerald-600/22 blur-[130px]" />
