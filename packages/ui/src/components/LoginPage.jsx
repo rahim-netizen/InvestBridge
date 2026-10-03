@@ -1,9 +1,10 @@
 import { motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 import { Mail, Lock, Eye, EyeOff, Check, Loader2 } from "lucide-react";
-import { apiLogin } from "../api/auth";
+import { apiLogin, getCurrentUser } from "../api/auth";
 import GoogleAuthButton from "./GoogleAuthButton.jsx";
 import "./AuthCard.css";
+import { getInvestorDestination } from "../lib/profileCompletion.js";
 
 export default function LoginPage({ navigate }) {
   const [form, setForm] = useState({ email: "", password: "" });
@@ -85,7 +86,10 @@ export default function LoginPage({ navigate }) {
     try {
       const data = await apiLogin(form.email, form.password);
       setSuccess(true);
-      const destination = data.user?.role === "admin" ? "/admin" : "/profile";
+      const currentUser = await getCurrentUser();
+      const user = currentUser || data.user;
+      const destination =
+        user?.role === "admin" ? "/admin" : getInvestorDestination(user);
       setTimeout(() => navigate(destination), 1400);
     } catch (err) {
       setError(err.message || "Login failed. Please check your credentials.");

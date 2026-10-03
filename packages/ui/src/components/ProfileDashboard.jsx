@@ -5,6 +5,7 @@ import PageBackground, { AURORA_BG } from "./PageBackground.jsx";
 import PageDecor from "./PageDecor.jsx";
 import { getCurrentUser, setAuthToken, onAuthChange } from "../api/auth";
 import { updateProfile } from "../api/profile";
+import { isInvestorProfileComplete } from "../lib/profileCompletion.js";
 
 const getStoredUser = () => {
   if (typeof window === "undefined") {
@@ -280,7 +281,10 @@ export default function ProfileDashboard({ onOpenDeals, onOpenConnect, onOpenPay
       profile_image: form.profileImage,
       company_personnel_photos: form.companyPersonnelPhotos || [],
       nid_photos: form.nidPhotos || [],
-      profile_complete: true,
+      profile_complete: isInvestorProfileComplete({
+        ...form,
+        hasCompanyInfo,
+      }),
     };
 
     try {
@@ -289,7 +293,7 @@ export default function ProfileDashboard({ onOpenDeals, onOpenConnect, onOpenPay
         ...user,
         ...(response.user || {}),
         profile: response.profile || form,
-        profileComplete: true,
+        profileComplete: Boolean(response.profile?.profile_complete),
       };
 
       const storedUsers = JSON.parse(
@@ -308,8 +312,13 @@ export default function ProfileDashboard({ onOpenDeals, onOpenConnect, onOpenPay
 
       localStorage.setItem("investbridgeSessionUser", JSON.stringify(savedUser));
       localStorage.setItem("investbridgeUsers", JSON.stringify(nextUsers));
-      setStatus("Profile saved. Your dashboard is ready to go.");
-      navigate("/");
+      const profileComplete = Boolean(response.profile?.profile_complete);
+      if (profileComplete) {
+        setStatus("Profile saved. Your dashboard is ready to go.");
+        navigate("/dashboard");
+      } else {
+        setStatus("Profile saved. Complete the remaining details to unlock your dashboard.");
+      }
     } catch (err) {
       setStatus(err.message || "Failed to save profile. Please try again.");
     }

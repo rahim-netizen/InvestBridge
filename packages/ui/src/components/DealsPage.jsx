@@ -27,6 +27,10 @@ import {
   PopoverSelect,
 } from "./FilterControls.jsx";
 import { FormSection, panelClassName } from "./OpportunityFormParts.jsx";
+import {
+  formatInvestmentAmount,
+  getInvestorCount,
+} from "../lib/opportunityStats.js";
 
 const getStoredUser = () => {
   if (typeof window === "undefined") {
@@ -162,8 +166,15 @@ function DealCard({ deal, saved, saving, onOpen, onToggleSave }) {
           {deal.blurb}
         </p>
 
-        <div className="mt-auto flex items-end gap-[22px] pt-[18px]">
-          <DealStat label="Goal" value={deal.goal} />
+        <div className="mt-auto flex flex-wrap items-end gap-[22px] pt-[18px]">
+          <DealStat
+            label="Invested / goal"
+            value={`${formatInvestmentAmount(deal.investedAmount)} / ${deal.goal}`}
+          />
+          <DealStat
+            label="Investors"
+            value={deal.investorCount ?? "Unavailable"}
+          />
           <DealStat label="Timeline" value={deal.timeline} />
           <span className="ml-auto inline-flex shrink-0 items-center gap-1 whitespace-nowrap text-[13px] font-semibold text-brand-300 transition-colors group-hover:text-brand-200">
             View deal room
@@ -210,6 +221,7 @@ export default function DealsPage({ navigate }) {
             image: opp.image || null,
             postedBy: opp.user?.email || null,
             investedAmount: Number(opp.invested_amount) || 0,
+            investorCount: getInvestorCount(opp),
             createdAt: opp.created_at || null,
           }));
         setDeals(mapped);
