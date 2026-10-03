@@ -48,6 +48,11 @@ jobs:
             exit 1
           fi
 
+      # Stamp the release with the commit it was built from; /api/health reads it.
+      - name: Write the release revision
+        working-directory: packages/api-backend
+        run: echo "$GITHUB_SHA" > REVISION
+
       # One archive of the Laravel app with vendor/ and public/app/, and
       # without .git, node_modules or any .env file.
       - name: Pack the release
@@ -60,6 +65,7 @@ jobs:
           tar -tzf "$GITHUB_WORKSPACE/release.tar.gz" > "$RUNNER_TEMP/files.txt"
           grep -qx './vendor/autoload.php' "$RUNNER_TEMP/files.txt"
           grep -qx './public/app/index.html' "$RUNNER_TEMP/files.txt"
+          grep -qx './REVISION' "$RUNNER_TEMP/files.txt"
           if grep -Eq '(^|/)\.env$|node_modules/|(^|/)\.git/' "$RUNNER_TEMP/files.txt"; then
             echo "::error::archive contains .env, node_modules or .git"
             exit 1
