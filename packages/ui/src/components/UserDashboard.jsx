@@ -125,6 +125,57 @@ function CardStat({ label, value }) {
   );
 }
 
+const VISIBLE_INVESTORS = 3;
+
+// Who backed this post and how much, largest first (the API sorts them).
+function InvestorList({ investors }) {
+  const [expanded, setExpanded] = useState(false);
+
+  if (investors.length === 0) {
+    return (
+      <p className="mt-4 text-xs text-white/45">No investors yet.</p>
+    );
+  }
+
+  const shown = expanded ? investors : investors.slice(0, VISIBLE_INVESTORS);
+  const hidden = investors.length - shown.length;
+
+  return (
+    <div className="mt-4">
+      <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/50">
+        Backed by
+      </p>
+      <ul className="mt-2 space-y-1.5">
+        {shown.map((investor) => (
+          <li
+            key={investor.user_id}
+            className="flex items-center justify-between gap-3 text-sm"
+          >
+            <span className="flex min-w-0 items-center gap-2">
+              <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-brand-500/20 text-[10px] font-bold text-brand-300">
+                {initialsOf(investor.name)}
+              </span>
+              <span className="truncate text-white/85">{investor.name}</span>
+            </span>
+            <span className="shrink-0 font-semibold text-white">
+              {formatInvestmentAmount(investor.amount)}
+            </span>
+          </li>
+        ))}
+      </ul>
+      {(hidden > 0 || expanded) && investors.length > VISIBLE_INVESTORS && (
+        <button
+          type="button"
+          onClick={() => setExpanded((value) => !value)}
+          className="mt-2 text-xs font-semibold text-brand-300 hover:text-brand-200"
+        >
+          {expanded ? "Show less" : `+${hidden} more`}
+        </button>
+      )}
+    </div>
+  );
+}
+
 // Split card matching the Deals page: media left, details right; stacks on phones.
 function DashboardCard({ opp, actions }) {
   const [imageFailed, setImageFailed] = useState(false);
@@ -182,6 +233,9 @@ function DashboardCard({ opp, actions }) {
           />
           <CardStat label="Timeline" value={opp.timeline || "TBD"} />
         </div>
+
+        {/* Only the founder's own posts carry the investor breakdown. */}
+        {opp.investors && <InvestorList investors={opp.investors} />}
 
         <div className="mt-4 flex items-center justify-between gap-3 border-t border-white/[0.08] pt-3.5">
           {actions}
@@ -347,6 +401,7 @@ export default function UserDashboard({ navigate }) {
           status: opp.status || "Active",
           investedAmount: Number(opp.invested_amount) || 0,
           investorCount: getInvestorCount(opp),
+          investors: Array.isArray(opp.investors) ? opp.investors : null,
         }));
         setAllOpportunities(mapped);
       }

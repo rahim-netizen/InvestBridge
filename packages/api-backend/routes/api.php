@@ -27,6 +27,7 @@ Route::get('/verify-email/{id}/{hash}', VerifyEmailController::class)
 
 Route::get('/opportunities/all', [\App\Http\Controllers\OpportunityController::class, 'all']);
 Route::get('/stats', [\App\Http\Controllers\StatsController::class, 'index']);
+Route::get('/ratings/recent', [\App\Http\Controllers\RatingController::class, 'recent']);
 
 // Deployment check: REVISION is written by the CI deploy job with the commit SHA.
 Route::get('/health', function () {

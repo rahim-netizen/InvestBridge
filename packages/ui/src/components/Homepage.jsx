@@ -20,7 +20,11 @@ import PageBackground, { AURORA_BG } from "./PageBackground.jsx";
 import PageDecor from "./PageDecor.jsx";
 import GradientText from "./GradientText.jsx";
 import BorderGlow from "./BorderGlow.jsx";
-import { getAllOpportunities, getPlatformStats } from "../api/opportunities";
+import {
+  getAllOpportunities,
+  getPlatformStats,
+  getRecentRatings,
+} from "../api/opportunities";
 import {
   fadeUp,
   fadeUpBlur,
@@ -160,33 +164,6 @@ const investorBenefits = [
     icon: Rocket,
     title: "Back founders early",
     desc: "Access pre-seed to Series A rounds you would not otherwise see — on one platform.",
-  },
-];
-
-const testimonials = [
-  {
-    quote:
-      "We closed our $1.5M Series A in three weeks. InvestBridge put us in front of investors who actually understood HealthTech — no cold outreach required.",
-    name: "Amara Okafor",
-    role: "Founder & CEO, NovaVet AI",
-    avatar:
-      "https://images.pexels.com/photos/3760263/pexels-photo-3760263.jpeg?auto=compress&cs=tinysrgb&w=200",
-  },
-  {
-    quote:
-      "As an angel investor, deal flow used to be a full-time job. Now I review three vetted rounds before my morning coffee and commit in a couple of clicks.",
-    name: "Daniel Reyes",
-    role: "Angel Investor · 14 portfolio companies",
-    avatar:
-      "https://images.pexels.com/photos/2182970/pexels-photo-2182970.jpeg?auto=compress&cs=tinysrgb&w=200",
-  },
-  {
-    quote:
-      "The data rooms are detailed enough to make real decisions. I built a diversified CleanEnergy portfolio across four countries without leaving the platform.",
-    name: "Mei Lin Tan",
-    role: "Partner, Greenline Capital",
-    avatar:
-      "https://images.pexels.com/photos/3760263/pexels-photo-3760263.jpeg?auto=compress&cs=tinysrgb&w=200",
   },
 ];
 
@@ -675,6 +652,23 @@ function StepCard({ s, i, navigate }) {
   );
 }
 
+const parseGoal = (raw) => {
+  if (raw == null) return 0;
+  const match = String(raw).toUpperCase().match(/([\d,]*\.?\d+)\s*([KMB]?)/);
+  if (!match) return 0;
+  const num = Number(match[1].replace(/,/g, "")) || 0;
+  return num * ({ K: 1e3, M: 1e6, B: 1e9 }[match[2]] || 1);
+};
+
+// Same rule as the Deals page: a round is open while it is live (not
+// suspended, pending or completed) and the raised total is below its goal.
+const isOpenRound = (opp) => {
+  const status = String(opp.status || "active").toLowerCase();
+  if (status !== "active") return false;
+  const goal = parseGoal(opp.funding_goal);
+  return goal <= 0 || Number(opp.invested_amount || 0) < goal;
+};
+
 function FeaturedStartups({ navigate, imageErrors, handleImageError }) {
   const [startups, setStartups] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -686,7 +680,10 @@ function FeaturedStartups({ navigate, imageErrors, handleImageError }) {
       try {
         const data = await getAllOpportunities();
         if (cancelled) return;
-        const mapped = (data.opportunities || []).slice(0, 6).map((opp) => ({
+        const mapped = (data.opportunities || [])
+          .filter(isOpenRound)
+          .slice(0, 6)
+          .map((opp) => ({
           id: opp.id,
           name: opp.title,
           company: opp.company,
@@ -695,7 +692,7 @@ function FeaturedStartups({ navigate, imageErrors, handleImageError }) {
           goal: opp.funding_goal || "TBD",
           blurb: opp.description || "",
           timeline: opp.timeline || "TBD",
-          status: opp.investor_id ? "Funded" : "Open",
+          status: "Open",
           image: opp.image || null,
         }));
         setStartups(mapped);
@@ -968,7 +965,33 @@ function BenefitCard({ b }) {
   );
 }
 
+// Real investor ratings of founders (only recorded once a funded project is
+// completed), newest first. Ratings carry a score but no written review, so
+// each card states who rated whom, on which project, and the actual stars.
 function Testimonials({ imageErrors, handleImageError }) {
+  const [ratings, setRatings] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadRatings() {
+      try {
+        const data = await getRecentRatings();
+        if (!cancelled) setRatings(data);
+      } catch {
+        if (!cancelled) setRatings([]);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
+    loadRatings();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   return (
     <section id="stories" className="py-20 text-white sm:py-28">
       <div className="container-page">
@@ -996,22 +1019,37 @@ function Testimonials({ imageErrors, handleImageError }) {
           </motion.div>
         </Parallax>
 
-        <motion.div
-          className="mt-14 grid gap-6 md:grid-cols-3"
-          variants={stagger}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, amount: 0.15 }}
-        >
-          {testimonials.map((t) => (
-            <TestimonialCard
-              key={t.name}
-              t={t}
-              imageErrors={imageErrors}
-              handleImageError={handleImageError}
-            />
-          ))}
-        </motion.div>
+        {!loading && ratings.length === 0 ? (
+          <div className="mt-14 rounded-[40px] border border-white/10 bg-white/[0.04] p-10 text-center backdrop-blur">
+            <p className="text-white/65">
+              No ratings yet. Investors rate founders here once a funded project
+              is completed.
+            </p>
+          </div>
+        ) : (
+          <motion.div
+            className={`mt-14 grid gap-6 ${
+              ratings.length === 1
+                ? "mx-auto max-w-md"
+                : ratings.length === 2
+                  ? "mx-auto max-w-4xl md:grid-cols-2"
+                  : "md:grid-cols-3"
+            }`}
+            variants={stagger}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.15 }}
+          >
+            {ratings.map((r) => (
+              <TestimonialCard
+                key={r.id}
+                r={r}
+                imageErrors={imageErrors}
+                handleImageError={handleImageError}
+              />
+            ))}
+          </motion.div>
+        )}
       </div>
     </section>
   );
@@ -1027,7 +1065,17 @@ const starPop = {
   }),
 };
 
-function TestimonialCard({ t, imageErrors, handleImageError }) {
+function TestimonialCard({ r, imageErrors, handleImageError }) {
+  const name = r.investor?.name || "InvestBridge investor";
+  const project = r.opportunity?.title || r.opportunity?.company || "a project";
+  const avatarKey = `rating-${r.id}`;
+  const ratedOn = r.rated_at
+    ? new Date(r.rated_at).toLocaleDateString("en-US", {
+        month: "short",
+        year: "numeric",
+      })
+    : null;
+
   return (
     <BorderGlow
       backgroundColor="transparent"
@@ -1049,29 +1097,35 @@ function TestimonialCard({ t, imageErrors, handleImageError }) {
           <Quote className="h-8 w-8 text-brand-400/60" />
         </motion.div>
         <blockquote className="mt-4 text-sm leading-relaxed text-white/75">
-          {t.quote}
+          Backed <span className="font-semibold text-white">{project}</span>
+          {r.entrepreneur ? <> by {r.entrepreneur}</> : null}
+          {r.opportunity?.sector ? <> ({r.opportunity.sector})</> : null} and
+          rated the founder {r.rating} out of 5 once the project was completed.
         </blockquote>
         <div className="mt-6 flex items-center gap-3">
-          {!imageErrors[t.name] ? (
+          {r.investor?.avatar && !imageErrors[avatarKey] ? (
             <img
-              src={t.avatar}
-              alt={t.name}
+              src={r.investor.avatar}
+              alt={name}
               className="h-11 w-11 rounded-full object-cover"
               loading="lazy"
-              onError={() => handleImageError(t.name)}
+              referrerPolicy="no-referrer"
+              onError={() => handleImageError(avatarKey)}
             />
           ) : (
             <div className="h-11 w-11 rounded-full bg-ink-200 flex items-center justify-center dark:bg-ink-800">
               <span className="text-ink-600 text-xs font-semibold dark:text-ink-300">
-                {t.name.charAt(0)}
+                {initialsOf(name)}
               </span>
             </div>
           )}
           <div>
             <figcaption className="text-sm font-semibold text-white">
-              {t.name}
+              {name}
             </figcaption>
-            <p className="text-xs text-white/55">{t.role}</p>
+            <p className="text-xs text-white/55">
+              Investor{ratedOn ? <> · {ratedOn}</> : null}
+            </p>
           </div>
         </div>
         <div className="mt-4 flex gap-0.5 text-gold-400">
@@ -1084,9 +1138,12 @@ function TestimonialCard({ t, imageErrors, handleImageError }) {
               whileInView="visible"
               viewport={{ once: true, amount: 0.6 }}
             >
-              <Star className="h-4 w-4 fill-current" />
+              <Star
+                className={`h-4 w-4 ${i < r.rating ? "fill-current" : "text-white/20"}`}
+              />
             </motion.span>
           ))}
+          <span className="sr-only">{r.rating} out of 5 stars</span>
         </div>
       </motion.figure>
     </BorderGlow>

@@ -43,6 +43,14 @@ class User extends Authenticatable implements MustVerifyEmailContract
     }
 
     /**
+     * Ratings investors have given this user as a founder.
+     */
+    public function ratingsReceived()
+    {
+        return $this->hasMany(\App\Models\Rating::class, 'entrepreneur_id');
+    }
+
+    /**
      * The live post count, computed rather than read from the cached
      * `posts` column, so it can never drift out of sync with the posts table.
      */

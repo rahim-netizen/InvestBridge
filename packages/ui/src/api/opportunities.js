@@ -252,3 +252,19 @@ export async function getPlatformStats() {
 
   return data;
 }
+
+export async function getRecentRatings() {
+  const response = await fetch(`${API_BASE_URL}/api/ratings/recent`, {
+    method: "GET",
+    headers: getHeaders(),
+    credentials: "include",
+  });
+
+  const data = await parseJsonResponse(response);
+
+  if (!response.ok) {
+    throw new Error(data.message || "Failed to load ratings.");
+  }
+
+  return data.ratings || [];
+}
