@@ -1,9 +1,4 @@
-﻿import {
-  Sparkles,
-  Star,
-  ArrowUpRight,
-  X,
-} from "lucide-react";
+﻿import { Sparkles, Star, ArrowUpRight, X } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useCallback, useEffect, useRef, useState } from "react";
 import PageBackground, { AURORA_BG } from "./PageBackground.jsx";
@@ -15,11 +10,7 @@ import {
   disconnectOpportunity,
   getConnectedOpportunities,
 } from "../api/connected";
-import {
-  fadeUp,
-  fadeUpBlur,
-  stagger,
-} from "../lib/motion.jsx";
+import { fadeUp, fadeUpBlur, stagger } from "../lib/motion.jsx";
 import {
   FilterChip,
   FilterPopover,
@@ -41,7 +32,16 @@ const getStoredUser = () => {
   }
 };
 
-const sectors = ["All", "HealthTech", "CleanEnergy", "E-commerce", "AgriTech", "FinTech", "EdTech", "Others"];
+const sectors = [
+  "All",
+  "HealthTech",
+  "CleanEnergy",
+  "E-commerce",
+  "AgriTech",
+  "FinTech",
+  "EdTech",
+  "Others",
+];
 
 const sizeBands = [
   { value: "All", label: "Any size" },
@@ -68,7 +68,10 @@ const parseGoal = (goalStr) => {
   if (!goalStr || goalStr === "$0") return 0;
   const num = parseFloat(String(goalStr).replace(/[^0-9.]/g, ""));
   if (Number.isNaN(num)) return 0;
-  const suffix = String(goalStr).replace(/[0-9.]/g, "").trim().toUpperCase();
+  const suffix = String(goalStr)
+    .replace(/[0-9.]/g, "")
+    .trim()
+    .toUpperCase();
   if (suffix.includes("B")) return num * 1000000000;
   if (suffix.includes("M")) return num * 1000000;
   if (suffix.includes("K")) return num * 1000;
@@ -77,6 +80,23 @@ const parseGoal = (goalStr) => {
 
 // A round is closed once the raised total has reached its goal, so it should
 // no longer be offered as an open discovery deal.
+const formatMoney = (amount) =>
+  new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0,
+  }).format(Number(amount) || 0);
+
+const getInvestorCount = (opportunity) => {
+  const count =
+    opportunity.investor_count ??
+    opportunity.investors_count ??
+    opportunity.connections_count;
+  if (count == null) return null;
+  const parsed = Number(count);
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
 const isFullyFunded = (opp) => {
   const goal = parseGoal(opp.funding_goal);
   if (goal <= 0) return false;
@@ -94,8 +114,15 @@ const initialsOf = (name = "") =>
 function DealStat({ label, value }) {
   return (
     <div className="min-w-0">
-      <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/50">{label}</p>
-      <p className="mt-1 truncate text-base font-semibold text-white" title={String(value)}>{value}</p>
+      <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/50">
+        {label}
+      </p>
+      <p
+        className="mt-1 truncate text-base font-semibold text-white"
+        title={String(value)}
+      >
+        {value}
+      </p>
     </div>
   );
 }
@@ -138,7 +165,9 @@ function DealCard({ deal, saved, saving, onOpen, onToggleSave }) {
           <span className="rounded-full border border-white/[0.14] px-2.5 py-0.5 text-[11px] font-semibold text-white/80">
             {deal.sector}
           </span>
-          <span className="truncate text-xs text-white/50">{deal.location}</span>
+          <span className="truncate text-xs text-white/50">
+            {deal.location}
+          </span>
           <div className="ml-auto flex shrink-0 items-center">
             <button
               type="button"
@@ -156,20 +185,24 @@ function DealCard({ deal, saved, saving, onOpen, onToggleSave }) {
           </div>
         </div>
 
-        <h3 className="mt-3.5 text-xl font-semibold leading-tight text-white">{deal.name}</h3>
+        <h3 className="mt-3.5 text-xl font-semibold leading-tight text-white">
+          {deal.name}
+        </h3>
         <p className="mt-1 text-xs text-white/55">by {deal.company}</p>
         <p className="mt-3 line-clamp-3 text-sm leading-relaxed text-white/70 [text-wrap:pretty]">
           {deal.blurb}
         </p>
 
-        <div className="mt-auto flex items-end gap-[22px] pt-[18px]">
+        <div className="mt-auto grid grid-cols-2 gap-x-5 gap-y-3 pt-[18px] sm:grid-cols-4">
+          <DealStat label="Invested" value={formatMoney(deal.investedAmount)} />
           <DealStat label="Goal" value={deal.goal} />
+          <DealStat label="Investors" value={deal.investorsCount ?? "—"} />
           <DealStat label="Timeline" value={deal.timeline} />
-          <span className="ml-auto inline-flex shrink-0 items-center gap-1 whitespace-nowrap text-[13px] font-semibold text-brand-300 transition-colors group-hover:text-brand-200">
-            View deal room
-            <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-          </span>
         </div>
+        <span className="mt-4 inline-flex shrink-0 items-center gap-1 self-end whitespace-nowrap text-[13px] font-semibold text-brand-300 transition-colors group-hover:text-brand-200">
+          View deal room
+          <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+        </span>
       </div>
     </motion.article>
   );
@@ -210,6 +243,7 @@ export default function DealsPage({ navigate }) {
             image: opp.image || null,
             postedBy: opp.user?.email || null,
             investedAmount: Number(opp.invested_amount) || 0,
+            investorsCount: getInvestorCount(opp),
             createdAt: opp.created_at || null,
           }));
         setDeals(mapped);
@@ -303,7 +337,6 @@ export default function DealsPage({ navigate }) {
     }
   };
 
-
   const matchesSizeBand = (goalStr, band) => {
     if (band === "All") return true;
     const amount = parseGoal(goalStr);
@@ -321,9 +354,7 @@ export default function DealsPage({ navigate }) {
     "All",
     ...Array.from(
       new Set(
-        deals
-          .map((d) => d.location)
-          .filter((loc) => loc && loc !== "TBD"),
+        deals.map((d) => d.location).filter((loc) => loc && loc !== "TBD"),
       ),
     ).sort(),
   ];
@@ -356,10 +387,14 @@ export default function DealsPage({ navigate }) {
   };
 
   const sortedDeals = [...filteredDeals].sort((a, b) => {
-    if (goalSort === "High to Low") return parseGoal(b.goal) - parseGoal(a.goal);
-    if (goalSort === "Low to High") return parseGoal(a.goal) - parseGoal(b.goal);
-    if (goalSort === "Newest") return parseDate(b.createdAt) - parseDate(a.createdAt);
-    if (goalSort === "Oldest") return parseDate(a.createdAt) - parseDate(b.createdAt);
+    if (goalSort === "High to Low")
+      return parseGoal(b.goal) - parseGoal(a.goal);
+    if (goalSort === "Low to High")
+      return parseGoal(a.goal) - parseGoal(b.goal);
+    if (goalSort === "Newest")
+      return parseDate(b.createdAt) - parseDate(a.createdAt);
+    if (goalSort === "Oldest")
+      return parseDate(a.createdAt) - parseDate(b.createdAt);
     return 0;
   });
 
@@ -370,8 +405,7 @@ export default function DealsPage({ navigate }) {
     (savedOnly ? 1 : 0) +
     (goalSort !== "None" ? 1 : 0);
 
-  const hasActiveFilters =
-    searchQuery.trim() !== "" || activeFilterCount > 0;
+  const hasActiveFilters = searchQuery.trim() !== "" || activeFilterCount > 0;
 
   const clearAllFilters = () => {
     setSearchQuery("");
@@ -416,8 +450,8 @@ export default function DealsPage({ navigate }) {
               </GradientText>
             </h1>
             <p className="mt-3 max-w-xl text-lg leading-relaxed text-white/80">
-              Filter by sector and momentum to find
-              opportunities worth your time.
+              Filter by sector and momentum to find opportunities worth your
+              time.
             </p>
           </div>
 
@@ -427,10 +461,7 @@ export default function DealsPage({ navigate }) {
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search deals, companies, locations..."
             />
-            <FilterPopover
-              label="Filter deals"
-              activeCount={activeFilterCount}
-            >
+            <FilterPopover label="Filter deals" activeCount={activeFilterCount}>
               <PopoverSelect
                 label="Sector"
                 value={sectorFilter}
@@ -575,7 +606,11 @@ export default function DealsPage({ navigate }) {
                 </div>
               </div>
 
-              <FormSection n="01" title="The basics" hint="Who is raising, and where.">
+              <FormSection
+                n="01"
+                title="The basics"
+                hint="Who is raising, and where."
+              >
                 <dl className="grid gap-3.5 sm:grid-cols-3">
                   {[
                     ["Sector", selectedDeal.sector],
@@ -597,7 +632,11 @@ export default function DealsPage({ navigate }) {
                 </dl>
               </FormSection>
 
-              <FormSection n="02" title="The raise" hint="How much, and how long it's open.">
+              <FormSection
+                n="02"
+                title="The raise"
+                hint="How much, and how long it's open."
+              >
                 <dl className="grid gap-3.5 sm:grid-cols-2">
                   {[
                     ["Funding goal", selectedDeal.goal],
@@ -618,7 +657,12 @@ export default function DealsPage({ navigate }) {
                 </dl>
               </FormSection>
 
-              <FormSection n="03" title="The story" hint="What the founders are building." last>
+              <FormSection
+                n="03"
+                title="The story"
+                hint="What the founders are building."
+                last
+              >
                 <p className="whitespace-pre-line text-[15px] leading-relaxed text-white/80">
                   {selectedDeal.blurb || "No description provided."}
                 </p>
@@ -626,7 +670,9 @@ export default function DealsPage({ navigate }) {
 
               {/* Footer */}
               <div className="flex flex-wrap items-center gap-3 border-t border-white/[0.08] pt-5">
-                <span className="text-[13px] text-brand-300">{connectStatus}</span>
+                <span className="text-[13px] text-brand-300">
+                  {connectStatus}
+                </span>
                 <button
                   type="button"
                   onClick={() => setSelectedDeal(null)}
@@ -664,8 +710,8 @@ export default function DealsPage({ navigate }) {
                     {connectingId === selectedDeal.id
                       ? "Please wait..."
                       : connectedMap[selectedDeal.id]
-                      ? "Remove from dashboard"
-                      : "Save to dashboard"}
+                        ? "Remove from dashboard"
+                        : "Save to dashboard"}
                   </button>
                 )}
               </div>
@@ -673,25 +719,27 @@ export default function DealsPage({ navigate }) {
           )}
         </AnimatePresence>
 
-         <motion.div
-           className="grid gap-[22px] lg:grid-cols-2"
-           variants={stagger}
-           initial="hidden"
-           animate="visible"
-         >
-           {sortedDeals.length === 0 ? (
-             <div className="col-span-full glass-panel-strong holo-card rounded-[2rem] p-8 text-center">
-               <p className="text-ink-500 dark:text-ink-400">No deals match your filters.</p>
-               <button
-                 type="button"
-                 onClick={clearAllFilters}
-                 className="mt-4 text-sm font-semibold text-brand-700 hover:text-brand-800 dark:text-brand-400"
-               >
-                 Clear all filters
-               </button>
-             </div>
-           ) : (
-             sortedDeals.map((deal) => (
+        <motion.div
+          className="grid gap-[22px] lg:grid-cols-2"
+          variants={stagger}
+          initial="hidden"
+          animate="visible"
+        >
+          {sortedDeals.length === 0 ? (
+            <div className="col-span-full glass-panel-strong holo-card rounded-[2rem] p-8 text-center">
+              <p className="text-ink-500 dark:text-ink-400">
+                No deals match your filters.
+              </p>
+              <button
+                type="button"
+                onClick={clearAllFilters}
+                className="mt-4 text-sm font-semibold text-brand-700 hover:text-brand-800 dark:text-brand-400"
+              >
+                Clear all filters
+              </button>
+            </div>
+          ) : (
+            sortedDeals.map((deal) => (
               <DealCard
                 key={deal.id}
                 deal={deal}
@@ -701,11 +749,16 @@ export default function DealsPage({ navigate }) {
                   setSelectedDeal(deal);
                   setConnectStatus("");
                   requestAnimationFrame(() =>
-                    dealPanelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }),
+                    dealPanelRef.current?.scrollIntoView({
+                      behavior: "smooth",
+                      block: "start",
+                    }),
                   );
                 }}
                 onToggleSave={() =>
-                  connectedMap[deal.id] ? handleDisconnect(deal) : handleConnect(deal)
+                  connectedMap[deal.id]
+                    ? handleDisconnect(deal)
+                    : handleConnect(deal)
                 }
               />
             ))

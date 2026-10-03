@@ -29,10 +29,13 @@ export function broadcastAuthChange(payload) {
  * Subscribe to cross-tab & local authentication changes
  */
 export function onAuthChange(callback) {
-  if (typeof window === "undefined") return () => { };
+  if (typeof window === "undefined") return () => {};
 
   const handleBroadcast = (event) => {
-    if (event.data && (event.data.type === "LOGIN" || event.data.type === "LOGOUT")) {
+    if (
+      event.data &&
+      (event.data.type === "LOGIN" || event.data.type === "LOGOUT")
+    ) {
       callback(event.data);
     }
   };
@@ -40,7 +43,9 @@ export function onAuthChange(callback) {
   const handleStorage = (event) => {
     if (event.key === "auth_token" || event.key === "investbridgeSessionUser") {
       const token = localStorage.getItem("auth_token");
-      const user = JSON.parse(localStorage.getItem("investbridgeSessionUser") || "null");
+      const user = JSON.parse(
+        localStorage.getItem("investbridgeSessionUser") || "null",
+      );
       if (token && user) {
         callback({ type: "LOGIN", user, token });
       } else if (!token && !user) {
@@ -76,6 +81,21 @@ export function onAuthChange(callback) {
 export function getAuthToken() {
   if (typeof localStorage === "undefined") return null;
   return localStorage.getItem("auth_token");
+}
+
+export function getPostLoginRoute(user) {
+  if (user?.role === "admin") return "/admin";
+
+  const profileComplete =
+    user?.profileComplete ??
+    user?.profile_complete ??
+    user?.profile?.profile_complete;
+
+  return profileComplete === true ||
+    profileComplete === 1 ||
+    profileComplete === "1"
+    ? "/dashboard"
+    : "/profile";
 }
 
 /**
@@ -136,7 +156,9 @@ async function parseJsonResponse(response) {
   try {
     data = text ? JSON.parse(text) : {};
   } catch {
-    data = { message: text ? text.slice(0, 120) : "Server returned empty response." };
+    data = {
+      message: text ? text.slice(0, 120) : "Server returned empty response.",
+    };
   }
   return data;
 }
@@ -175,7 +197,9 @@ export async function apiLogin(email, password) {
     clearAuthSession();
     const errorMessage =
       data.message ||
-      (data.errors ? Object.values(data.errors).flat().join(" ") : "Invalid credentials.");
+      (data.errors
+        ? Object.values(data.errors).flat().join(" ")
+        : "Invalid credentials.");
     throw new Error(errorMessage);
   }
 
@@ -209,7 +233,9 @@ export async function apiRegister(name, email, password) {
     clearAuthSession();
     const errorMessage =
       data.message ||
-      (data.errors ? Object.values(data.errors).flat().join(" ") : "Registration failed.");
+      (data.errors
+        ? Object.values(data.errors).flat().join(" ")
+        : "Registration failed.");
     throw new Error(errorMessage);
   }
 
@@ -226,18 +252,23 @@ export async function apiRegister(name, email, password) {
  * Resend 5-minute email verification link
  */
 export async function apiResendVerification(email) {
-  const response = await fetch(`${API_BASE_URL}/api/email/resend-verification`, {
-    method: "POST",
-    headers: getHeaders(),
-    body: JSON.stringify({ email }),
-  });
+  const response = await fetch(
+    `${API_BASE_URL}/api/email/resend-verification`,
+    {
+      method: "POST",
+      headers: getHeaders(),
+      body: JSON.stringify({ email }),
+    },
+  );
 
   const data = await parseJsonResponse(response);
 
   if (!response.ok) {
     const errorMessage =
       data.message ||
-      (data.errors ? Object.values(data.errors).flat().join(" ") : "Failed to resend verification email.");
+      (data.errors
+        ? Object.values(data.errors).flat().join(" ")
+        : "Failed to resend verification email.");
     throw new Error(errorMessage);
   }
 

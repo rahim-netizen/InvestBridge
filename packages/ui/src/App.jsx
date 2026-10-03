@@ -1,5 +1,11 @@
 import { useEffect, useState } from "react";
-import { Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
+import {
+  Navigate,
+  Route,
+  Routes,
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
 import PageLayout from "./components/PageLayout.jsx";
 import Homepage from "./components/Homepage.jsx";
 import AdminPage from "./components/AdminPage";
@@ -16,12 +22,14 @@ import ConnectPage from "./components/ConnectPage.jsx";
 import ChatbotWidget from "./components/ChatbotWidget.jsx";
 import SupportPage from "./components/SupportPage.jsx";
 import InfoPage, { infoPages } from "./components/InfoPage.jsx";
-import { getCurrentUser, onAuthChange } from "./api/auth";
+import { getCurrentUser, getPostLoginRoute, onAuthChange } from "./api/auth";
 
 function getStoredUser() {
   if (typeof window === "undefined") return null;
   try {
-    return JSON.parse(localStorage.getItem("investbridgeSessionUser") || "null");
+    return JSON.parse(
+      localStorage.getItem("investbridgeSessionUser") || "null",
+    );
   } catch {
     return null;
   }
@@ -60,8 +68,11 @@ export default function App() {
           currentPath === "/register" ||
           currentPath === "/verify-email-pending"
         ) {
-          const destination = user?.role === "admin" ? "/admin" : "/profile";
-          navigate(destination);
+          getCurrentUser().then((fetchedUser) => {
+            const authenticatedUser = fetchedUser || getStoredUser();
+            setCurrentUser(authenticatedUser);
+            navigate(getPostLoginRoute(authenticatedUser));
+          });
         }
       } else if (event.type === "LOGOUT") {
         const currentPath = window.location.pathname;
@@ -119,7 +130,11 @@ export default function App() {
         <Route
           path="/"
           element={
-            <PageLayout navigate={navigate} theme={theme} toggleTheme={toggleTheme}>
+            <PageLayout
+              navigate={navigate}
+              theme={theme}
+              toggleTheme={toggleTheme}
+            >
               <Homepage navigate={navigate} />
             </PageLayout>
           }
@@ -127,7 +142,11 @@ export default function App() {
         <Route
           path="/login"
           element={
-            <PageLayout navigate={navigate} theme={theme} toggleTheme={toggleTheme}>
+            <PageLayout
+              navigate={navigate}
+              theme={theme}
+              toggleTheme={toggleTheme}
+            >
               <LoginPage navigate={navigate} />
             </PageLayout>
           }
@@ -135,7 +154,11 @@ export default function App() {
         <Route
           path="/register"
           element={
-            <PageLayout navigate={navigate} theme={theme} toggleTheme={toggleTheme}>
+            <PageLayout
+              navigate={navigate}
+              theme={theme}
+              toggleTheme={toggleTheme}
+            >
               <RegisterPage navigate={navigate} />
             </PageLayout>
           }
@@ -143,39 +166,59 @@ export default function App() {
         <Route
           path="/verify-email-pending"
           element={
-            <PageLayout navigate={navigate} theme={theme} toggleTheme={toggleTheme}>
+            <PageLayout
+              navigate={navigate}
+              theme={theme}
+              toggleTheme={toggleTheme}
+            >
               <VerifyEmailPending navigate={navigate} />
             </PageLayout>
           }
         />
-         <Route
-           path="/profile"
-           element={
-             <PageLayout navigate={navigate} theme={theme} toggleTheme={toggleTheme}>
-               <ProfileDashboard navigate={navigate} />
-             </PageLayout>
-           }
-         />
-         <Route
-           path="/dashboard"
-           element={
-             <PageLayout navigate={navigate} theme={theme} toggleTheme={toggleTheme}>
-               <UserDashboard navigate={navigate} />
-             </PageLayout>
-           }
-         />
-         <Route
-           path="/status/:id"
-           element={
-             <PageLayout navigate={navigate} theme={theme} toggleTheme={toggleTheme}>
-               <StatusPage navigate={navigate} />
-             </PageLayout>
-           }
-         />
+        <Route
+          path="/profile"
+          element={
+            <PageLayout
+              navigate={navigate}
+              theme={theme}
+              toggleTheme={toggleTheme}
+            >
+              <ProfileDashboard navigate={navigate} />
+            </PageLayout>
+          }
+        />
+        <Route
+          path="/dashboard"
+          element={
+            <PageLayout
+              navigate={navigate}
+              theme={theme}
+              toggleTheme={toggleTheme}
+            >
+              <UserDashboard navigate={navigate} />
+            </PageLayout>
+          }
+        />
+        <Route
+          path="/status/:id"
+          element={
+            <PageLayout
+              navigate={navigate}
+              theme={theme}
+              toggleTheme={toggleTheme}
+            >
+              <StatusPage navigate={navigate} />
+            </PageLayout>
+          }
+        />
         <Route
           path="/opportunities"
           element={
-            <PageLayout navigate={navigate} theme={theme} toggleTheme={toggleTheme}>
+            <PageLayout
+              navigate={navigate}
+              theme={theme}
+              toggleTheme={toggleTheme}
+            >
               <OpportunitiesPage navigate={navigate} />
             </PageLayout>
           }
@@ -183,7 +226,11 @@ export default function App() {
         <Route
           path="/deals"
           element={
-            <PageLayout navigate={navigate} theme={theme} toggleTheme={toggleTheme}>
+            <PageLayout
+              navigate={navigate}
+              theme={theme}
+              toggleTheme={toggleTheme}
+            >
               <DealsPage navigate={navigate} />
             </PageLayout>
           }
@@ -191,7 +238,11 @@ export default function App() {
         <Route
           path="/payment/:id"
           element={
-            <PageLayout navigate={navigate} theme={theme} toggleTheme={toggleTheme}>
+            <PageLayout
+              navigate={navigate}
+              theme={theme}
+              toggleTheme={toggleTheme}
+            >
               <PaymentPage navigate={navigate} />
             </PageLayout>
           }
@@ -199,7 +250,11 @@ export default function App() {
         <Route
           path="/connect"
           element={
-            <PageLayout navigate={navigate} theme={theme} toggleTheme={toggleTheme}>
+            <PageLayout
+              navigate={navigate}
+              theme={theme}
+              toggleTheme={toggleTheme}
+            >
               <ConnectPage navigate={navigate} />
             </PageLayout>
           }
@@ -207,7 +262,11 @@ export default function App() {
         <Route
           path="/support"
           element={
-            <PageLayout navigate={navigate} theme={theme} toggleTheme={toggleTheme}>
+            <PageLayout
+              navigate={navigate}
+              theme={theme}
+              toggleTheme={toggleTheme}
+            >
               <SupportPage />
             </PageLayout>
           }
@@ -216,7 +275,11 @@ export default function App() {
           path="/admin"
           element={
             <AdminRoute>
-              <AdminPage navigate={navigate} theme={theme} toggleTheme={toggleTheme} />
+              <AdminPage
+                navigate={navigate}
+                theme={theme}
+                toggleTheme={toggleTheme}
+              />
             </AdminRoute>
           }
         />
@@ -225,7 +288,11 @@ export default function App() {
             key={path}
             path={path}
             element={
-              <PageLayout navigate={navigate} theme={theme} toggleTheme={toggleTheme}>
+              <PageLayout
+                navigate={navigate}
+                theme={theme}
+                toggleTheme={toggleTheme}
+              >
                 <InfoPage navigate={navigate} content={{ ...content, path }} />
               </PageLayout>
             }

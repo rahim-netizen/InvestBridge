@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 import { Mail, Lock, Eye, EyeOff, Check, Loader2 } from "lucide-react";
-import { apiLogin } from "../api/auth";
+import { apiLogin, getCurrentUser, getPostLoginRoute } from "../api/auth";
 import "./AuthCard.css";
 
 export default function LoginPage({ navigate }) {
@@ -35,7 +35,10 @@ export default function LoginPage({ navigate }) {
         const eyeX = rect.left + rect.width / 2;
         const eyeY = rect.top + rect.height / 2;
         const angle = Math.atan2(event.clientY - eyeY, event.clientX - eyeX);
-        const distance = Math.min(4, Math.hypot(event.clientX - eyeX, event.clientY - eyeY) / 30);
+        const distance = Math.min(
+          4,
+          Math.hypot(event.clientX - eyeX, event.clientY - eyeY) / 30,
+        );
         const moveX = Math.cos(angle) * distance;
         const moveY = Math.sin(angle) * distance;
         pupil.style.transform = `translate(${moveX}px, ${moveY}px)`;
@@ -48,7 +51,10 @@ export default function LoginPage({ navigate }) {
     document.documentElement.addEventListener("mouseleave", handleMouseLeave);
     return () => {
       window.removeEventListener("mousemove", handleMouseMove);
-      document.documentElement.removeEventListener("mouseleave", handleMouseLeave);
+      document.documentElement.removeEventListener(
+        "mouseleave",
+        handleMouseLeave,
+      );
     };
   }, [eyesClosed]);
 
@@ -75,7 +81,9 @@ export default function LoginPage({ navigate }) {
 
     const email = form.email.trim().toLowerCase();
     if (email !== "admin@gmail.com" && !email.endsWith("@gmail.com")) {
-      setError("Only @gmail.com email addresses are allowed, except for the admin account.");
+      setError(
+        "Only @gmail.com email addresses are allowed, except for the admin account.",
+      );
       return;
     }
 
@@ -83,8 +91,9 @@ export default function LoginPage({ navigate }) {
 
     try {
       const data = await apiLogin(form.email, form.password);
+      const currentUser = await getCurrentUser();
       setSuccess(true);
-      const destination = data.user?.role === "admin" ? "/admin" : "/profile";
+      const destination = getPostLoginRoute(currentUser || data.user);
       setTimeout(() => navigate(destination), 1400);
     } catch (err) {
       setError(err.message || "Login failed. Please check your credentials.");
@@ -132,110 +141,120 @@ export default function LoginPage({ navigate }) {
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ duration: 0.6, ease: "easeOut" }}
       >
-      <div
-        className={`ib-auth-container${eyesClosed ? " hide-password" : ""}${success ? " success" : ""}`}
-        style={{ transform: `rotateY(${tilt.x}deg) rotateX(${tilt.y}deg)` }}
-      >
-        <div className="ib-success-overlay">
-          <div className="ib-success-checkmark">
-            <Check className="h-10 w-10" strokeWidth={3} />
-          </div>
-          <h2>Welcome Back!</h2>
-          <p>Logging you in...</p>
-        </div>
-
-        <div className="ib-avatar-area">
-          <div className="ib-face">
-            <div className="ib-eye">
-              <div className="ib-pupil" ref={(el) => (pupilRefs.current[0] = el)} />
+        <div
+          className={`ib-auth-container${eyesClosed ? " hide-password" : ""}${success ? " success" : ""}`}
+          style={{ transform: `rotateY(${tilt.x}deg) rotateX(${tilt.y}deg)` }}
+        >
+          <div className="ib-success-overlay">
+            <div className="ib-success-checkmark">
+              <Check className="h-10 w-10" strokeWidth={3} />
             </div>
-            <div className="ib-eye">
-              <div className="ib-pupil" ref={(el) => (pupilRefs.current[1] = el)} />
+            <h2>Welcome Back!</h2>
+            <p>Logging you in...</p>
+          </div>
+
+          <div className="ib-avatar-area">
+            <div className="ib-face">
+              <div className="ib-eye">
+                <div
+                  className="ib-pupil"
+                  ref={(el) => (pupilRefs.current[0] = el)}
+                />
+              </div>
+              <div className="ib-eye">
+                <div
+                  className="ib-pupil"
+                  ref={(el) => (pupilRefs.current[1] = el)}
+                />
+              </div>
             </div>
           </div>
-        </div>
 
-        <h2>Account Login</h2>
+          <h2>Account Login</h2>
 
-        <form onSubmit={handleSubmit}>
-          <div className="ib-input-group">
-            <Mail className="ib-input-icon h-4 w-4" />
-            <input
-              type="email"
-              name="email"
-              placeholder=" "
-              autoComplete="off"
-              value={form.email}
-              onChange={handleChange}
-              required
-            />
-            <label htmlFor="email">Email Address</label>
-          </div>
-
-          <div className="ib-input-group">
-            <Lock className="ib-input-icon h-4 w-4" />
-            <input
-              type={showPassword ? "text" : "password"}
-              name="password"
-              placeholder=" "
-              value={form.password}
-              onChange={handleChange}
-              onFocus={() => setPasswordFocused(true)}
-              onBlur={() => setPasswordFocused(false)}
-              required
-            />
-            <label htmlFor="password">Password</label>
-            <button
-              type="button"
-              className="ib-toggle-password"
-              onClick={() => setShowPassword((current) => !current)}
-              aria-label={showPassword ? "Hide password" : "Show password"}
-            >
-              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-            </button>
-          </div>
-
-          <div className="ib-utils">
-            <label className="ib-remember-me">
+          <form onSubmit={handleSubmit}>
+            <div className="ib-input-group">
+              <Mail className="ib-input-icon h-4 w-4" />
               <input
-                type="checkbox"
-                checked={remember}
-                onChange={(event) => setRemember(event.target.checked)}
+                type="email"
+                name="email"
+                placeholder=" "
+                autoComplete="off"
+                value={form.email}
+                onChange={handleChange}
+                required
               />
-              Remember me
-            </label>
-            <button type="button" className="ib-forgot-pass">
-              Forgot Password?
+              <label htmlFor="email">Email Address</label>
+            </div>
+
+            <div className="ib-input-group">
+              <Lock className="ib-input-icon h-4 w-4" />
+              <input
+                type={showPassword ? "text" : "password"}
+                name="password"
+                placeholder=" "
+                value={form.password}
+                onChange={handleChange}
+                onFocus={() => setPasswordFocused(true)}
+                onBlur={() => setPasswordFocused(false)}
+                required
+              />
+              <label htmlFor="password">Password</label>
+              <button
+                type="button"
+                className="ib-toggle-password"
+                onClick={() => setShowPassword((current) => !current)}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
+              </button>
+            </div>
+
+            <div className="ib-utils">
+              <label className="ib-remember-me">
+                <input
+                  type="checkbox"
+                  checked={remember}
+                  onChange={(event) => setRemember(event.target.checked)}
+                />
+                Remember me
+              </label>
+              <button type="button" className="ib-forgot-pass">
+                Forgot Password?
+              </button>
+            </div>
+
+            <button
+              ref={submitBtnRef}
+              type="submit"
+              className="ib-submit-btn"
+              disabled={loading}
+              onClick={handleRipple}
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Signing in...
+                </>
+              ) : (
+                "Sign In"
+              )}
+            </button>
+          </form>
+
+          {error && <p className="ib-error-msg">{error}</p>}
+
+          <div className="ib-footer-links">
+            New here?{" "}
+            <button type="button" onClick={() => navigate("/register")}>
+              Create an account
             </button>
           </div>
-
-          <button
-            ref={submitBtnRef}
-            type="submit"
-            className="ib-submit-btn"
-            disabled={loading}
-            onClick={handleRipple}
-          >
-            {loading ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Signing in...
-              </>
-            ) : (
-              "Sign In"
-            )}
-          </button>
-        </form>
-
-        {error && <p className="ib-error-msg">{error}</p>}
-
-        <div className="ib-footer-links">
-          New here?{" "}
-          <button type="button" onClick={() => navigate("/register")}>
-            Create an account
-          </button>
         </div>
-      </div>
       </motion.div>
     </section>
   );

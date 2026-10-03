@@ -104,9 +104,7 @@ function StatCard({ icon: Icon, label, value, tone, onClick, isInView }) {
           </p>
         </div>
       </div>
-      <div
-        className="flex items-center justify-between border-t border-white/[0.08] px-5 py-2.5 text-xs font-semibold text-white/60 transition-colors group-hover:text-white/85"
-      >
+      <div className="flex items-center justify-between border-t border-white/[0.08] px-5 py-2.5 text-xs font-semibold text-white/60 transition-colors group-hover:text-white/85">
         View details
         <ChevronRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
       </div>
@@ -491,14 +489,19 @@ export default function AdminPage({ navigate }) {
     setLoading(true);
     setLoadError("");
     try {
-      const [statsRes, usersRes, opportunitiesRes, complaintsRes, connectionsRes] =
-        await Promise.all([
-          getAdminStats(),
-          getAdminUsers(),
-          getAdminOpportunities(),
-          getAdminComplaints(),
-          getAdminConnections(),
-        ]);
+      const [
+        statsRes,
+        usersRes,
+        opportunitiesRes,
+        complaintsRes,
+        connectionsRes,
+      ] = await Promise.all([
+        getAdminStats(),
+        getAdminUsers(),
+        getAdminOpportunities(),
+        getAdminComplaints(),
+        getAdminConnections(),
+      ]);
       setStats(statsRes.stats || stats);
       setUsers(usersRes.users || []);
       setProjects(opportunitiesRes.opportunities || []);
@@ -559,6 +562,17 @@ export default function AdminPage({ navigate }) {
     );
   }, [users, userSearch, globalSearch]);
 
+  const userPostCounts = useMemo(() => {
+    const counts = new Map();
+    projects.forEach((project) => {
+      const userId = project.user_id ?? project.user?.id;
+      if (userId == null) return;
+      const key = String(userId);
+      counts.set(key, (counts.get(key) || 0) + 1);
+    });
+    return counts;
+  }, [projects]);
+
   const filteredProjects = useMemo(() => {
     const query = (projectSearch || globalSearch).trim().toLowerCase();
     if (!query) return projects;
@@ -592,8 +606,7 @@ export default function AdminPage({ navigate }) {
             Number(connection.payout_amount) > 0,
         )
         .reduce(
-          (total, connection) =>
-            total + Number(connection.payout_amount || 0),
+          (total, connection) => total + Number(connection.payout_amount || 0),
           0,
         ),
     [connections],
@@ -676,9 +689,7 @@ export default function AdminPage({ navigate }) {
 
             // The payout settles on the gateway, so hand the browser over.
             // The record flips to "completed" only after the callback lands.
-            pushToast(
-              `Sending ${formatMoney(amount)} to SSLCommerz...`,
-            );
+            pushToast(`Sending ${formatMoney(amount)} to SSLCommerz...`);
             if (res.gateway_url) {
               window.location.href = res.gateway_url;
             }
@@ -899,6 +910,8 @@ export default function AdminPage({ navigate }) {
             <tr className="border-b border-ink-100 text-xs font-bold uppercase tracking-wider text-ink-400">
               <th className="px-4 py-3">Name</th>
               <th className="px-4 py-3">Email</th>
+              <th className="px-4 py-3">Posts</th>
+              <th className="px-4 py-3">Rating</th>
               <th className="px-4 py-3">Joined</th>
               <th className="px-4 py-3 text-right">Actions</th>
             </tr>
@@ -919,6 +932,12 @@ export default function AdminPage({ navigate }) {
                   </td>
                   <td className="px-4 py-3.5 text-ink-500">{user.email}</td>
                   <td className="px-4 py-3.5 text-ink-500">
+                    {userPostCounts.get(String(user.id)) || 0}
+                  </td>
+                  <td className="px-4 py-3.5 text-ink-500">
+                    {user.rating ?? "—"}
+                  </td>
+                  <td className="px-4 py-3.5 text-ink-500">
                     {formatDate(user.created_at)}
                   </td>
                   <td className="px-4 py-3.5 text-right">
@@ -936,7 +955,7 @@ export default function AdminPage({ navigate }) {
             </AnimatePresence>
             {filteredUsers.length === 0 && (
               <tr>
-                <td colSpan="4" className="py-8 text-center text-ink-400">
+                <td colSpan="6" className="py-8 text-center text-ink-400">
                   No users found.
                 </td>
               </tr>
@@ -966,7 +985,7 @@ export default function AdminPage({ navigate }) {
     >
       <div className="overflow-x-auto">
         <table className="w-full border-collapse text-left">
-<thead>
+          <thead>
             <tr className="border-b border-ink-100 text-xs font-bold uppercase tracking-wider text-ink-400">
               <th className="px-4 py-3">Project Name</th>
               <th className="px-4 py-3">Founder</th>
@@ -1098,7 +1117,7 @@ export default function AdminPage({ navigate }) {
                         </button>
                       </div>
                     </td>
-                </motion.tr>
+                  </motion.tr>
                 );
               })}
             </AnimatePresence>
@@ -1173,71 +1192,71 @@ export default function AdminPage({ navigate }) {
                     <td className="px-4 py-3.5">
                       <p className="font-semibold text-ink-900 dark:text-ink-100">
                         {connection.user?.name || "Unknown"}
-                    </p>
-                    <p className="text-xs text-ink-500">
-                      {connection.user?.email || "—"}
-                    </p>
-                  </td>
-                  <td className="px-4 py-3.5">
-                    <p className="font-semibold text-ink-900 dark:text-ink-100">
-                      {connection.opportunity?.title || "Deleted project"}
-                    </p>
-                    <p className="text-xs text-ink-500">
-                      {connection.opportunity?.company || "—"}
-                    </p>
-                  </td>
-                  <td className="px-4 py-3.5 font-semibold text-ink-900 dark:text-ink-100">
-                    {formatMoney(invested)}
-                  </td>
-                  <td className="px-4 py-3.5 text-ink-600 dark:text-ink-300">
-                    {Number(connection.investor_share || 0).toFixed(2)}%
-                  </td>
-                  <td className="px-4 py-3.5 font-semibold text-ink-900 dark:text-ink-100">
-                    {formatMoney(payout)}
-                  </td>
-                  <td className="px-4 py-3.5">
-                    {connectionStatusBadge(connection.status)}
-                  </td>
-                  <td className="px-4 py-3.5 text-ink-500">
-                    {formatDate(connection.created_at)}
-                  </td>
-                  <td className="px-4 py-3.5">
-                    <div className="flex items-center justify-end gap-2">
-                      {!isPayable ? (
-                        <span className="text-xs text-ink-400">
-                          No escrow to pay
-                        </span>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => handlePayConnection(connection)}
-                          disabled={
-                            connection.status === "completed" ||
-                            pendingRowId === connection.id
-                          }
-                          className="inline-flex items-center gap-1.5 rounded-lg bg-brand-600 px-3 py-1.5 text-xs font-semibold text-white transition-all hover:bg-brand-700 disabled:cursor-not-allowed disabled:bg-ink-200 disabled:text-ink-400 dark:disabled:bg-ink-800"
-                          title={
-                            connection.status === "completed"
-                              ? "Payout already completed"
-                              : `Release ${formatMoney(
-                                  payout,
-                                )} from escrow to ${
-                                  connection.user?.name || "investor"
-                                }`
-                          }
-                        >
-                          {pendingRowId === connection.id ? (
-                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                          ) : (
-                            <Banknote className="h-3.5 w-3.5" />
-                          )}
-                          {connection.status === "completed"
-                            ? "Paid"
-                            : "Pay investor"}
-                        </button>
-                      )}
-                    </div>
-                  </td>
+                      </p>
+                      <p className="text-xs text-ink-500">
+                        {connection.user?.email || "—"}
+                      </p>
+                    </td>
+                    <td className="px-4 py-3.5">
+                      <p className="font-semibold text-ink-900 dark:text-ink-100">
+                        {connection.opportunity?.title || "Deleted project"}
+                      </p>
+                      <p className="text-xs text-ink-500">
+                        {connection.opportunity?.company || "—"}
+                      </p>
+                    </td>
+                    <td className="px-4 py-3.5 font-semibold text-ink-900 dark:text-ink-100">
+                      {formatMoney(invested)}
+                    </td>
+                    <td className="px-4 py-3.5 text-ink-600 dark:text-ink-300">
+                      {Number(connection.investor_share || 0).toFixed(2)}%
+                    </td>
+                    <td className="px-4 py-3.5 font-semibold text-ink-900 dark:text-ink-100">
+                      {formatMoney(payout)}
+                    </td>
+                    <td className="px-4 py-3.5">
+                      {connectionStatusBadge(connection.status)}
+                    </td>
+                    <td className="px-4 py-3.5 text-ink-500">
+                      {formatDate(connection.created_at)}
+                    </td>
+                    <td className="px-4 py-3.5">
+                      <div className="flex items-center justify-end gap-2">
+                        {!isPayable ? (
+                          <span className="text-xs text-ink-400">
+                            No escrow to pay
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => handlePayConnection(connection)}
+                            disabled={
+                              connection.status === "completed" ||
+                              pendingRowId === connection.id
+                            }
+                            className="inline-flex items-center gap-1.5 rounded-lg bg-brand-600 px-3 py-1.5 text-xs font-semibold text-white transition-all hover:bg-brand-700 disabled:cursor-not-allowed disabled:bg-ink-200 disabled:text-ink-400 dark:disabled:bg-ink-800"
+                            title={
+                              connection.status === "completed"
+                                ? "Payout already completed"
+                                : `Release ${formatMoney(
+                                    payout,
+                                  )} from escrow to ${
+                                    connection.user?.name || "investor"
+                                  }`
+                            }
+                          >
+                            {pendingRowId === connection.id ? (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            ) : (
+                              <Banknote className="h-3.5 w-3.5" />
+                            )}
+                            {connection.status === "completed"
+                              ? "Paid"
+                              : "Pay investor"}
+                          </button>
+                        )}
+                      </div>
+                    </td>
                   </motion.tr>
                 );
               })}
@@ -1450,7 +1469,7 @@ export default function AdminPage({ navigate }) {
   return (
     <div className="dark relative min-h-screen">
       <PageBackground image={false} gradient={AURORA_BG} />
-        <PageDecor />
+      <PageDecor />
 
       {/* Top navbar â€” fixed across the top like SB-Admin's .sb-topnav */}
       <header className="fixed inset-x-0 top-0 z-40 flex h-16 items-center border-b border-white/10 bg-ink-950/85 pl-0 pr-4 backdrop-blur-2xl sm:pr-6">

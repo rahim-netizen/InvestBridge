@@ -59,6 +59,23 @@ const getStoredUser = () => {
 
 const STATUS_OPTIONS = ["Active", "Pending", "Completed", "Progress"];
 
+const formatMoney = (amount) =>
+  new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0,
+  }).format(Number(amount) || 0);
+
+const getInvestorCount = (opportunity) => {
+  const count =
+    opportunity.investor_count ??
+    opportunity.investors_count ??
+    opportunity.connections_count;
+  if (count == null) return null;
+  const parsed = Number(count);
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
 function resizeImage(file, maxDim = 1024, quality = 0.8) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -99,7 +116,8 @@ const cardStatusClass = (status) =>
 // Escrow lifecycle for a saved post, matching the badges on the status page.
 const SAVED_PAYOUT_STYLES = {
   NA: "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300",
-  pending: "bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300",
+  pending:
+    "bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300",
   completed:
     "bg-emerald-100 text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-300",
 };
@@ -115,8 +133,15 @@ const initialsOf = (name = "") =>
 function CardStat({ label, value }) {
   return (
     <div className="min-w-0">
-      <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/50">{label}</p>
-      <p className="mt-1 truncate text-base font-semibold text-white" title={String(value)}>{value}</p>
+      <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/50">
+        {label}
+      </p>
+      <p
+        className="mt-1 truncate text-base font-semibold text-white"
+        title={String(value)}
+      >
+        {value}
+      </p>
     </div>
   );
 }
@@ -158,17 +183,23 @@ function DashboardCard({ opp, actions }) {
           <span className="rounded-full border border-white/[0.14] px-2.5 py-0.5 text-[11px] font-semibold text-white/80">
             {opp.sector}
           </span>
-          <span className="truncate text-xs text-white/50">{opp.location || "TBD"}</span>
+          <span className="truncate text-xs text-white/50">
+            {opp.location || "TBD"}
+          </span>
         </div>
 
-        <h3 className="mt-3.5 text-xl font-semibold leading-tight text-white">{opp.title}</h3>
+        <h3 className="mt-3.5 text-xl font-semibold leading-tight text-white">
+          {opp.title}
+        </h3>
         <p className="mt-1 text-xs text-white/55">by {opp.company}</p>
         <p className="mt-3 line-clamp-3 text-sm leading-relaxed text-white/70 [text-wrap:pretty]">
           {opp.blurb || "No description provided."}
         </p>
 
-        <div className="mt-auto flex items-end gap-[22px] pt-[18px]">
+        <div className="mt-auto grid grid-cols-2 gap-x-5 gap-y-3 pt-[18px] sm:grid-cols-4">
+          <CardStat label="Invested" value={formatMoney(opp.investedAmount)} />
           <CardStat label="Goal" value={opp.goal} />
+          <CardStat label="Investors" value={opp.investorsCount ?? "—"} />
           <CardStat label="Timeline" value={opp.timeline || "TBD"} />
         </div>
 
@@ -179,7 +210,6 @@ function DashboardCard({ opp, actions }) {
     </motion.article>
   );
 }
-
 
 function PaymentResultModal({ status, tranId, onClose, navigate }) {
   const success = status === "success";
@@ -238,14 +268,20 @@ function PaymentResultModal({ status, tranId, onClose, navigate }) {
         <div className="mt-6 flex flex-wrap justify-center gap-3">
           <button
             type="button"
-            onClick={() => navigate("/dashboard")}
+            onClick={() => {
+              onClose();
+              navigate("/dashboard", { replace: true });
+            }}
             className="btn-primary"
           >
             Go to dashboard
           </button>
           <button
             type="button"
-            onClick={() => navigate("/deals")}
+            onClick={() => {
+              onClose();
+              navigate("/deals");
+            }}
             className="btn-ghost"
           >
             Browse deals
@@ -332,6 +368,7 @@ export default function UserDashboard({ navigate }) {
           createdAt: opp.created_at,
           status: opp.status || "Active",
           investedAmount: Number(opp.invested_amount) || 0,
+          investorsCount: getInvestorCount(opp),
         }));
         setAllOpportunities(mapped);
       }
@@ -369,6 +406,7 @@ export default function UserDashboard({ navigate }) {
                 createdAt: opp.created_at,
                 status: opp.status || "Active",
                 investedAmount: Number(opp.invested_amount) || 0,
+                investorsCount: getInvestorCount(opp),
                 myInvestment: Number(c.investment_amount) || 0,
                 payoutStatus: c.status || "NA",
                 myPayout: Number(c.payout_amount) || 0,
@@ -449,7 +487,10 @@ export default function UserDashboard({ navigate }) {
     setEditStatus("");
     // The panel renders inline above the project grid; bring it into view.
     requestAnimationFrame(() =>
-      editPanelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }),
+      editPanelRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      }),
     );
   };
 
@@ -569,7 +610,7 @@ export default function UserDashboard({ navigate }) {
   return (
     <section className="dark relative min-h-screen overflow-hidden px-4 py-20 transition-colors duration-300 sm:px-6 lg:px-8">
       <PageBackground image={false} gradient={AURORA_BG} />
-        <PageDecor />
+      <PageDecor />
       <div className="pointer-events-none absolute inset-0 -z-10 opacity-60">
         <div className="absolute left-[-5rem] top-24 h-72 w-72 rounded-full bg-brand-200/35 blur-3xl" />
         <div className="absolute right-[-4rem] bottom-10 h-80 w-80 rounded-full bg-gold-200/20 blur-3xl" />
@@ -750,12 +791,18 @@ export default function UserDashboard({ navigate }) {
                   <label className="group relative flex min-h-[190px] cursor-pointer flex-wrap items-end gap-4 overflow-hidden rounded-[20px] border border-dashed border-brand-500/40 bg-[radial-gradient(70%_120%_at_15%_0%,rgba(16,185,129,0.22)_0%,rgba(16,185,129,0)_70%),rgba(5,9,15,0.4)] px-5 py-5 transition-colors hover:border-brand-500/70 sm:px-[26px] sm:py-[22px]">
                     {editForm.image && (
                       <>
-                        <img src={editForm.image} alt="" className="absolute inset-0 h-full w-full object-cover" />
+                        <img
+                          src={editForm.image}
+                          alt=""
+                          className="absolute inset-0 h-full w-full object-cover"
+                        />
                         <div className="absolute inset-0 bg-gradient-to-t from-[rgba(5,9,15,0.85)] to-[rgba(5,9,15,0.1)]" />
                       </>
                     )}
                     <div className="relative">
-                      <h2 className="text-[26px] font-semibold text-white">Edit opportunity</h2>
+                      <h2 className="text-[26px] font-semibold text-white">
+                        Edit opportunity
+                      </h2>
                       <p className="mt-1.5 text-[13px] text-white/60">
                         {editForm.image
                           ? "Click to change the cover image."
@@ -774,7 +821,11 @@ export default function UserDashboard({ navigate }) {
                     />
                   </label>
 
-                  <FormSection n="01" title="The basics" hint="How investors will find you.">
+                  <FormSection
+                    n="01"
+                    title="The basics"
+                    hint="How investors will find you."
+                  >
                     <div className="flex flex-col gap-3.5">
                       <div className="grid gap-3.5 sm:grid-cols-2">
                         <label className={formLabelClassName}>
@@ -800,27 +851,40 @@ export default function UserDashboard({ navigate }) {
                       </div>
                       <div className="grid gap-3.5 sm:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
                         <div className="flex flex-col gap-2">
-                          <span className="text-[13px] font-semibold text-white/85">Sector *</span>
-                          <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Sector">
-                            {sectors.filter((s) => s !== "All").map((s) => {
-                              const active = editForm.sector === s;
-                              return (
-                                <button
-                                  key={s}
-                                  type="button"
-                                  role="radio"
-                                  aria-checked={active}
-                                  onClick={() => setEditForm((current) => ({ ...current, sector: s }))}
-                                  className={`rounded-full border px-3 py-[7px] text-xs font-semibold transition-colors ${
-                                    active
-                                      ? "border-brand-500 bg-brand-500/[0.18] text-brand-300"
-                                      : "border-white/[0.14] text-white/80 hover:border-white/30"
-                                  }`}
-                                >
-                                  {s}
-                                </button>
-                              );
-                            })}
+                          <span className="text-[13px] font-semibold text-white/85">
+                            Sector *
+                          </span>
+                          <div
+                            className="flex flex-wrap gap-2"
+                            role="radiogroup"
+                            aria-label="Sector"
+                          >
+                            {sectors
+                              .filter((s) => s !== "All")
+                              .map((s) => {
+                                const active = editForm.sector === s;
+                                return (
+                                  <button
+                                    key={s}
+                                    type="button"
+                                    role="radio"
+                                    aria-checked={active}
+                                    onClick={() =>
+                                      setEditForm((current) => ({
+                                        ...current,
+                                        sector: s,
+                                      }))
+                                    }
+                                    className={`rounded-full border px-3 py-[7px] text-xs font-semibold transition-colors ${
+                                      active
+                                        ? "border-brand-500 bg-brand-500/[0.18] text-brand-300"
+                                        : "border-white/[0.14] text-white/80 hover:border-white/30"
+                                    }`}
+                                  >
+                                    {s}
+                                  </button>
+                                );
+                              })}
                           </div>
                         </div>
                         <label className={formLabelClassName}>
@@ -837,7 +901,11 @@ export default function UserDashboard({ navigate }) {
                     </div>
                   </FormSection>
 
-                  <FormSection n="02" title="The raise" hint="How much, and how long it's open.">
+                  <FormSection
+                    n="02"
+                    title="The raise"
+                    hint="How much, and how long it's open."
+                  >
                     <div className="grid gap-3.5 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
                       <label className={formLabelClassName}>
                         Funding goal
@@ -856,23 +924,33 @@ export default function UserDashboard({ navigate }) {
                         </span>
                       </label>
                       <div className="flex flex-col gap-1.5">
-                        <span className="text-[13px] font-semibold text-white/85">Open for</span>
+                        <span className="text-[13px] font-semibold text-white/85">
+                          Open for
+                        </span>
                         <div
                           role="radiogroup"
                           aria-label="Open for"
                           className="grid h-11 grid-cols-4 gap-1 rounded-xl border border-white/[0.12] bg-[rgba(5,9,15,0.5)] p-1"
                         >
                           {OPEN_FOR_DAYS.map((n) => {
-                            const active = parseInt(editForm.timeline, 10) === n;
+                            const active =
+                              parseInt(editForm.timeline, 10) === n;
                             return (
                               <button
                                 key={n}
                                 type="button"
                                 role="radio"
                                 aria-checked={active}
-                                onClick={() => setEditForm((current) => ({ ...current, timeline: `${n} days` }))}
+                                onClick={() =>
+                                  setEditForm((current) => ({
+                                    ...current,
+                                    timeline: `${n} days`,
+                                  }))
+                                }
                                 className={`rounded-lg text-[13px] font-semibold transition-colors ${
-                                  active ? "bg-brand-500/[0.22] text-brand-300" : "text-white/70 hover:text-white"
+                                  active
+                                    ? "bg-brand-500/[0.22] text-brand-300"
+                                    : "text-white/70 hover:text-white"
                                 }`}
                               >
                                 {n} days
@@ -884,7 +962,12 @@ export default function UserDashboard({ navigate }) {
                     </div>
                   </FormSection>
 
-                  <FormSection n="03" title="The story" hint="Two or three sentences work best." last>
+                  <FormSection
+                    n="03"
+                    title="The story"
+                    hint="Two or three sentences work best."
+                    last
+                  >
                     <label className={formLabelClassName}>
                       Description
                       <textarea

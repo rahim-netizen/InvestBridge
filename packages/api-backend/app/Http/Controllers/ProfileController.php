@@ -14,6 +14,10 @@ class ProfileController extends Controller
     {
         $user = Auth::user();
 
+        if (!$user instanceof User) {
+            abort(401);
+        }
+
         $profile = Profile::where('user_id', $user->id)->first();
 
         if (!$profile) {
@@ -32,6 +36,12 @@ class ProfileController extends Controller
     public function update(Request $request)
     {
         $user = Auth::user();
+
+        if (!$user instanceof User) {
+            abort(401);
+        }
+
+        $user = User::findOrFail($user->id);
 
         $validated = $request->validate([
             'full_name' => ['nullable', 'string', 'max:255'],
