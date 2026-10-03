@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { Check, Loader2, AlertTriangle } from "lucide-react";
-import { apiGoogleHandoff } from "../api/auth";
+import { apiGoogleHandoff, getCurrentUser } from "../api/auth";
+import { getInvestorDestination } from "../lib/profileCompletion.js";
 
 // Where the backend sends the browser after Google answers. It parks a
 // one-time code here, which is swapped for a Sanctum token so the real token
@@ -43,9 +44,10 @@ export default function GoogleAuthCallback({ navigate }) {
     }
 
     apiGoogleHandoff(code)
-      .then((data) => {
+      .then(async (data) => {
+        const user = (await getCurrentUser()) || data.user;
         const destination =
-          data.user?.role === "admin" ? "/admin" : "/profile";
+          user?.role === "admin" ? "/admin" : getInvestorDestination(user);
         navigate(destination, { replace: true });
       })
       .catch((err) =>

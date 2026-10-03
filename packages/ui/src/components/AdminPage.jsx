@@ -900,6 +900,8 @@ export default function AdminPage({ navigate }) {
               <th className="px-4 py-3">Name</th>
               <th className="px-4 py-3">Email</th>
               <th className="px-4 py-3">Joined</th>
+              <th className="px-4 py-3 text-right">Posts</th>
+              <th className="px-4 py-3 text-right">Rating</th>
               <th className="px-4 py-3 text-right">Actions</th>
             </tr>
           </thead>
@@ -921,6 +923,12 @@ export default function AdminPage({ navigate }) {
                   <td className="px-4 py-3.5 text-ink-500">
                     {formatDate(user.created_at)}
                   </td>
+                  <td className="px-4 py-3.5 text-right text-ink-500">
+                    {Number(user.posts) || 0}
+                  </td>
+                  <td className="px-4 py-3.5 text-right text-ink-500">
+                    {user.rating == null ? "—" : Number(user.rating).toFixed(1)}
+                  </td>
                   <td className="px-4 py-3.5 text-right">
                     <button
                       type="button"
@@ -936,7 +944,7 @@ export default function AdminPage({ navigate }) {
             </AnimatePresence>
             {filteredUsers.length === 0 && (
               <tr>
-                <td colSpan="4" className="py-8 text-center text-ink-400">
+                <td colSpan="6" className="py-8 text-center text-ink-400">
                   No users found.
                 </td>
               </tr>

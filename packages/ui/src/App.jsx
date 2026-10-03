@@ -18,6 +18,7 @@ import ChatbotWidget from "./components/ChatbotWidget.jsx";
 import SupportPage from "./components/SupportPage.jsx";
 import InfoPage, { infoPages } from "./components/InfoPage.jsx";
 import { getCurrentUser, onAuthChange } from "./api/auth";
+import { getInvestorDestination } from "./lib/profileCompletion.js";
 
 function getStoredUser() {
   if (typeof window === "undefined") return null;
@@ -61,8 +62,25 @@ export default function App() {
           currentPath === "/register" ||
           currentPath === "/verify-email-pending"
         ) {
-          const destination = user?.role === "admin" ? "/admin" : "/profile";
-          navigate(destination);
+          const destination =
+            user?.role === "admin" ? "/admin" : getInvestorDestination(user);
+          getCurrentUser().then((fetchedUser) => {
+            setCurrentUser(fetchedUser || user);
+            const path = window.location.pathname;
+            if (
+              path === "/login" ||
+              path === "/register" ||
+              path === "/verify-email-pending"
+            ) {
+              navigate(
+                fetchedUser?.role === "admin"
+                  ? "/admin"
+                  : fetchedUser
+                    ? getInvestorDestination(fetchedUser)
+                    : destination,
+              );
+            }
+          });
         }
       } else if (event.type === "LOGOUT") {
         const currentPath = window.location.pathname;

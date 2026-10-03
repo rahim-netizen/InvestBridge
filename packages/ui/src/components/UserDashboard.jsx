@@ -43,6 +43,10 @@ import {
   formLabelClassName,
   panelClassName,
 } from "./OpportunityFormParts.jsx";
+import {
+  formatInvestmentAmount,
+  getInvestorCount,
+} from "../lib/opportunityStats.js";
 
 const getStoredUser = () => {
   if (typeof window === "undefined") {
@@ -167,8 +171,15 @@ function DashboardCard({ opp, actions }) {
           {opp.blurb || "No description provided."}
         </p>
 
-        <div className="mt-auto flex items-end gap-[22px] pt-[18px]">
-          <CardStat label="Goal" value={opp.goal} />
+        <div className="mt-auto flex flex-wrap items-end gap-[22px] pt-[18px]">
+          <CardStat
+            label="Invested / goal"
+            value={`${formatInvestmentAmount(opp.investedAmount)} / ${opp.goal}`}
+          />
+          <CardStat
+            label="Investors"
+            value={opp.investorCount ?? "Unavailable"}
+          />
           <CardStat label="Timeline" value={opp.timeline || "TBD"} />
         </div>
 
@@ -238,7 +249,10 @@ function PaymentResultModal({ status, tranId, onClose, navigate }) {
         <div className="mt-6 flex flex-wrap justify-center gap-3">
           <button
             type="button"
-            onClick={() => navigate("/dashboard")}
+            onClick={() => {
+              onClose();
+              navigate("/dashboard");
+            }}
             className="btn-primary"
           >
             Go to dashboard
@@ -332,6 +346,7 @@ export default function UserDashboard({ navigate }) {
           createdAt: opp.created_at,
           status: opp.status || "Active",
           investedAmount: Number(opp.invested_amount) || 0,
+          investorCount: getInvestorCount(opp),
         }));
         setAllOpportunities(mapped);
       }
@@ -369,6 +384,7 @@ export default function UserDashboard({ navigate }) {
                 createdAt: opp.created_at,
                 status: opp.status || "Active",
                 investedAmount: Number(opp.invested_amount) || 0,
+                investorCount: getInvestorCount(opp),
                 myInvestment: Number(c.investment_amount) || 0,
                 payoutStatus: c.status || "NA",
                 myPayout: Number(c.payout_amount) || 0,
