@@ -41,6 +41,23 @@ class Opportunity extends Model
     }
 
     /**
+     * Every investor connection (saved or funded) on this post.
+     */
+    public function connections()
+    {
+        return $this->hasMany(ConnectedOpportunity::class);
+    }
+
+    /**
+     * Connections that have actually put money in (investment_amount sums
+     * each investor's validated payments).
+     */
+    public function investments()
+    {
+        return $this->hasMany(ConnectedOpportunity::class)->where('investment_amount', '>', 0);
+    }
+
+    /**
      * Keep the founder's cached post count correct whenever a post is added or
      * removed, whichever controller does it.
      */

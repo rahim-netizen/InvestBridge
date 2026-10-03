@@ -14,10 +14,24 @@ class OpportunityController extends Controller
     {
         $user = Auth::user();
 
-        $opportunities = Opportunity::with('user')
+        $opportunities = Opportunity::with([
+            'user',
+            'investments' => fn ($query) => $query->with('user:id,name')->orderByDesc('investment_amount'),
+        ])
+            ->withCount('investments as investors_count')
             ->where('user_id', $user->id)
             ->orderByDesc('created_at')
             ->get();
+
+        // The founder sees who backed each of their own posts and how much.
+        $opportunities->each(function ($opportunity) {
+            $opportunity->setAttribute('investors', $opportunity->investments->map(fn ($investment) => [
+                'user_id' => $investment->user_id,
+                'name' => $investment->user?->name ?? 'Investor',
+                'amount' => (float) $investment->investment_amount,
+            ])->values());
+            $opportunity->unsetRelation('investments');
+        });
 
         return response()->json([
             'opportunities' => $opportunities,
@@ -124,7 +138,9 @@ class OpportunityController extends Controller
 
     public function all(Request $request)
     {
+        // Public feed: only the number of investors, never who they are.
         $opportunities = Opportunity::with('user')
+            ->withCount('investments as investors_count')
             ->orderByDesc('created_at')
             ->get();
 

@@ -49,6 +49,38 @@ class RatingController extends Controller
     }
 
     /**
+     * Public feed of the latest real ratings for the homepage "Success
+     * stories" section. Only names, avatars, the project and the score are
+     * exposed - never e-mails or amounts.
+     */
+    public function recent(): JsonResponse
+    {
+        $ratings = Rating::with(['investor.profile', 'entrepreneur', 'opportunity'])
+            ->latest()
+            ->take(6)
+            ->get()
+            ->filter(fn ($rating) => $rating->investor && $rating->opportunity)
+            ->map(fn ($rating) => [
+                'id' => $rating->id,
+                'rating' => $rating->rating,
+                'investor' => [
+                    'name' => $rating->investor->profile?->full_name ?: $rating->investor->name,
+                    'avatar' => $rating->investor->profile?->profile_image ?: $rating->investor->avatar,
+                ],
+                'entrepreneur' => $rating->entrepreneur?->name,
+                'opportunity' => [
+                    'title' => $rating->opportunity->title,
+                    'company' => $rating->opportunity->company,
+                    'sector' => $rating->opportunity->sector,
+                ],
+                'rated_at' => $rating->created_at?->toIso8601String(),
+            ])
+            ->values();
+
+        return response()->json(['ratings' => $ratings]);
+    }
+
+    /**
      * Record a rating and refresh the entrepreneur's average.
      */
     public function store(Request $request, $id): JsonResponse

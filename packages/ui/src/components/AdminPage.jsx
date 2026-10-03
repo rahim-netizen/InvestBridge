@@ -20,6 +20,7 @@ import {
   RefreshCw,
   Search,
   ShieldCheck,
+  Star,
   Table as TableIcon,
   Trash2,
   UserCircle2,
@@ -28,12 +29,6 @@ import {
 } from "lucide-react";
 import { fadeUp, stagger, useCountUp, useInView } from "../lib/motion.jsx";
 import { apiLogout } from "../api/auth";
-import {
-  getMilestoneAmount,
-  getNextMilestone,
-  getProjectPaymentState,
-  saveProjectProgress,
-} from "../lib/projectProgress";
 import {
   deleteAdminOpportunity,
   deleteAdminUser,
@@ -143,7 +138,7 @@ function ContentCard({ icon: Icon, title, actions, children }) {
 }
 
 function formatDate(value) {
-  if (!value) return "â€”";
+  if (!value) return "—";
   try {
     return new Date(value).toLocaleDateString(undefined, {
       year: "numeric",
@@ -151,7 +146,7 @@ function formatDate(value) {
       day: "numeric",
     });
   } catch {
-    return "â€”";
+    return "—";
   }
 }
 
@@ -163,6 +158,28 @@ function formatMoney(value) {
     maximumFractionDigits: 2,
   })}`;
 }
+
+// funding_goal is free text ("1000", "$1.5M", "500K"), so read it the same
+// way the Deals page does before comparing it with invested_amount.
+function parseGoal(raw) {
+  if (raw == null) return 0;
+  const match = String(raw).toUpperCase().match(/([\d,]*\.?\d+)\s*([KMB]?)/);
+  if (!match) return 0;
+  const num = Number(match[1].replace(/,/g, "")) || 0;
+  return num * ({ K: 1e3, M: 1e6, B: 1e9 }[match[2]] || 1);
+}
+
+// Opportunity status is stored with mixed casing ("Active", "active",
+// "Completed", "suspended"), so compare it case-insensitively.
+const projectStatusKey = (project) =>
+  String(project.status || "active").toLowerCase();
+
+const PROJECT_STATUS_BADGE = {
+  active: { label: "Active", className: "bg-emerald-100 text-emerald-800" },
+  suspended: { label: "Suspended", className: "bg-amber-100 text-amber-800" },
+  completed: { label: "Completed", className: "bg-sky-100 text-sky-800" },
+  pending: { label: "Pending", className: "bg-ink-100 text-ink-700" },
+};
 
 // connected_opportunities.status is a three-step lifecycle: NA means the
 // investor has not paid yet, pending means the money is collected but not yet
@@ -459,7 +476,6 @@ export default function AdminPage({ navigate }) {
   const [confirmConfig, setConfirmConfig] = useState(null);
   const [busyAction, setBusyAction] = useState(false);
   const [pendingRowId, setPendingRowId] = useState(null);
-  const [projectProgress, setProjectProgress] = useState({});
 
   // The sidebar is collapsed to icons on desktop and hidden on mobile. On
   // desktop the toggle flips a persisted flag; on mobile it opens/closes an
@@ -512,6 +528,22 @@ export default function AdminPage({ navigate }) {
       setLoadError(err.message || "Failed to load admin data.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Re-read projects and the dashboard counters from the backend after a
+  // project action, so the table and the "Active projects" card always show
+  // what is actually stored rather than a locally patched copy.
+  const syncProjects = async () => {
+    try {
+      const [statsRes, opportunitiesRes] = await Promise.all([
+        getAdminStats(),
+        getAdminOpportunities(),
+      ]);
+      setStats((current) => statsRes.stats || current);
+      setProjects(opportunitiesRes.opportunities || []);
+    } catch {
+      // Keep the optimistic state; the next refresh will reconcile it.
     }
   };
 
@@ -646,6 +678,7 @@ export default function AdminPage({ navigate }) {
               current.filter((p) => p.id !== project.id),
             );
             pushToast(`"${project.title}" was removed.`);
+            await syncProjects();
           } catch (err) {
             pushToast(err.message || "Failed to remove project.", "error");
           }
@@ -692,7 +725,8 @@ export default function AdminPage({ navigate }) {
   };
 
   const handleToggleProjectStatus = async (project) => {
-    const nextStatus = project.status === "suspended" ? "active" : "suspended";
+    const nextStatus =
+      projectStatusKey(project) === "suspended" ? "active" : "suspended";
     setPendingRowId(project.id);
     try {
       const res = await setAdminOpportunityStatus(project.id, nextStatus);
@@ -710,24 +744,8 @@ export default function AdminPage({ navigate }) {
       pushToast(err.message || "Failed to update project status.", "error");
     } finally {
       setPendingRowId(null);
+      await syncProjects();
     }
-  };
-
-  // The old file called handlePayMilestone from the progress cell but never
-  // defined it â€” clicking Pay would throw. This wires the button up against
-  // the same local-storage progress store the rest of the app reads.
-  const handlePayMilestone = (project) => {
-    const state =
-      projectProgress[project.id] || getProjectPaymentState(project);
-    const next = getNextMilestone(state.progress);
-    if (!next) return;
-    const paidMilestones = Array.from(new Set([...state.paidMilestones, next]));
-    saveProjectProgress(project.id, next, paidMilestones);
-    setProjectProgress((current) => ({
-      ...current,
-      [project.id]: { progress: next, paidMilestones },
-    }));
-    pushToast(`Marked ${next}% milestone paid for "${project.title}".`);
   };
 
   const handleSendFeedback = async (complaint) => {
@@ -827,7 +845,7 @@ export default function AdminPage({ navigate }) {
                   </span>
                   <div>
                     <p className="text-sm font-semibold text-ink-900 dark:text-ink-100">
-                      {user.name || "â€”"}
+                      {user.name || "—"}
                     </p>
                     <p className="text-xs text-ink-500">{user.email}</p>
                   </div>
@@ -887,7 +905,7 @@ export default function AdminPage({ navigate }) {
             type="text"
             value={userSearch}
             onChange={(event) => setUserSearch(event.target.value)}
-            placeholder="Search name or emailâ€¦"
+            placeholder="Search name or email…"
             className="w-full rounded-xl border border-ink-100 bg-white/70 py-2 pl-9 pr-3 text-sm text-ink-700 outline-none transition-colors focus:border-brand-300 dark:border-ink-800 dark:bg-ink-950/40"
           />
         </div>
@@ -927,7 +945,20 @@ export default function AdminPage({ navigate }) {
                     {Number(user.posts) || 0}
                   </td>
                   <td className="px-4 py-3.5 text-right text-ink-500">
-                    {user.rating == null ? "—" : Number(user.rating).toFixed(1)}
+                    {Number(user.ratings_count) > 0 ? (
+                      <span
+                        className="inline-flex items-center justify-end gap-1"
+                        title={`${user.ratings_count} rating${user.ratings_count === 1 ? "" : "s"}`}
+                      >
+                        <Star className="h-3.5 w-3.5 fill-current text-gold-400" />
+                        <span className="font-semibold text-ink-900 dark:text-ink-100">
+                          {Number(user.rating).toFixed(1)}
+                        </span>
+                        <span className="text-xs">({user.ratings_count})</span>
+                      </span>
+                    ) : (
+                      <span className="text-xs">Not rated</span>
+                    )}
                   </td>
                   <td className="px-4 py-3.5 text-right">
                     <button
@@ -966,7 +997,7 @@ export default function AdminPage({ navigate }) {
             type="text"
             value={projectSearch}
             onChange={(event) => setProjectSearch(event.target.value)}
-            placeholder="Search project or founderâ€¦"
+            placeholder="Search project or founder…"
             className="w-full rounded-xl border border-ink-100 bg-white/70 py-2 pl-9 pr-3 text-sm text-ink-700 outline-none transition-colors focus:border-brand-300 dark:border-ink-800 dark:bg-ink-950/40"
           />
         </div>
@@ -988,10 +1019,19 @@ export default function AdminPage({ navigate }) {
           <tbody className="divide-y divide-white/5 text-sm">
             <AnimatePresence initial={false}>
               {filteredProjects.map((project) => {
-                const state =
-                  projectProgress[project.id] ||
-                  getProjectPaymentState(project);
-                const nextMilestone = getNextMilestone(state.progress);
+                const goal = parseGoal(project.funding_goal);
+                const invested = Number(project.invested_amount) || 0;
+                const percent =
+                  goal > 0 ? Math.min(100, Math.round((invested / goal) * 100)) : 0;
+                const fullyFunded = goal > 0 && invested >= goal;
+                const investors = Number(project.investors_count) || 0;
+                const statusKey = projectStatusKey(project);
+                const badge = PROJECT_STATUS_BADGE[statusKey] || {
+                  label: project.status,
+                  className: "bg-ink-100 text-ink-700",
+                };
+                const isCompleted = statusKey === "completed";
+                const isSuspended = statusKey === "suspended";
                 return (
                   <motion.tr
                     key={project.id}
@@ -1008,73 +1048,45 @@ export default function AdminPage({ navigate }) {
                       {project.user?.name || "Unknown"}
                     </td>
                     <td className="px-4 py-3.5 font-medium text-ink-900 dark:text-ink-100">
-                      {project.funding_goal || "—"}
+                      {goal > 0 ? formatMoney(goal) : project.funding_goal || "—"}
                     </td>
                     <td className="px-4 py-3.5 font-medium text-ink-900 dark:text-ink-100">
-                      {project.invested_amount
-                        ? `$${Number(project.invested_amount).toLocaleString("en-US", { maximumFractionDigits: 0 })}`
-                        : "$0"}
-                    </td>
-                    <td className="px-4 py-3.5 text-ink-500">
-                      {project.user?.name || "Unknown"}
-                    </td>
-                    <td className="px-4 py-3.5 font-medium text-ink-900 dark:text-ink-100">
-                      {project.funding_goal || "â€”"}
+                      {formatMoney(invested)}
                     </td>
                     <td className="min-w-44 px-4 py-3.5">
                       <div className="space-y-2">
                         <div className="flex items-center justify-between text-xs">
                           <span className="font-semibold text-ink-700 dark:text-ink-300">
-                            {state.progress}% complete
+                            {percent}% funded
                           </span>
                           <span className="text-ink-400">
-                            {state.paidMilestones.length}/4 paid
+                            {investors} investor{investors === 1 ? "" : "s"}
                           </span>
                         </div>
                         <div className="h-2 overflow-hidden rounded-full bg-ink-100 dark:bg-ink-800">
                           <div
                             className="h-full rounded-full bg-brand-500 transition-all duration-500"
-                            style={{ width: `${state.progress}%` }}
+                            style={{ width: `${percent}%` }}
                           />
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => handlePayMilestone(project)}
-                          disabled={
-                            !nextMilestone || pendingRowId === project.id
-                          }
-                          className="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-700 transition-colors hover:text-brand-800 disabled:cursor-not-allowed disabled:text-ink-400 dark:text-brand-400"
-                          title={
-                            nextMilestone
-                              ? `Pay ${nextMilestone}% milestone (${getMilestoneAmount(
-                                  project,
-                                  nextMilestone,
-                                ).toLocaleString(undefined, {
-                                  style: "currency",
-                                  currency: "USD",
-                                  maximumFractionDigits: 0,
-                                })})`
-                              : "All milestones paid"
-                          }
+                        <p
+                          className={`text-xs font-semibold ${
+                            fullyFunded
+                              ? "text-brand-700 dark:text-brand-400"
+                              : "text-ink-400"
+                          }`}
                         >
-                          <Banknote className="h-3.5 w-3.5" />
-                          {nextMilestone
-                            ? `Pay ${nextMilestone}% milestone`
-                            : "Fully funded"}
-                        </button>
+                          {fullyFunded
+                            ? "Fully funded"
+                            : `${formatMoney(Math.max(0, goal - invested))} to go`}
+                        </p>
                       </div>
                     </td>
                     <td className="px-4 py-3.5">
                       <span
-                        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                          project.status === "suspended"
-                            ? "bg-amber-100 text-amber-800"
-                            : "bg-emerald-100 text-emerald-800"
-                        }`}
+                        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${badge.className}`}
                       >
-                        {project.status === "suspended"
-                          ? "Suspended"
-                          : "Active"}
+                        {badge.label}
                       </span>
                     </td>
                     <td className="px-4 py-3.5">
@@ -1082,19 +1094,22 @@ export default function AdminPage({ navigate }) {
                         <button
                           type="button"
                           onClick={() => handleToggleProjectStatus(project)}
-                          disabled={pendingRowId === project.id}
-                          className="inline-flex items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-700 transition-all hover:border-amber-300 hover:bg-amber-100 disabled:opacity-50"
+                          disabled={pendingRowId === project.id || isCompleted}
+                          title={
+                            isCompleted
+                              ? "Completed projects cannot be suspended"
+                              : undefined
+                          }
+                          className="inline-flex items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-700 transition-all hover:border-amber-300 hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-50"
                         >
                           {pendingRowId === project.id ? (
                             <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                          ) : project.status === "suspended" ? (
+                          ) : isSuspended ? (
                             <PlayCircle className="h-3.5 w-3.5" />
                           ) : (
                             <PauseCircle className="h-3.5 w-3.5" />
                           )}
-                          {project.status === "suspended"
-                            ? "Activate"
-                            : "Suspend"}
+                          {isSuspended ? "Activate" : "Suspend"}
                         </button>
                         <button
                           type="button"
@@ -1138,7 +1153,7 @@ export default function AdminPage({ navigate }) {
               type="text"
               value={connectionSearch}
               onChange={(event) => setConnectionSearch(event.target.value)}
-              placeholder="Search investor or projectâ€¦"
+              placeholder="Search investor or project…"
               className="w-full rounded-xl border border-ink-100 bg-white/70 py-2 pl-9 pr-3 text-sm text-ink-700 outline-none transition-colors focus:border-brand-300 dark:border-ink-800 dark:bg-ink-950/40"
             />
           </div>
@@ -1340,7 +1355,7 @@ export default function AdminPage({ navigate }) {
       return (
         <div className="flex flex-col items-center justify-center gap-3 rounded-[24px] border border-white/10 bg-[rgba(5,9,15,0.55)] py-16 backdrop-blur text-ink-400">
           <Loader2 className="h-6 w-6 animate-spin" />
-          <p className="text-sm font-medium">Loading admin dataâ€¦</p>
+          <p className="text-sm font-medium">Loading admin data…</p>
         </div>
       );
     }
@@ -1357,7 +1372,7 @@ export default function AdminPage({ navigate }) {
       );
     }
     // Each renderer returns a ContentCard (or a grid of them) that animates
-    // its own mount, so a plain switch here is enough â€” wrapping in
+    // its own mount, so a plain switch here is enough — wrapping in
     // AnimatePresence mode="wait" around plain-div children swallowed the
     // swap in practice.
     if (activeTab === "users") return renderUsersTable();
@@ -1460,7 +1475,7 @@ export default function AdminPage({ navigate }) {
       <PageBackground image={false} gradient={AURORA_BG} />
         <PageDecor />
 
-      {/* Top navbar â€” fixed across the top like SB-Admin's .sb-topnav */}
+      {/* Top navbar — fixed across the top like SB-Admin's .sb-topnav */}
       <header className="fixed inset-x-0 top-0 z-40 flex h-16 items-center border-b border-white/10 bg-ink-950/85 pl-0 pr-4 backdrop-blur-2xl sm:pr-6">
         {/* Brand block spans the sidebar column on desktop */}
         <div
@@ -1496,7 +1511,7 @@ export default function AdminPage({ navigate }) {
           <Menu className="h-4 w-4" />
         </button>
 
-        {/* Global search â€” hidden on very small screens */}
+        {/* Global search — hidden on very small screens */}
         <div className="ml-3 hidden max-w-md flex-1 md:block">
           <div className="relative">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400" />
@@ -1504,13 +1519,13 @@ export default function AdminPage({ navigate }) {
               type="text"
               value={globalSearch}
               onChange={(event) => setGlobalSearch(event.target.value)}
-              placeholder="Search users or projectsâ€¦"
+              placeholder="Search users or projects…"
               className="w-full rounded-xl border border-white/10 bg-white/5 py-2 pl-9 pr-3 text-sm text-ink-100 placeholder:text-ink-500 outline-none transition-colors focus:border-brand-400/50"
             />
           </div>
         </div>
 
-        {/* Brand initials on mobile â€” a compact wordmark since the sidebar
+        {/* Brand initials on mobile — a compact wordmark since the sidebar
             brand is hidden */}
         <span className="ml-3 flex items-center gap-2 font-display text-base font-extrabold text-white md:hidden">
           <span className="grid h-8 w-8 place-items-center rounded-lg border border-white/20 bg-brand-600/90">
@@ -1594,7 +1609,7 @@ export default function AdminPage({ navigate }) {
           <SideNav mode={sidebarCollapsed ? "collapsed" : "expanded"} />
         </div>
 
-        {/* Mobile drawer + backdrop â€” the drawer only mounts while open so
+        {/* Mobile drawer + backdrop — the drawer only mounts while open so
             we never race a stalled CSS transition. */}
         {mobileNavOpen && (
           <div
@@ -1608,7 +1623,7 @@ export default function AdminPage({ navigate }) {
           </div>
         )}
 
-        {/* Main content column â€” offset by the sidebar width on desktop */}
+        {/* Main content column — offset by the sidebar width on desktop */}
         <main
           className={`flex min-h-[calc(100vh-4rem)] w-full flex-col ${
             sidebarCollapsed ? "md:pl-16" : "md:pl-64"
@@ -1631,11 +1646,11 @@ export default function AdminPage({ navigate }) {
             </div>
           </div>
 
-          {/* Footer â€” echoes SB-Admin's small copyright strip */}
+          {/* Footer — echoes SB-Admin's small copyright strip */}
           <footer className="mt-auto border-t border-white/10 bg-ink-950/60 px-4 py-4 backdrop-blur-xl sm:px-8">
             <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-2 text-xs text-ink-400 sm:flex-row">
               <span>
-                Â© {new Date().getFullYear()} InvestBridge Â· Admin console
+                © {new Date().getFullYear()} InvestBridge · Admin console
               </span>
               <span className="flex items-center gap-3">
                 <BarChart3 className="h-3.5 w-3.5" />

@@ -25,13 +25,18 @@ class AdminController extends Controller
     }
 
     /**
-     * List every non-admin platform user.
+     * List every non-admin platform user with their post count and founder
+     * rating. Posts and the rating count are counted live from their tables
+     * so they cannot drift; `rating` is the stored average RatingController
+     * recomputes from every rating on each new one.
      */
     public function users()
     {
         $users = User::where('role', '!=', 'admin')
+            ->select(['id', 'name', 'email', 'role', 'rating', 'created_at'])
+            ->withCount(['opportunities as posts', 'ratingsReceived as ratings_count'])
             ->orderByDesc('created_at')
-            ->get(['id', 'name', 'email', 'role', 'created_at']);
+            ->get();
 
         return response()->json(['users' => $users]);
     }
@@ -79,6 +84,7 @@ class AdminController extends Controller
     public function opportunities()
     {
         $opportunities = Opportunity::with('user:id,name,email')
+            ->withCount(['connections as investors_count' => fn ($query) => $query->where('investment_amount', '>', 0)])
             ->orderByDesc('created_at')
             ->get();
 
@@ -92,6 +98,15 @@ class AdminController extends Controller
         ]);
 
         $opportunity = Opportunity::findOrFail($id);
+
+        // Suspend/activate only toggles a live post; it must never overwrite a
+        // post the founder has already completed back to "active".
+        if (strcasecmp((string) $opportunity->status, 'completed') === 0) {
+            return response()->json([
+                'message' => 'Completed projects cannot be suspended or reactivated.',
+            ], 422);
+        }
+
         $opportunity->update($validated);
 
         return response()->json(['opportunity' => $opportunity]);

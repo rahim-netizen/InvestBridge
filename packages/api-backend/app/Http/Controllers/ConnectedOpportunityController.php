@@ -15,6 +15,7 @@ class ConnectedOpportunityController extends Controller
         $user = Auth::user();
 
         $connections = ConnectedOpportunity::with([
+            'opportunity' => fn ($query) => $query->withCount('investments as investors_count'),
             'opportunity.user.profile',
         ])
             ->where('user_id', $user->id)
